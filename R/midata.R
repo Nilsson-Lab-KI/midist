@@ -2,12 +2,12 @@
 # MID data functions
 #
 
-#
-# Construct an MI (mass isotopomer) data object from a peak_area data.frame
-# The first column of peak_areas must be peak identifiers, repeated for each
-# MI of the same peak, and MIs must be increasing 0,1,...,n for each peak
-# exp_name is a list of experiment names matching columns 2,3... in peak_areas
-#
+#' Construct an MIData (mass isotopomer data) object
+#'
+#' @param peak_areas a peak_area data.frame. The first column of peak_areas must be peak identifiers,
+#' repeated for each MI of the same peak, and MIs must be increasing 0,1,...,n for each peak
+#' @param exp_names a list of experiment names matching columns 2,3... in peak_areas
+#' @export
 MIData <- function(peak_areas, exp_names)
 {
   # verify dimensions
@@ -124,20 +124,30 @@ get_mids <- function(mi_data, p, e)
     mi_data$mids[get_mi_indices(mi_data, p), get_exp_indices(mi_data, e), drop = FALSE])
 }
 
-#
-# get an averaged MID vector for a given peak and experiment
-#
+#'Get an averaged MID vector
+#'
+#' for a given peak.
+#'
+#' @param mi_data an MIData object
+#' @param p the peak index
+#' @param e the experiment index
+#' @export
 get_avg_mid <- function(mi_data, p, e)
 {
   return(mi_data$avg_mids[get_mi_indices(mi_data, p), e])
 }
 
-#
-# get averaged MID vectors for a given peak, for all experiments
-# returns an MI x experiments
-get_avg_mid_all <- function(mi_data, p)
+#' Get averaged MID vectors
+#'
+#' for a given peak, for all experiments
+#'
+#' @param mi_data an MIData object
+#' @param p the peak index
+#' @returns a matrix where each column is the MID from an experiment
+#' @export
+get_avg_mid_all <- function(mi_data, index)
 {
-  return(mi_data$avg_mids[get_mi_indices(mi_data, p), ])
+  return(mi_data$avg_mids[get_mi_indices(mi_data, index), ])
 }
 
 get_mi_indices <- function(mi_data, p)
@@ -150,6 +160,10 @@ get_exp_indices <- function(mi_data, e)
   return(mi_data$exp_index[[e]] + 0:(mi_data$exp_n_rep[[e]]-1))
 }
 
+#' Get the index of a list of peak identifers in an MIData object
+#' @param mi_data the MIData object
+#' @param peak_ids a list of peak identifiers
+#' @export
 get_peak_index <- function(mi_data, peak_ids)
 {
   return(match(peak_ids, mi_data$peak_ids))

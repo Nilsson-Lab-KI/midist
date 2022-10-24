@@ -233,9 +233,15 @@ solution <- function(longer.mid, shorter.mid)
   return(nnls_solution(A, longer.mid))
 }
 
-# returns convolution x*y (for x*y = z), where x and z are the shorter and
-# longer mids, respectively and y is the unknown mid;
-# or, if ... less than than tolerance, returns a single NA value
+#' Convolute two MIDs
+#'
+#' Computes the convolution x*y (for x*y = z), where x and z are the shorter and
+#' longer mids, respectively and y is the unknown mid
+#' @param longer.mid the longer mid
+#' @param shorter.mid the shorter mid
+#' @param tol a threshold below which the convolution is not computed
+#' @returns the convoluted MID vector, or NA if isotopoic enrichment is less than than tolerance
+#' @export
 convolute <- function(longer.mid, shorter.mid, tol = 0.0107)
 {
   A <- convolution_matrix(longer.mid, shorter.mid)
@@ -336,8 +342,11 @@ prepare.mids <- function(mid.lists)
   return(mids)
 }
 
-# calculates the cosine score between two vectors of the same length.
-# Returns NA if either x or y is a zero vector, due to division by zero
+#' Cosine similarity between two vectors of the same length.
+#' @param x a vector
+#' @param y a vector
+#' @returns the cosine similarity, or NA if either x or y is a zero vector
+#' @export
 calc.cosine <- function(x, y)
 {
   cosi <- sum(x * y) / (sqrt(sum(x^2)) * sqrt(sum(y^2)))
@@ -361,12 +370,18 @@ get.cosine <- function(peak_pair, peak.mids)
   return(cosine)
 }
 
-#
-# apply a distance function dist to MID x,y after convolution
-# if length(x) < length(y), we find a vector v such that
-# ||x * v - y|| is minimal, and compute dist(x*v, y)
-# and vice versa if length(x) > length(y)
-#
+#' Apply a distance function dist to MID x,y after convolution
+#'
+#' if length(x) < length(y), we find a vector v such that
+#' ||x * v - y|| is minimal, and compute dist(x*v, y)
+#' and vice versa if length(x) > length(y)
+#'
+#' @param dist a distance function
+#' @param x an MID
+#' @param y an MID
+#' @param conv_fn a function used to convolute MIDs
+#' @returns the distance value
+#' @export
 get_mid_dist <- function(dist, x, y, conv_fn)
 {
   # if there are any N/A values, the distance is N/A
