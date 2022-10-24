@@ -47,20 +47,15 @@ c13correct <- function(mid, constraint = TRUE)
   return(pnnls(a = correct, b = mid)$x)
 }
 
-#' Geneerate a convolution matrix for an MID
+#' Generate a convolution matrix for an MID
 #'
-#' Convolution of two MIDs x * y can be written as a matrix multiplicationA(x).y
-#' This function creates thematrix A(x) for a given number of carbon in y
+#' Convolution of two MIDs x * y can be written as a matrix multiplication
+#' A(x).y
+#' This function creates the matrix A(x) for a given number of carbons in y
 #' @param x an MID
 #' @param y_carbons the number of carbons in the vector y
-
-# this creates the convolution matrix of size
-# length(longer.mid) x length(middle.length.mid)
-#convolution_matrix <- function(longer.mid, shorter.mid)
-
 convolution_matrix <- function(x, y_carbons)
 {
-  #middle.length <- (length(longer.mid)-1) - (length(shorter.mid)-1) + 1
   x_carbons <- length(x) - 1
   # create empty matrix
   A <- matrix(0, x_carbons + y_carbons + 1, y_carbons + 1)
@@ -70,6 +65,17 @@ convolution_matrix <- function(x, y_carbons)
   }
   return(A)
 }
+
+#' Compute the convolution x*y of two MIDs x,y
+#' @param x an MID vector
+#' @param y an MID vector
+#' @returns the convolution MID vector x*y
+#' @export
+convolute <- function(x, y)
+{
+  return(as.vector(convolution_matrix(x, length(y)-1) %*% y))
+}
+
 
 # find the non-negative least-squares solution to A y = z
 # such that sum(y) = 1, y >= 0

@@ -1,6 +1,5 @@
-
 #
-# MID normalization
+# Tests for MIData objects
 #
 
 test_that("MIData objects are created correctly", {
@@ -24,8 +23,14 @@ test_that("MIData objects are created correctly", {
   expect_equal(midata$experiments, c('exp1', 'exp2'))
   expect_equal(midata$exp_index, c(1, 3))
   expect_equal(midata$exp_n_rep, c(2, 1))
+  expect_equal(midata$n_atoms_index[["2"]], c(1))
+  expect_equal(midata$n_atoms_index[["3"]], c(2))
 })
 
+
+#
+# MID normalization
+#
 
 test_that("normalized MIDs sum to 1", {
   # example "peak area" data, each column an MID

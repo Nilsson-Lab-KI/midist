@@ -3,6 +3,7 @@
 export(MIData)
 export(calc.cosine)
 export(convolute)
+export(find_convolution)
 export(get_avg_mid)
 export(get_avg_mid_all)
 export(get_mid_dist)

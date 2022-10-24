@@ -38,7 +38,12 @@ MIData <- function(peak_areas, exp_names)
   mi_data$peak_index <- match(mi_data$peak_ids, peak_areas[[1]])
   # find no. atoms for each peak (no. MIs = no.atoms + 1)
   mi_data$peak_n_atoms <-
-    as.numeric(table(factor(peak_areas[[1]], levels = unique(mi_data$peak_ids)))) - 1
+    as.numeric(table(factor(peak_areas[[1]], levels = mi_data$peak_ids))) - 1
+  # precompute list of peak index vectors for each atom number
+  mi_data$n_atoms_index <- lapply(
+    unique(mi_data$peak_n_atoms),
+    function(n) which(mi_data$peak_n_atoms == n))
+  names(mi_data$n_atoms_index) <- as.character(unique(mi_data$peak_n_atoms))
 
   # names of the tracing experiments
   mi_data$experiments <- unique(exp_names)
@@ -46,7 +51,7 @@ MIData <- function(peak_areas, exp_names)
   mi_data$exp_index <- match(mi_data$experiments, exp_names)
   # number of replicates per experiment
   mi_data$exp_n_rep <-
-    as.numeric(table(factor(exp_names, levels = unique(exp_names))))
+    as.numeric(table(factor(exp_names, levels = mi_data$experiments)))
 
   # store the peak area data as matrix
   mi_data$peak_areas <- as.matrix(peak_areas[2:ncol(peak_areas)])
@@ -167,11 +172,20 @@ get_exp_indices <- function(mi_data, e)
 }
 
 #' Get the index of a list of peak identifers in an MIData object
-#' @param mi_data the MIData object
+#' @param mi_data an MIData object
 #' @param peak_ids a list of peak identifiers
 #' @export
 get_peak_index <- function(mi_data, peak_ids)
 {
   return(match(peak_ids, mi_data$peak_ids))
+}
+
+#' Get the index of peaks with a specific number of atoms
+#' @param mi_data an MIData object
+#' @param n_atoms number of atoms in peaks of interest
+#' @export
+get_peak_index_n_atoms <- function(mi_data, n_atoms)
+{
+  return(mi_data$n_atoms_index[[as.character(n_atoms)]])
 }
 
