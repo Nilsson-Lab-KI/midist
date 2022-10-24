@@ -47,18 +47,27 @@ c13correct <- function(mid, constraint = TRUE)
   return(pnnls(a = correct, b = mid)$x)
 }
 
+#' Geneerate a convolution matrix for an MID
+#'
+#' Convolution of two MIDs x * y can be written as a matrix multiplicationA(x).y
+#' This function creates thematrix A(x) for a given number of carbon in y
+#' @param x an MID
+#' @param y_carbons the number of carbons in the vector y
 
-# creates the convolution matrix of size length(longer.mid)xlength(middle.length.mid)
-convolution_matrix <- function(longer.mid, shorter.mid)
+# this creates the convolution matrix of size
+# length(longer.mid) x length(middle.length.mid)
+#convolution_matrix <- function(longer.mid, shorter.mid)
+
+convolution_matrix <- function(x, y_carbons)
 {
-  # RN: creating the empty matrix form for the shorter mid
-  middle.length <- (length(longer.mid)-1) - (length(shorter.mid)-1) + 1
-  A <- matrix(0, length(longer.mid), middle.length)
-
-  for (i in 1:ncol(A)){
-    A[i:(i+length(shorter.mid)-1), i] <- shorter.mid
+  #middle.length <- (length(longer.mid)-1) - (length(shorter.mid)-1) + 1
+  x_carbons < - length(x) - 1
+  # create empty matrix
+  A <- matrix(0, x_carbons + y_carbons + 1, y_carbons + 1)
+  # fill in columns
+  for (i in 1:(y_carbons + 1)) {
+    A[i:(i+x_carbons), i] <- x
   }
-
   return(A)
 }
 
@@ -77,7 +86,6 @@ solution <- function(longer.mid, shorter.mid)
   # length(longer.mid) > length(shorter.mid)
 
   # DS: it will produce a matrix dimension error if length(longer.mid) < length(shorter.mid)
-
   A <- convolution_matrix(longer.mid, shorter.mid)
 
   # calculating the solution that minimizes the difference between the two MIDs
@@ -85,7 +93,7 @@ solution <- function(longer.mid, shorter.mid)
   return(nnls_solution(A, longer.mid))
 }
 
-#' Convolute two MIDs
+#' Find the optimal convolution for two MIDs
 #'
 #' Computes the convolution x*y (for x*y = z), where x and z are the shorter and
 #' longer mids, respectively and y is the unknown mid
@@ -94,6 +102,7 @@ solution <- function(longer.mid, shorter.mid)
 #' @param tol a threshold below which the convolution is not computed
 #' @returns the convoluted MID vector, or NA if isotopoic enrichment is less than than tolerance
 #' @export
+
 convolute <- function(longer.mid, shorter.mid, tol = 0.0107)
 {
   A <- convolution_matrix(longer.mid, shorter.mid)
