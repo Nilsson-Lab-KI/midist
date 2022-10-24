@@ -1,22 +1,16 @@
 
 ### peak intensity processing functions:
 
-#
-# compute isotopic enrichment (fraction of heavy atoms)
-#
-isotopic_enrichment <- function(mid)
-{
-  n <- length(mid) - 1
-  return(sum(mid * c(0:n)) / n)
-}
 
-calc_enrichment <- function(metabolite, tracer, mid_data, enrichment_tol = 0.0107){
+calc_enrichment <- function(metabolite, tracer, mid_data, enrichment_tol = 0.0107)
+{
   mid <- mid_data[which(mid_data$Metabolite == metabolite), which(colnames(mid_data) == tracer)]
   df <- data.frame(metabolite = metabolite, enrichment = isotopic_enrichment(mid))
   return(df)
 }
 
-get_enriched_mets <- function(metabolite, tracer, mid_data, enrichment_tol = 0.0107){
+get_enriched_mets <- function(metabolite, tracer, mid_data, enrichment_tol = 0.0107)
+{
   mid <- mid_data[which(mid_data$Metabolite == metabolite), which(colnames(mid_data) == tracer)]
   enrichment <- isotopic_enrichment(mid)
   if (enrichment > enrichment_tol){
@@ -86,36 +80,6 @@ binomvals <- function(is, n, p){
   return(bins)
 }
 
-# 13C correct
-c13correct <- function(mid, constraint = TRUE){
-  p <- 0.0107
-  nrCarbon <- length(mid)-1
-  end <- length(mid)
-  correct <- matrix(0, end, end)
-
-  for (d2 in 1:end){
-    b1 <- c(0:(end-d2))
-    b2 <- end-d2
-    correct[d2:end, d2] <- binomvals(b1, b2, p)
-  }
-
-  return(pnnls(a = correct, b = mid)$x)
-}
-
-
-
-#
-# return a zero vector if the mid enrichment is below a threshold
-#
-filter_enrichment <- function(mids, tol = 0.01)
-{
-  if (isotopic_enrichment(mids) <= tol) {
-    return(rep(0, length(mids)))
-  }
-  else {
-    return(mids)
-  }
-}
 
 #
 # get the length of the MID vector (number of atoms + 1)
@@ -196,65 +160,6 @@ get.df <- function(peak, all.peaks)
 
 ### cosine functions
 
-# creates the convolution matrix of size length(longer.mid)xlength(middle.length.mid)
-convolution_matrix <- function(longer.mid, shorter.mid)
-{
-  # RN: creating the empty matrix form for the shorter mid
-  middle.length <- (length(longer.mid)-1) - (length(shorter.mid)-1) + 1
-  A <- matrix(0, length(longer.mid), middle.length)
-
-  for (i in 1:ncol(A)){
-    A[i:(i+length(shorter.mid)-1), i] <- shorter.mid
-  }
-
-  return(A)
-}
-
-# find the non-negative least-squares solution to A y = z
-# such that sum(y) = 1, y >= 0
-nnls_solution <- function(A, z)
-{
-  return(pnnls(a = A, b = z, k = 0, sum = 1)$x)
-}
-
-# returns the solution y for x*y = z,
-# where x and z are the shorter and longer mids, respectively
-solution <- function(longer.mid, shorter.mid)
-{
-  # RN: here there should probably be a check that
-  # length(longer.mid) > length(shorter.mid)
-
-  # DS: it will produce a matrix dimension error if length(longer.mid) < length(shorter.mid)
-
-  A <- convolution_matrix(longer.mid, shorter.mid)
-
-  # calculating the solution that minimizes the difference between the two MIDs
-  # when the smaller metabolite convolutes to the larger one
-  return(nnls_solution(A, longer.mid))
-}
-
-#' Convolute two MIDs
-#'
-#' Computes the convolution x*y (for x*y = z), where x and z are the shorter and
-#' longer mids, respectively and y is the unknown mid
-#' @param longer.mid the longer mid
-#' @param shorter.mid the shorter mid
-#' @param tol a threshold below which the convolution is not computed
-#' @returns the convoluted MID vector, or NA if isotopoic enrichment is less than than tolerance
-#' @export
-convolute <- function(longer.mid, shorter.mid, tol = 0.0107)
-{
-  A <- convolution_matrix(longer.mid, shorter.mid)
-  sol <- nnls_solution(A, longer.mid)
-
-  if(isotopic_enrichment(sol) < tol)
-    return(NA)
-  con <- A %*% sol
-  if(isotopic_enrichment(con) < tol)
-    return(NA)
-
-  return(con)
-}
 
 
 
