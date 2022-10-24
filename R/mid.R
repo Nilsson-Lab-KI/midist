@@ -97,13 +97,13 @@ solution <- function(longer.mid, shorter.mid)
 #'
 #' Computes the convolution x*y (for x*y = z), where x and z are the shorter and
 #' longer mids, respectively and y is the unknown mid
-#' @param longer.mid the longer mid
-#' @param shorter.mid the shorter mid
+#' @param longer.mid the longer mid z
+#' @param shorter.mid the shorter mid x
 #' @param tol a threshold below which the convolution is not computed
 #' @returns the convoluted MID vector, or NA if isotopoic enrichment is less than than tolerance
 #' @export
 
-convolute <- function(longer.mid, shorter.mid, tol = 0.0107)
+find_convolution <- function(longer.mid, shorter.mid, tol = 0.0107)
 {
   A <- convolution_matrix(longer.mid, shorter.mid)
   sol <- nnls_solution(A, longer.mid)

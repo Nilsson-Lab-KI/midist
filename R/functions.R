@@ -23,10 +23,10 @@ prepare <- function(mid_1, mid_2){
     return(list(mid_1, mid_2))
   }
   else if (length(mid_1) > length(mid_2)){
-    return(list(mid_1, convolute(mid_1, mid_2)))
+    return(list(mid_1, find_convolution(mid_1, mid_2)))
   }
   else
-    return(list(convolute(mid_2, mid_1), mid_2))
+    return(list(find_convolution(mid_2, mid_1), mid_2))
 }
 
 correct_before_prepare <- function(mid_1, mid_2){
@@ -36,11 +36,11 @@ correct_before_prepare <- function(mid_1, mid_2){
     return(list(mid_1_c[-1], mid_2_c[-1]))
   }
   else if (length(mid_1_c) > length(mid_2_c)){
-    convoluted_mid <- convolute(mid_1_c, mid_2_c)
+    find_convolutiond_mid <- find_convolution(mid_1_c, mid_2_c)
     return(list(mid_1_c[-1], convoluted_mid[-1]))
   }
   else {
-    convoluted_mid <- convolute(mid_2_c, mid_1_c)
+    convoluted_mid <- find_convolution(mid_2_c, mid_1_c)
     return(list(convoluted_mid[-1], mid_2_c[-1]))
   }
 
@@ -54,13 +54,13 @@ correct_after_prepare <- function(mid_1, mid_2){
     return(list(mid_1_c[-1], mid_2_c[-1]))
   }
   else if (length(mid_1) > length(mid_2)){
-    convoluted_mid <- convolute(mid_1, mid_2)
+    convoluted_mid <- find_convolution(mid_1, mid_2)
     mid_1_c <- c13correct(mid_1)
     convoluted_mid_c <- c13correct(convoluted_mid)
     return(list(mid_1_c[-1], convoluted_mid_c[-1]))
   }
   else {
-    convoluted_mid <- convolute(mid_2, mid_1)
+    convoluted_mid <- find_convolution(mid_2, mid_1)
     mid_2_c <- c13correct(mid_2)
     convoluted_mid_c <- c13correct(convoluted_mid)
     return(list(convoluted_mid[-1], mid_2_c[-1]))
@@ -185,7 +185,7 @@ convolute.mid <- function(tracer.ind, longer.mids, shorter.mids)
   }
 
   else {
-    convolution <- convolute(longer.mid, shorter.mid)
+    convolution <- find_convolution(longer.mid, shorter.mid)
     convolution.enrichment <- filter_enrichment(convolution)
 
     if (sum(convolution.enrichment) == 0){
@@ -412,11 +412,11 @@ get_mid_list <- function(peak.x, peak.y, e, mi_data){
     name.list <- list(peak.x, peak.y)
   }
   else if (length(x) > length(y)){
-    mid.list <- list(x, y, solution(x, y), convolute(x, y))
+    mid.list <- list(x, y, solution(x, y), find_convolution(x, y))
     name.list <- list(paste0("Peak: ", peak.x), paste0("Peak: ", peak.y), "Peak: unknown", paste0("unknown + ", peak.x))
   }
   else {
-    mid.list <- list(y, x, solution(y, x), convolute(y, x))
+    mid.list <- list(y, x, solution(y, x), find_convolution(y, x))
     name.list <- list(paste0("Peak: ", peak.y), paste0("Peak: ", peak.x), "Peak: unknown", paste0("unknown + ", peak.x))
   }
 
