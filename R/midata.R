@@ -110,7 +110,7 @@ get_peak_areas <- function(mi_data, p, e)
   rows <- get_mi_indices(mi_data, p)
   cols <- get_exp_indices(mi_data, e)
   return(as.matrix(
-    mi_data$peak_areas[rows, cols], nrow = len(rows), ncol = len(col)))
+    mi_data$peak_areas[rows, cols], nrow = length(rows), ncol = length(col)))
 }
 
 #

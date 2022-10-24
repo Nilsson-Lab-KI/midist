@@ -1,8 +1,3 @@
-### libraries
-
-# library(limSolve)
-library(lsei)
-library(stringr)
 
 ### peak intensity processing functions:
 
@@ -36,7 +31,7 @@ prepare <- function(mid_1, mid_2){
   else if (length(mid_1) > length(mid_2)){
     return(list(mid_1, convolute(mid_1, mid_2)))
   }
-  else 
+  else
     return(list(convolute(mid_2, mid_1), mid_2))
 }
 
@@ -54,7 +49,7 @@ correct_before_prepare <- function(mid_1, mid_2){
     convoluted_mid <- convolute(mid_2_c, mid_1_c)
     return(list(convoluted_mid[-1], mid_2_c[-1]))
   }
-    
+
 }
 
 correct_after_prepare <- function(mid_1, mid_2){
@@ -76,7 +71,7 @@ correct_after_prepare <- function(mid_1, mid_2){
     convoluted_mid_c <- c13correct(convoluted_mid)
     return(list(convoluted_mid[-1], mid_2_c[-1]))
   }
-    
+
 }
 
 # this is a function to calculate the binomial distribution of a set of "i"s (B_i^n)
@@ -97,7 +92,7 @@ c13correct <- function(mid, constraint = TRUE){
   nrCarbon <- length(mid)-1
   end <- length(mid)
   correct <- matrix(0, end, end)
-  
+
   for (d2 in 1:end){
     b1 <- c(0:(end-d2))
     b2 <- end-d2
@@ -507,7 +502,12 @@ get_mid_list <- function(peak.x, peak.y, e, mi_data){
 
   return(list(mid.list, name.list))
 }
-plot_mids <- function(mid.list, name.list, cosine, include_M0 = TRUE){
+
+
+plot_mids <- function(mid.list, name.list, cosine, include_M0 = TRUE)
+{
+  # prevent R CMD CHECK warnings
+  MI <- MID <- NULL
 
   p <- list()
 
