@@ -61,7 +61,7 @@ c13correct <- function(mid, constraint = TRUE)
 convolution_matrix <- function(x, y_carbons)
 {
   #middle.length <- (length(longer.mid)-1) - (length(shorter.mid)-1) + 1
-  x_carbons < - length(x) - 1
+  x_carbons <- length(x) - 1
   # create empty matrix
   A <- matrix(0, x_carbons + y_carbons + 1, y_carbons + 1)
   # fill in columns
