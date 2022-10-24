@@ -7,7 +7,7 @@
 get_peak_index(mi_data, peak_ids)
 }
 \arguments{
-\item{mi_data}{the MIData object}
+\item{mi_data}{an MIData object}
 
 \item{peak_ids}{a list of peak identifiers}
 }
