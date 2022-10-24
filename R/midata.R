@@ -6,7 +6,7 @@
 #'
 #' @param peak_areas a peak_area data.frame. The first column of peak_areas must be peak identifiers,
 #' repeated for each MI of the same peak, and MIs must be increasing 0,1,...,n for each peak
-#' @param exp_names a list of experiment names matching columns 2,3... in peak_areas
+#' @param exp_names a optional list of experiment names matching columns 2,3... in peak_areas
 #' @export
 MIData <- function(peak_areas, exp_names)
 {
@@ -20,10 +20,16 @@ MIData <- function(peak_areas, exp_names)
   peak_ids <- unique(peak_areas[[1]])
 
   # find zero carbon peaks
-  nr_carbon <- as.numeric(table(factor(peak_areas[[1]], levels = unique(peak_ids)))) - 1
-  zero_carbon_peaks <- as.numeric(names(table(factor(peak_areas[[1]], levels = unique(peak_ids)))[which(nr_carbon == 0)]))
+  # TODO: this introduces indexing errors.
+  # It doesn't seem like a good idea to mutate the peak_areas matrix,
+  # should be moved elsewhere
+#  nr_carbon <- as.numeric(table(factor(peak_areas[[1]], levels = unique(peak_ids)))) - 1
+#  zero_carbon_peaks <- as.numeric(names(table(
+#      factor(
+#      peak_areas[[1]], levels = unique(peak_ids)))[which(nr_carbon == 0)]
+#  ))
   # update peak_areas by removing the zero carbon peaks
-  peak_areas <- peak_areas[-which(peak_areas[[1]] %in% zero_carbon_peaks), ]
+#  peak_areas <- peak_areas[-which(peak_areas[[1]] %in% zero_carbon_peaks), ]
 
   # unique peak ids
   mi_data$peak_ids <- unique(peak_areas[[1]])
