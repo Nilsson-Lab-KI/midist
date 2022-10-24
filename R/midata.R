@@ -76,7 +76,9 @@ MIData <- function(peak_areas, exp_names)
 }
 
 #
-# normalize mids, skip missing values to avoid division by zero
+# normalize each column in a matrix of positive values
+# so that each column sums to 1
+# skip columns whose sum is zero
 #
 normalize_mids <- function(mids)
 {
