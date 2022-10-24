@@ -74,11 +74,14 @@ library(lsei)
 
 # MID AND CONVOLUTION #
 {
-  bring_mid <- function(met, mid_data){
+  bring_mid <- function(met, mid_data)
+    {
     return(mid_data$MID[which(mid_data$Metabolite == met)])
   }
-  get_convoluted_mid <- function(middle_mid, s_mid){
 
+
+  get_convoluted_mid <- function(middle_mid, s_mid)
+  {
     if (length(middle_mid) == length(s_mid) | length(middle_mid) > length(s_mid)){
       # get convolution matrix
       conv_matrix <- convolution_matrix_v2(middle_mid, s_mid)
@@ -95,9 +98,11 @@ library(lsei)
 
       return(c_mid)
     }
-
   }
-  convolution_matrix_v2 <- function(longer_mid, shorter_mid){
+
+
+  convolution_matrix_v2 <- function(longer_mid, shorter_mid)
+  {
     n_row <- length(longer_mid) + length(shorter_mid) - 1
     n_col <- length(shorter_mid)
     A <- matrix(0, n_row, n_col)

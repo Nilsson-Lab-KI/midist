@@ -247,19 +247,6 @@ prepare.mids <- function(mid.lists)
   return(mids)
 }
 
-#' Cosine similarity between two vectors of the same length.
-#' @param x a vector
-#' @param y a vector
-#' @returns the cosine similarity, or NA if either x or y is a zero vector
-#' @export
-calc.cosine <- function(x, y)
-{
-  cosi <- sum(x * y) / (sqrt(sum(x^2)) * sqrt(sum(y^2)))
-  return(cosi)
-}
-
-calc_dot <- function(x, y) {1 - sum(x*y)}
-
 
 # the main function that takes a peak pair, prepares mids (including convolutions),
 # and output cosine scores for the input peak pair
@@ -271,7 +258,7 @@ get.cosine <- function(peak_pair, peak.mids)
   # calculate convolutions if necessary
   # and flatten mids
   mids <- prepare.mids(mid.lists)
-  cosine <- calc.cosine(mids[[1]], mids[[2]])
+  cosine <- cosine_sim(mids[[1]], mids[[2]])
   return(cosine)
 }
 
