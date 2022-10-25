@@ -18,13 +18,13 @@ isotopic_enrichment <- function(mid)
 #
 # return a zero vector if the mid enrichment is below a threshold
 #
-filter_enrichment <- function(mids, tol = 0.01)
+filter_enrichment <- function(mid, tol = 0.01)
 {
-  if (isotopic_enrichment(mids) <= tol) {
-    return(rep(0, length(mids)))
+  if (isotopic_enrichment(mid) <= tol) {
+    return(rep(0, length(mid)))
   }
   else {
-    return(mids)
+    return(mid)
   }
 }
 

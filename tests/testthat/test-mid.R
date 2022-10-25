@@ -11,6 +11,15 @@ test_that("enrichment values are correct", {
   expect_equal(isotopic_enrichment(c(0.5,0,0.5)), 0.5)
 })
 
+test_that("filter_enrichment works correctly", {
+  expect_equal(
+    filter_enrichment(c(0.99, 0.01), tol = 0.01),
+    c(0, 0))
+  expect_equal(
+    filter_enrichment(c(0.99, 0.01), tol = 0.01-1e-10),
+    c(0.99, 0.01))
+})
+
 test_that("convolution matrix has right dimensions", {
   # convolution 2-carbon x with 3-carbon y
   A <- convolution_matrix(x = c(0.1,0.3,0.6), y_carbons = 3)
