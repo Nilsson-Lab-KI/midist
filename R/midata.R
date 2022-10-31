@@ -39,11 +39,8 @@ MIData <- function(peak_areas, exp_names)
   # find no. atoms for each peak (no. MIs = no.atoms + 1)
   mi_data$peak_n_atoms <-
     as.numeric(table(factor(peak_areas[[1]], levels = mi_data$peak_ids))) - 1
-  # precompute list of peak index vectors for each atom number
-  mi_data$n_atoms_index <- lapply(
-    unique(mi_data$peak_n_atoms),
-    function(n) which(mi_data$peak_n_atoms == n))
-  names(mi_data$n_atoms_index) <- as.character(unique(mi_data$peak_n_atoms))
+  # # precompute list of peak index vectors for each atom number
+  mi_data$n_atoms_index <- create_atom_index(mi_data$peak_n_atoms)
 
   # names of the tracing experiments
   mi_data$experiments <- unique(exp_names)
@@ -84,6 +81,27 @@ MIData <- function(peak_areas, exp_names)
     }
   }
   return(mi_data)
+}
+
+
+create_atom_index <- function(peak_n_atoms)
+{
+  index <- lapply(
+    unique(peak_n_atoms),
+    function(n) which(peak_n_atoms == n))
+  names(index) <- as.character(unique(peak_n_atoms))
+  return(index)
+}
+
+midata_subset <- function(midata, peak_index)
+{
+  new_midata <- midata
+  # subset peaks ...
+  
+  # recompute the atoms index
+  mi_data$n_atoms_index <- create_atom_index(mi_data$peak_n_atoms)
+  
+  # subset the peak area matrices ...
 }
 
 #
