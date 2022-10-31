@@ -84,6 +84,8 @@ MIData <- function(peak_areas, exp_names)
 }
 
 
+# create an index list mapping each number of atoms n
+# to the indices of the peaks having n atoms
 create_atom_index <- function(peak_n_atoms)
 {
   index <- lapply(
@@ -93,14 +95,17 @@ create_atom_index <- function(peak_n_atoms)
   return(index)
 }
 
+# subset an MIData object to the peaks given by peak_index
+# and return a new MIData object
+# TODO
 midata_subset <- function(midata, peak_index)
 {
   new_midata <- midata
   # subset peaks ...
-  
+
   # recompute the atoms index
   mi_data$n_atoms_index <- create_atom_index(mi_data$peak_n_atoms)
-  
+
   # subset the peak area matrices ...
 }
 
