@@ -35,12 +35,3 @@ test_that("MID convolution is correct", {
   expect_equal(convolute(c(0.2, 0, 0.8), c(0.5, 0.5)), c(0.1, 0.1, 0.4, 0.4))
 
 })
-
-# TODO
-#test_that("atom index is created correctly", {
-#  expect_equal(
-#    create_atom_index(c(1,1,3,3,3,5,6)),
-#    
-#  )
-#})
- 
