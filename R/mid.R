@@ -30,7 +30,7 @@ filter_enrichment <- function(mid, tol = 0.01)
 
 
 #' Correct an MID vector for naturally occurring isotopes
-# 13C correct
+#' @export
 c13correct <- function(mid, constraint = TRUE)
 {
   p <- 0.0107
@@ -45,6 +45,13 @@ c13correct <- function(mid, constraint = TRUE)
   }
 
   return(pnnls(a = correct, b = mid)$x)
+}
+
+
+#' Correct an MID vector for naturally occurring isotopes and remove M+0
+#' @export
+correct_and_remove <- function(mid){
+  return(c13correct(mid)[-1])
 }
 
 #' Generate a convolution matrix for an MID
