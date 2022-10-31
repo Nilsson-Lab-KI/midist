@@ -52,7 +52,7 @@ c13correct <- function(mid, constraint = TRUE)
 
 #' Correct an MID vector for naturally occurring isotopes and remove M+0
 #' @param mid An MID vector to correct
-#' #' @export
+#' @export
 correct_and_remove <- function(mid){
   return(c13correct(mid)[-1])
 }
