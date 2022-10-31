@@ -176,7 +176,7 @@ get_avg_mid <- function(mi_data, p, e)
 #' for a given peak, for all experiments
 #'
 #' @param mi_data an MIData object
-#' @param p the peak index
+#' @param index the peak index
 #' @returns a matrix where each column is the MID from an experiment
 #' @export
 get_avg_mid_all <- function(mi_data, index)

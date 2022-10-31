@@ -9,7 +9,7 @@ get_avg_mid_all(mi_data, index)
 \arguments{
 \item{mi_data}{an MIData object}
 
-\item{p}{the peak index}
+\item{index}{the peak index}
 }
 \value{
 a matrix where each column is the MID from an experiment

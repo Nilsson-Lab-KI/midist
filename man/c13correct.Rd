@@ -6,6 +6,11 @@
 \usage{
 c13correct(mid, constraint = TRUE)
 }
+\arguments{
+\item{mid}{An MID vector to correct}
+
+\item{constraint}{NOT CURRENTLY USED}
+}
 \description{
 Correct an MID vector for naturally occurring isotopes
 }

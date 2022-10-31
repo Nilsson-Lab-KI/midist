@@ -6,6 +6,10 @@
 \usage{
 correct_and_remove(mid)
 }
+\arguments{
+\item{mid}{An MID vector to correct
+#' @export}
+}
 \description{
 Correct an MID vector for naturally occurring isotopes and remove M+0
 }

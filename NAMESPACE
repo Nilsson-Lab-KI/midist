@@ -3,7 +3,6 @@
 export(MIData)
 export(c13correct)
 export(convolute)
-export(correct_and_remove)
 export(cosine_dist)
 export(cosine_sim)
 export(find_convolution)
