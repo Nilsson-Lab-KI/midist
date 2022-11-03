@@ -43,8 +43,14 @@ c13correct <- function(mid, constraint = TRUE)
     b2 <- end-d2
     correct[d2:end, d2] <- binomvals(b1, b2, p)
   }
+  
+  if (constraint == FALSE){
+    return(pnnls(a = correct, b = mid)$x)
+  }
+  
+  else 
+    return(pnnls(a = correct, b = mid, sum = 1)$x)
 
-  return(pnnls(a = correct, b = mid)$x)
 }
 
 
