@@ -136,4 +136,76 @@ find_convolution <- function(longer.mid, shorter.mid, tol = 0.0107)
   return(con)
 }
 
+#
+# 
+# in cases of unequal carbons
+#
 
+#' Calculate similarity, possibly using convolution
+#'
+#' brings MIDs of peak x and peak y for experiment e from an MIData object (sim_data)
+#' computes convolution in case of unequal C numbers
+#' calculates similarity between MIDs
+#' removes the first element that corresponds to M+0, if remove_m0 == T, before computing similarity.
+#' @param sim_data the MIdata object
+#' @param x peak index
+#' @param y peak index
+#' @param e experiment index
+#' @param similarity similarity function
+#' @param remove_m0 whether to exclude M+0 (the first element in MID vectors) from similarity calculation
+#' @returns the convoluted MID vector, or NA if isotopoic enrichment is less than than tolerance
+#' @export
+
+conv_similarity <- function(sim_data, x, y, e, similarity, remove_m0 = F)
+{
+  mid_x <- get_avg_mid(sim_data, x, e)
+  n_atom_x <- length(mid_x) - 1
+  
+  mid_y <- get_avg_mid(sim_data, y, e)
+  n_atom_y <- length(mid_y) - 1
+  
+  if (n_atom_x == n_atom_y) {
+    # in case of equal number, just calculate the similarity
+    if(remove_m0 == TRUE)
+    {
+      mid_x <- mid_x[-1]
+      mid_y <- mid_y[-1]
+    }
+    return(similarity(mid_x, mid_y))
+  }
+  else {
+    # smaller and larger MIDs
+    if(n_atom_x < n_atom_y) {
+      s_mid <- mid_x
+      l_mid <- mid_y
+      carbon_diff <- n_atom_y - n_atom_x
+    }
+    else {
+      s_mid <- mid_y
+      l_mid <- mid_x
+      carbon_diff <- n_atom_x - n_atom_y
+    }
+    # index of metabolites to convolute with
+    conv_met_index <- get_peak_index_n_atoms(sim_data, carbon_diff)
+    if (length(conv_met_index) > 0) {
+      # get all possible convolutions
+      convolutions <- lapply(
+        conv_met_index,
+        function(m) convolute(get_avg_mid(sim_data, m, e), s_mid))
+      
+      if (remove_m0 == TRUE){
+        convolutions <- lapply(convolutions, function(conv) return(conv[-1]))
+        l_mid <- l_mid[-1]
+      }
+      
+      # calculate maximum similarity
+      similarities <- unlist(lapply(convolutions, similarity, l_mid))
+      similarities[which(is.na(similarities))] <- 0
+      return(max(similarities))
+    }
+    else {
+      # no matching metabolites to convolute with
+      return(0)
+    }
+  }
+}

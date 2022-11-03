@@ -2,6 +2,7 @@
 
 export(MIData)
 export(c13correct)
+export(conv_similarity)
 export(convolute)
 export(correct_and_remove)
 export(cosine_dist)
