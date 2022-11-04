@@ -36,6 +36,12 @@ test_that("MID convolution is correct", {
 
 })
 
+test_that("13-c correction sums to 1", {
+  # 
+  mid <- c(1,0,0)
+  expect_equal(c13correct(mid), mid)
+})
+
 # TODO
 #test_that("atom index is created correctly", {
 #  expect_equal(
