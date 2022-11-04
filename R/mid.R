@@ -10,7 +10,9 @@
 #' @returns the enrichment value
 isotopic_enrichment <- function(mid)
 {
+  # number of carbon atoms
   n <- length(mid) - 1
+  # compute and return isotopic enrichment
   return(sum(mid * c(0:n)) / n)
 }
 
@@ -18,7 +20,7 @@ isotopic_enrichment <- function(mid)
 #
 # return a zero vector if the mid enrichment is below a threshold
 #
-filter_enrichment <- function(mid, tol = 0.01)
+filter_enrichment <- function(mid, tol = 0.0107)
 {
   if (isotopic_enrichment(mid) <= tol) {
     return(rep(0, length(mid)))
@@ -31,23 +33,28 @@ filter_enrichment <- function(mid, tol = 0.01)
 
 #' Correct an MID vector for naturally occurring isotopes
 #' @export
-c13correct <- function(mid, constraint = TRUE)
+c13correct <- function(mid, p = 0.0107, constraint = TRUE)
 {
-  p <- 0.0107
+  # number of carbon atoms
   nrCarbon <- length(mid)-1
+  # dimensions of the correction matrix
   end <- length(mid)
+  # an empty correction matrix to be filled in by binom values
   correct <- matrix(0, end, end)
 
+  # column-wise filling in the correction matrix
   for (d2 in 1:end){
     b1 <- c(0:(end-d2))
     b2 <- end-d2
     correct[d2:end, d2] <- binomvals(b1, b2, p)
   }
   
+  # if we do not have a constraint on the sum of the values
   if (constraint == FALSE){
     return(pnnls(a = correct, b = mid)$x)
   }
   
+  # if we have a sum 1 constraint (default)
   else 
     return(pnnls(a = correct, b = mid, sum = 1)$x)
 
@@ -158,10 +165,14 @@ find_convolution <- function(longer.mid, shorter.mid, tol = 0.0107)
 
 conv_similarity <- function(sim_data, x, y, e, similarity, remove_m0 = F)
 {
+  # find in sim_data (an MIData object) the MID of metabolite with index x from experiment e
   mid_x <- get_avg_mid(sim_data, x, e)
+  # number of carbon atoms of metabolite x
   n_atom_x <- length(mid_x) - 1
   
+  # find in sim_data (an MIData object) the MID of metabolite with index y from experiment e
   mid_y <- get_avg_mid(sim_data, y, e)
+  # number of carbon atoms of metabolite y
   n_atom_y <- length(mid_y) - 1
   
   if (n_atom_x == n_atom_y) {
@@ -173,6 +184,7 @@ conv_similarity <- function(sim_data, x, y, e, similarity, remove_m0 = F)
     }
     return(similarity(mid_x, mid_y))
   }
+  
   else {
     # smaller and larger MIDs
     if(n_atom_x < n_atom_y) {
@@ -185,26 +197,38 @@ conv_similarity <- function(sim_data, x, y, e, similarity, remove_m0 = F)
       l_mid <- mid_x
       carbon_diff <- n_atom_x - n_atom_y
     }
+    
     # index of metabolites to convolute with
     conv_met_index <- get_peak_index_n_atoms(sim_data, carbon_diff)
+    
     if (length(conv_met_index) > 0) {
       # get all possible convolutions
       convolutions <- lapply(
         conv_met_index,
+        # for simulated data, get_avg_mid and get_mid would return the same MID from sim_data
+        # for real data, this returns the average MID of all replicates
         function(m) convolute(get_avg_mid(sim_data, m, e), s_mid))
       
+      # if sim_data contains C-13 corrected MIDs, remove M+0 from all convolutions
       if (remove_m0 == TRUE){
         convolutions <- lapply(convolutions, function(conv) return(conv[-1]))
+        # remove M+0 also from the larger metabolite
         l_mid <- l_mid[-1]
       }
       
-      # calculate maximum similarity
+      # calculate similarities between the larger metabolite and all possible convolutions
+      # without M+0
       similarities <- unlist(lapply(convolutions, similarity, l_mid))
+      # assign zero similarity to missing values
+      # missing values can occur after correcting unlabelled MIDs for natural 13C,
+      # and the removal of M+0 results in zero vectors, thus zero division in similarity, e.g. cosine
       similarities[which(is.na(similarities))] <- 0
+      # return the maximum similarity
       return(max(similarities))
     }
     else {
       # no matching metabolites to convolute with
+      # return zero similarity
       return(0)
     }
   }
