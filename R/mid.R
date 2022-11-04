@@ -30,6 +30,15 @@ filter_enrichment <- function(mid, tol = 0.0107)
   }
 }
 
+# calculate binom values
+binomvals <- function(is, n, p){
+  bins <- c()
+  for (j in 1:length(is)){
+    bin <- dbinom(is[j], n, p)
+    bins <- c(bins, bin)
+  }
+  return(bins)
+}
 
 #' Correct an MID vector for naturally occurring isotopes
 #' @export
