@@ -26,5 +26,10 @@ cosine_dist <- function(x, y)
   return(1 - cosine_sim)
 }
 
+#' Apply a function on MIDs x,y after removing M+0
+apply_no_m0 <- function(f, x, y)
+{
+  return(f(x[-1], y[-1]))
+}
 
 calc_dot <- function(x, y) {1 - sum(x*y)}
