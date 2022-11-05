@@ -36,25 +36,31 @@ test_that("MID convolution is correct", {
 
 })
 
-test_that("13-c correction sums to 1", {
-  # 
-  mid <- c(1,0,0)
-  expect_equal(c13correct(mid), mid)
+test_that("13C correction is correct", {
+  # case where simplex constraints must be enforced
+  expect_equal(c13correct(c(1,0,0)), c(1,0,0))
+  # case from simplex interior to corner
+  expect_equal(c13correct(c(0.9, 0.1), p = 0.1), c(1,0))
+  # case within interior of simplex
+  expect_equal(c13correct(c(0.1, 0.9), p = 0.2), c(0.125, 0.875))
+  # edge case for zero atoms
+  expect_equal(c13correct(c(1)), c(1))
 })
 
+
 test_that("conv_similarity returns a valid similarity score", {
-  # 
+  #
   sim_data <- list(peak_ids = c("a", "b", "c", "d"),
                    peak_index = c(1, 3, 6, 9),
                    peak_n_atoms = c(1, 2, 2, 3),
                    n_atoms_index = list('1' = 1, '2' = c(2, 3), '3' = 4),
                    experiments = c(1,2), exp_n_rep = c(1,1),
                    peak_areas = c(0.98, 0.02, 0.8, 0.1, 0.1, 0.6, 0.2, 0,2, 0.8, 0.05, 0.1, 0.05),
-                   mids = cbind(c(0.98, 0.02, 0.8, 0.1, 0.1, 0.6, 0.2, 0,2, 0.8, 0.05, 0.1, 0.05), 
+                   mids = cbind(c(0.98, 0.02, 0.8, 0.1, 0.1, 0.6, 0.2, 0,2, 0.8, 0.05, 0.1, 0.05),
                                 c(0.98, 0.02, 0.8, 0.1, 0.1, 0.6, 0.2, 0,2, 0.8, 0.05, 0.1, 0.05)),
-                   avg_mids = cbind(c(0.98, 0.02, 0.8, 0.1, 0.1, 0.6, 0.2, 0,2, 0.8, 0.05, 0.1, 0.05), 
+                   avg_mids = cbind(c(0.98, 0.02, 0.8, 0.1, 0.1, 0.6, 0.2, 0,2, 0.8, 0.05, 0.1, 0.05),
                                     c(0.98, 0.02, 0.8, 0.1, 0.1, 0.6, 0.2, 0,2, 0.8, 0.05, 0.1, 0.05)))
-  
+
   expect_equal(round(conv_similarity(sim_data, 1, 4, 1, cosine_sim), 7), 0.9979649)
 })
 
@@ -63,8 +69,7 @@ test_that("conv_similarity returns a valid similarity score", {
 #test_that("atom index is created correctly", {
 #  expect_equal(
 #    create_atom_index(c(1,1,3,3,3,5,6)),
-#    
+#
 #  )
 #})
- 
- 
+
