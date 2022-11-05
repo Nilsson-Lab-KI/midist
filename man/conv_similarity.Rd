@@ -4,10 +4,10 @@
 \alias{conv_similarity}
 \title{Calculate similarity between average MIDs from an MIData object}
 \usage{
-conv_similarity(sim_data, x, y, e, similarity)
+conv_similarity(mi_data, x, y, e, similarity)
 }
 \arguments{
-\item{sim_data}{the MIdata object}
+\item{mi_data}{the MIdata object}
 
 \item{x}{peak index}
 
@@ -22,7 +22,7 @@ the resulting similarity value
 }
 \description{
 Calculates the given similarity function between MIDs for peak x and y for
-experiment e from an MIData object (sim_data).
+experiment e from an MIData object (mi_data).
 If x,y have unequal atom numbers, computes all convolutions x*z of the same
 size as y (if y is the longer vector) and returns the largest similarity;
 if similarity returns NA for some pair, the NA value is ignored when taking

@@ -218,3 +218,12 @@ get_peak_index_n_atoms <- function(mi_data, n_atoms)
   return(mi_data$n_atoms_index[[as.character(n_atoms)]])
 }
 
+#' Get the number of atoms for a given peak
+#' @param mi_data an MIData object
+#' @param p the peak index
+#' @export
+get_peak_n_atoms <- function(mi_data, p)
+{
+  return(mi_data$peak_n_atoms)
+}
+
