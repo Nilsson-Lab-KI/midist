@@ -23,9 +23,20 @@ test_that("conv_similarity returns a valid similarity score", {
   # peak area data, one experiment
   peak_areas = data.frame(
     peak_id <- c(rep("a",2), rep("b",3), rep("c",3), rep("d",4)),
-    exp1 <- c(0.98, 0.02, 0.8, 0.1, 0.1, 0.6, 0.2, 0.2, 0.8, 0.05, 0.1, 0.05))
+    exp1 <- c(
+      0.98, 0.02,
+      0.8, 0.1, 0.1,
+      0.6, 0.2, 0.2,
+      0.8, 0.05, 0.1, 0.05))
   # create MIData object
   midata <- MIData(peak_areas, exp_names = "exp1")
   # for a vs d, we take maximum of a*b vs d and a*c vs d
-  expect_equal(conv_similarity(midata, 1, 4, 1, cosine_sim), 0.9949405, tolerance = 1e-7)
+  expect_equal(
+    conv_similarity(midata, 1, 4, 1, cosine_sim), 0.9949405, tolerance = 1e-7)
+  # test that conv_similarity is symmetric
+  expect_equal(
+    conv_similarity(midata, 1, 4, 1, cosine_sim),
+    conv_similarity(midata, 4, 1, 1, cosine_sim))
+  # for a vs b, we get the similarity a*a vs b
+  expect_equal(conv_similarity(midata, 1, 2, 1, cosine_sim), 0.9889838)
 })

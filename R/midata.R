@@ -224,6 +224,6 @@ get_peak_index_n_atoms <- function(mi_data, n_atoms)
 #' @export
 get_peak_n_atoms <- function(mi_data, p)
 {
-  return(mi_data$peak_n_atoms)
+  return(mi_data$peak_n_atoms[[p]])
 }
 

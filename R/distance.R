@@ -58,7 +58,7 @@ calc_dot <- function(x, y) {1 - sum(x*y)}
 #' If x,y have unequal atom numbers, computes all convolutions x*z of the same
 #' size as y (if y is the longer vector) and returns the largest similarity;
 #' if similarity returns NA for some pair, the NA value is ignored when taking
-#' maximum similarity.
+#' maximum similarity; if there are no possible convolutions, returns 0
 #'
 #' @param mi_data the MIdata object
 #' @param x peak index
@@ -70,45 +70,36 @@ calc_dot <- function(x, y) {1 - sum(x*y)}
 
 conv_similarity <- function(mi_data, x, y, e, similarity)
 {
-  # find in mi_data the MID of metabolite with index x from experiment e
-  mid_x <- get_avg_mid(mi_data, x, e)
-  # number of carbon atoms of metabolite x
-  n_atom_x <- length(mid_x) - 1
+  # number of carbon atoms of metabolites x, y
+  n_atom_x <- get_peak_n_atoms(mi_data, x)
+  n_atom_y <- get_peak_n_atoms(mi_data, y)
+  # ensure MID x is smaller or equal to MID y
+  if(n_atom_x > n_atom_y) {
+    return(conv_similarity(mi_data, y, x, e, similarity))
+  }
 
-  # find in mi_data the MID of metabolite with index y from experiment e
+  # find the MIDs of metabolite with index x, y from experiment e
+  mid_x <- get_avg_mid(mi_data, x, e)
   mid_y <- get_avg_mid(mi_data, y, e)
-  # number of carbon atoms of metabolite y
-  n_atom_y <- length(mid_y) - 1
 
   if (n_atom_x == n_atom_y) {
     # in case of equal number, just calculate the similarity
     return(similarity(mid_x, mid_y))
   }
-
   else {
-    # smaller and larger MIDs
-    if(n_atom_x < n_atom_y) {
-      s_mid <- mid_x
-      l_mid <- mid_y
-      carbon_diff <- n_atom_y - n_atom_x
-    }
-    else {
-      s_mid <- mid_y
-      l_mid <- mid_x
-      carbon_diff <- n_atom_x - n_atom_y
-    }
-
+    # x is strictly smaller than y
     # index of metabolites to convolute with
+    carbon_diff <- n_atom_y - n_atom_x
     conv_met_index <- get_peak_index_n_atoms(mi_data, carbon_diff)
 
     if (length(conv_met_index) > 0) {
       # get all possible convolutions
       convolutions <- lapply(
         conv_met_index,
-        function(m) convolute(get_avg_mid(mi_data, m, e), s_mid))
+        function(m) convolute(get_avg_mid(mi_data, m, e), mid_x))
 
       # calculate similarities between the larger metabolite and all possible convolutions
-      similarities <- unlist(lapply(convolutions, similarity, l_mid))
+      similarities <- unlist(lapply(convolutions, similarity, mid_y))
       # remove any missing values
       similarities <- similarities[!is.na(similarities)]
       if(length(similarities) == 0) {
