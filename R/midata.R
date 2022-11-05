@@ -126,15 +126,17 @@ normalize_mids <- function(mids)
 }
 
 #
-#+ average replicates that don't sum to zero, and only if 2/3 replicates don't sum to zero,
-# if only one replicate does not sum to 0, return that replicate,
+# average replicates, excluding any MIDs that sum to zero
 # else return zeros of size n+1 by 1, where n is the number of C atoms
 #
-collapse_replicates <- function(mid.matrix)
+collapse_replicates <- function(mid_matrix)
 {
-  col_sums <- colSums(mid.matrix)
+  col_sums <- colSums(mid_matrix)
   n_nonzero <- sum(col_sums > 0)
-  return(rowSums(mid.matrix) / n_nonzero)
+  if(n_nonzero > 0)
+    return(rowSums(mid_matrix) / n_nonzero)
+  else
+    return(rep(0, nrow(mid_matrix)))
 }
 
 #

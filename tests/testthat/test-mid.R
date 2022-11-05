@@ -33,7 +33,9 @@ test_that("MID convolution is correct", {
   expect_equal(convolute(c(0.5, 0.5), c(0.2, 0, 0.8)), c(0.1, 0.1, 0.4, 0.4))
   # long * short vector
   expect_equal(convolute(c(0.2, 0, 0.8), c(0.5, 0.5)), c(0.1, 0.1, 0.4, 0.4))
-
+  # convolutions with zero vector
+  expect_equal(convolute(c(1,0), c(0,0)), c(0,0,0))
+  expect_equal(convolute(c(0,0), c(1,0)), c(0,0,0))
 })
 
 test_that("13C correction is correct", {
