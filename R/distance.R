@@ -39,6 +39,7 @@ cosine_dist <- function(x, y)
 #' @param x a vector
 #' @param y a vector
 #' @returns the result of calling f
+#' @export
 #'
 apply_no_m0 <- function(f, x, y)
 {
