@@ -20,17 +20,12 @@ test_that("cosine_dist is correct", {
 
 
 test_that("conv_similarity returns a valid similarity score", {
-  #
-  sim_data <- list(peak_ids = c("a", "b", "c", "d"),
-                   peak_index = c(1, 3, 6, 9),
-                   peak_n_atoms = c(1, 2, 2, 3),
-                   n_atoms_index = list('1' = 1, '2' = c(2, 3), '3' = 4),
-                   experiments = c(1,2), exp_n_rep = c(1,1),
-                   peak_areas = c(0.98, 0.02, 0.8, 0.1, 0.1, 0.6, 0.2, 0,2, 0.8, 0.05, 0.1, 0.05),
-                   mids = cbind(c(0.98, 0.02, 0.8, 0.1, 0.1, 0.6, 0.2, 0,2, 0.8, 0.05, 0.1, 0.05),
-                                c(0.98, 0.02, 0.8, 0.1, 0.1, 0.6, 0.2, 0,2, 0.8, 0.05, 0.1, 0.05)),
-                   avg_mids = cbind(c(0.98, 0.02, 0.8, 0.1, 0.1, 0.6, 0.2, 0,2, 0.8, 0.05, 0.1, 0.05),
-                                    c(0.98, 0.02, 0.8, 0.1, 0.1, 0.6, 0.2, 0,2, 0.8, 0.05, 0.1, 0.05)))
-
-  expect_equal(round(conv_similarity(sim_data, 1, 4, 1, cosine_sim), 7), 0.9979649)
+  # peak area data, one experiment
+  peak_areas = data.frame(
+    peak_id <- c(rep("a",2), rep("b",3), rep("c",3), rep("d",4)),
+    exp1 <- c(0.98, 0.02, 0.8, 0.1, 0.1, 0.6, 0.2, 0.2, 0.8, 0.05, 0.1, 0.05))
+  # create MIData object
+  midata <- MIData(peak_areas, exp_names = "exp1")
+  # for a vs d, we take maximum of a*b vs d and a*c vs d
+  expect_equal(conv_similarity(midata, 1, 4, 1, cosine_sim), 0.9949405, tolerance = 1e-7)
 })
