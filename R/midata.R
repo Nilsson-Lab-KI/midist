@@ -184,6 +184,12 @@ get_avg_mid_all <- function(mi_data, index)
   return(mi_data$avg_mids[get_mi_indices(mi_data, index), ])
 }
 
+#' Get MI indices of a given peak
+#'
+#' @param mi_data an MIData object
+#' @param p the peak index
+#' @returns a vector of MI indices
+#' @export
 get_mi_indices <- function(mi_data, p)
 {
   return(mi_data$peak_index[[p]] + 0:mi_data$peak_n_atoms[[p]])
