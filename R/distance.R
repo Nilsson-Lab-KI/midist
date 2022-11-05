@@ -9,8 +9,14 @@
 #' @export
 cosine_sim <- function(x, y)
 {
-  cosi <- sum(x * y) / (sqrt(sum(x^2)) * sqrt(sum(y^2)))
-  return(cosi)
+  # compute norms
+  x_norm <- sqrt(sum(x^2))
+  y_norm <- sqrt(sum(y^2))
+  # test for zero vector
+  if(x_norm == 0 || y_norm == 0)
+    return(NA)
+  else
+    return(sum(x * y) / (x_norm * y_norm))
 }
 
 #' Cosine distance between two vectors of the same length.
