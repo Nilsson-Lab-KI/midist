@@ -29,7 +29,7 @@ cosine_sim <- function(x, y)
 #' @export
 cosine_dist <- function(x, y)
 {
-  return(1 - cosine_sim)
+  return(1 - cosine_sim(x,y))
 }
 
 #' Apply a function on MIDs x,y after removing M+0
