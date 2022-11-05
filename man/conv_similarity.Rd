@@ -2,9 +2,9 @@
 % Please edit documentation in R/mid.R
 \name{conv_similarity}
 \alias{conv_similarity}
-\title{Calculate similarity, possibly using convolution}
+\title{Calculate similarity between average MIDs from an MIData object}
 \usage{
-conv_similarity(sim_data, x, y, e, similarity, remove_m0 = F)
+conv_similarity(sim_data, x, y, e, similarity)
 }
 \arguments{
 \item{sim_data}{the MIdata object}
@@ -15,16 +15,16 @@ conv_similarity(sim_data, x, y, e, similarity, remove_m0 = F)
 
 \item{e}{experiment index}
 
-\item{similarity}{similarity function}
-
-\item{remove_m0}{whether to exclude M+0 (the first element in MID vectors) from similarity calculation}
+\item{similarity}{A similarity function on MIDs.}
 }
 \value{
-the convoluted MID vector, or NA if isotopoic enrichment is less than than tolerance
+the resulting similarity value
 }
 \description{
-brings MIDs of peak x and peak y for experiment e from an MIData object (sim_data)
-computes convolution in case of unequal C numbers
-calculates similarity between MIDs
-removes the first element that corresponds to M+0, if remove_m0 == T, before computing similarity.
+Calculates the given similarity function between MIDs for peak x and y for
+experiment e from an MIData object (sim_data).
+If x,y have unequal atom numbers, computes all convolutions x*z of the same
+size as y (if y is the longer vector) and returns the largest similarity;
+if similarity returns NA for some pair, the NA value is ignored when taking
+maximum similarity.
 }

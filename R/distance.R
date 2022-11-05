@@ -33,9 +33,17 @@ cosine_dist <- function(x, y)
 }
 
 #' Apply a function on MIDs x,y after removing M+0
+#'
+#' This simply removes the first component of each vector before applying f
+#' @param f function to apply
+#' @param x a vector
+#' @param y a vector
+#' @returns the result of calling f
+#'
 apply_no_m0 <- function(f, x, y)
 {
   return(f(x[-1], y[-1]))
 }
+
 
 calc_dot <- function(x, y) {1 - sum(x*y)}
