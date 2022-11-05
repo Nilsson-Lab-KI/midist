@@ -28,6 +28,16 @@ test_that("MIData objects are created correctly", {
 })
 
 
+test_that("atom index is created correctly", {
+  atom_index <- create_atom_index(c(1,1,3,4,4,3,6))
+  expect_equal(
+    atom_index,
+    list("1" = c(1,2), "3" = c(3,6), "4" = c(4,5), "6" = c(7))
+  )
+})
+
+
+
 #
 # MID normalization
 #

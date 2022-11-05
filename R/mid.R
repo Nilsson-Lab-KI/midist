@@ -41,6 +41,8 @@ binomvals <- function(is, n, p){
 }
 
 #' Correct an MID vector for naturally occurring isotopes
+#' @param mid An MID vector to correct
+#' @param constraint NOT CURRENTLY USED
 #' @export
 c13correct <- function(mid, p = 0.0107, constraint = TRUE)
 {
@@ -71,6 +73,7 @@ c13correct <- function(mid, p = 0.0107, constraint = TRUE)
 
 
 #' Correct an MID vector for naturally occurring isotopes and remove M+0
+#' @param mid An MID vector to correct
 #' @export
 correct_and_remove <- function(mid){
   return(c13correct(mid)[-1])
