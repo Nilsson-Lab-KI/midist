@@ -4,12 +4,14 @@
 \alias{c13correct}
 \title{Correct an MID vector for naturally occurring isotopes}
 \usage{
-c13correct(mid, constraint = TRUE)
+c13correct(mid, p = 0.0107, constraint = TRUE)
 }
 \arguments{
 \item{mid}{An MID vector to correct}
 
-\item{constraint}{NOT CURRENTLY USED}
+\item{p}{heavy atom natural abundance}
+
+\item{constraint}{whether to constrain sum of corrected vector to 1}
 }
 \description{
 Correct an MID vector for naturally occurring isotopes

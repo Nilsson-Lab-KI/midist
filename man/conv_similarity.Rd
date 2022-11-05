@@ -2,7 +2,7 @@
 % Please edit documentation in R/mid.R
 \name{conv_similarity}
 \alias{conv_similarity}
-\title{Calculate similarity, using convolution}
+\title{Calculate similarity, possibly using convolution}
 \usage{
 conv_similarity(sim_data, x, y, e, similarity, remove_m0 = F)
 }
