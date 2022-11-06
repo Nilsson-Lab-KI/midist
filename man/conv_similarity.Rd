@@ -26,5 +26,5 @@ experiment e from an MIData object (mi_data).
 If x,y have unequal atom numbers, computes all convolutions x*z of the same
 size as y (if y is the longer vector) and returns the largest similarity;
 if similarity returns NA for some pair, the NA value is ignored when taking
-maximum similarity.
+maximum similarity; if there are no possible convolutions, returns 0
 }
