@@ -8,6 +8,7 @@
 #'
 #' @param mid and MID vector
 #' @returns the enrichment value
+#' @export
 isotopic_enrichment <- function(mid)
 {
   # number of carbon atoms
