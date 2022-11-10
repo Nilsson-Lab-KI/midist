@@ -143,7 +143,6 @@ similarity_matrix <- function(midata, e, similarity, remove_m0 = FALSE)
   }
   
   # data dimensions
-  n_experiments <- length(midata$experiments)
   n_metabolites <- length(midata$peak_ids)
   
   # met names
