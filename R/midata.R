@@ -10,19 +10,25 @@
 #' @export
 MIData <- function(peak_areas, exp_names)
 {
-  # verify dimensions
-  stopifnot(ncol(peak_areas) == length(exp_names) + 1)
+  # # verify dimensions
+  # stopifnot(ncol(peak_areas) == length(exp_names) + 1)
+  
+  # verify first three column names
+  stopifnot(colnames(peak_areas)[1:3] %in% c("Metabolite", "Formula", "MassIsotopomer"))
+  
   # create object
   mi_data <- list()
   class(mi_data) <-"MIData"
 
   # unique peak ids
-  mi_data$peak_ids <- unique(peak_areas[[1]])
+  mi_data$peak_ids <- unique(peak_areas[["Metabolite"]])
   # start index of each peak
   mi_data$peak_index <- match(mi_data$peak_ids, peak_areas[[1]])
+  # unique formulas
+  mi_data$peak_formulas <- peak_areas[["Formula"]][mi_data$peak_index]
   # find no. atoms for each peak (no. MIs = no.atoms + 1)
   mi_data$peak_n_atoms <-
-    as.numeric(table(factor(peak_areas[[1]], levels = mi_data$peak_ids))) - 1
+    as.numeric(table(factor(peak_areas[["Metabolite"]], levels = mi_data$peak_ids))) - 1
   # # precompute list of peak index vectors for each atom number
   mi_data$n_atoms_index <- create_atom_index(mi_data$peak_n_atoms)
 
@@ -34,8 +40,8 @@ MIData <- function(peak_areas, exp_names)
   mi_data$exp_n_rep <-
     as.numeric(table(factor(exp_names, levels = mi_data$experiments)))
 
-  # remove the first column (peak_ids / metabolite names)
-  peak_areas <- as.matrix(peak_areas[2:ncol(peak_areas)])
+  # remove first three columns (peak_ids / metabolite names, formulas, and mass isotopomers)
+  peak_areas <- as.matrix(peak_areas[4:ncol(peak_areas)])
   
   # MIDs
   mi_data$mids <- matrix(
