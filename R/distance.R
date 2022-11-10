@@ -118,3 +118,51 @@ conv_similarity <- function(mi_data, x, y, e, similarity)
     }
   }
 }
+
+
+#' Calculate similarity matrix, based on a specific similarity/distance measure, for metabolites from an MIData object
+#'
+#' Calculates a similarity matrix based on the given similarity function for all MID pairs for
+#' experiment e from an MIData object (midata).
+#'
+#' @param midata the MIdata object
+#' @param e experiment index
+#' @param similarity A similarity function on MIDs
+#' @param remove_m0 whether to remove M+0 from MIDs (TRUE if MIDs are corrected for the natural 13C. FALSE by default)
+#' @returns the resulting similarity matrix
+#' @export
+
+similarity_matrix <- function(midata, e, similarity, remove_m0 = FALSE)
+{
+  
+  # c13 correct midata, and update similarity to remove M+0
+  if (remove_m0 == TRUE)
+  {
+    midata <- midata_transform(midata, c13correct)
+    similarity <- function(x,y) apply_no_m0(similarity, x,y)
+  }
+  
+  # data dimensions
+  n_experiments <- length(midata$experiments)
+  n_metabolites <- length(midata$peak_ids)
+  
+  # met names
+  met_names <- midata$peak_ids
+  
+  # create an empty matrix to be filled in with similarities
+  sm <- matrix(NA, n_metabolites, n_metabolites)
+  colnames(sm) <- midata$peak_ids
+  rownames(sm) <- midata$peak_ids
+  
+  # loop over matrix elements (r2,d2) such that r2 <= d2
+  for (x in 1:n_metabolites) 
+  {
+    for (y in x:n_metabolites) 
+    {
+      sm[x,y] <- sm[y,x] <- conv_similarity(midata, x, y, e, similarity)
+    }
+  }
+  
+  return(sm)
+  
+}
