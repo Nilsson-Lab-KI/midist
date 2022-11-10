@@ -132,14 +132,14 @@ conv_similarity <- function(mi_data, x, y, e, similarity)
 #' @returns the resulting similarity matrix
 #' @export
 
-similarity_matrix <- function(midata, e, similarity, remove_m0 = FALSE)
+similarity_matrix <- function(midata, e, similarity_measure, remove_m0 = FALSE)
 {
   
   # c13 correct midata, and update similarity to remove M+0
   if (remove_m0 == TRUE)
   {
     midata <- midata_transform(midata, c13correct)
-    similarity <- function(x,y) apply_no_m0(similarity, x,y)
+    similarity <- function(x,y) apply_no_m0(similarity_measure, x,y)
   }
   
   # data dimensions

@@ -4,16 +4,16 @@
 \alias{similarity_matrix}
 \title{Calculate similarity matrix, based on a specific similarity/distance measure, for metabolites from an MIData object}
 \usage{
-similarity_matrix(midata, e, similarity, remove_m0 = FALSE)
+similarity_matrix(midata, e, similarity_measure, remove_m0 = FALSE)
 }
 \arguments{
 \item{midata}{the MIdata object}
 
 \item{e}{experiment index}
 
-\item{similarity}{A similarity function on MIDs}
-
 \item{remove_m0}{whether to remove M+0 from MIDs (TRUE if MIDs are corrected for the natural 13C. FALSE by default)}
+
+\item{similarity}{A similarity function on MIDs}
 }
 \value{
 the resulting similarity matrix
