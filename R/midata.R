@@ -34,21 +34,19 @@ MIData <- function(peak_areas, exp_names)
   mi_data$exp_n_rep <-
     as.numeric(table(factor(exp_names, levels = mi_data$experiments)))
 
-  # store the peak area data as matrix
-  mi_data$peak_areas <- as.matrix(peak_areas[2:ncol(peak_areas)])
-  # ensure all peak areas are non-negative
-  stopifnot(min(mi_data$peak_areas) >= 0)
-
+  # remove the first column (peak_ids / metabolite names)
+  peak_areas <- as.matrix(peak_areas[2:ncol(peak_areas)])
+  
   # MIDs
   mi_data$mids <- matrix(
-    nrow = nrow(mi_data$peak_areas), ncol = ncol(mi_data$peak_areas))
+    nrow = nrow(peak_areas), ncol = ncol(peak_areas))
   # compute MIDs
   for(p in 1:length(mi_data$peak_ids)) {
     rows <- get_mi_indices(mi_data, p)
     for(e in 1:length(mi_data$experiments)) {
       cols <- get_exp_indices(mi_data, e)
       # compute MID
-      pa <- mi_data$peak_areas[rows, cols, drop = FALSE]
+      pa <- peak_areas[rows, cols, drop = FALSE]
       # normalize nonzero mids
       mi_data$mids[rows, cols] <- normalize_mids(pa)
     }
@@ -74,7 +72,7 @@ create_atom_index <- function(peak_n_atoms)
 calc_avg_mids <- function(mi_data)
 {
   avg_mids <- matrix(
-    nrow = nrow(mi_data$peak_areas), ncol = length(mi_data$experiments))
+    nrow = nrow(mi_data$mids), ncol = length(mi_data$experiments))
   # compute MIDs
   for(p in 1:length(mi_data$peak_ids)) {
     rows <- get_mi_indices(mi_data, p)
@@ -158,17 +156,17 @@ collapse_replicates <- function(mid_matrix)
     return(rep(0, nrow(mid_matrix)))
 }
 
-#
-# get peak areas for a given peak p, experiment e
-# (indices into the peak and experiment vectors)
-#
-get_peak_areas <- function(mi_data, p, e)
-{
-  rows <- get_mi_indices(mi_data, p)
-  cols <- get_exp_indices(mi_data, e)
-  return(as.matrix(
-    mi_data$peak_areas[rows, cols], nrow = length(rows), ncol = length(col)))
-}
+# #
+# # get peak areas for a given peak p, experiment e
+# # (indices into the peak and experiment vectors)
+# #
+# get_peak_areas <- function(mi_data, p, e)
+# {
+#   rows <- get_mi_indices(mi_data, p)
+#   cols <- get_exp_indices(mi_data, e)
+#   return(as.matrix(
+#     mi_data$peak_areas[rows, cols], nrow = length(rows), ncol = length(col)))
+# }
 
 #
 # get MIDs, as above
