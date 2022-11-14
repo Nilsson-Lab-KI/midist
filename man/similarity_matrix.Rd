@@ -11,9 +11,9 @@ similarity_matrix(midata, e, similarity_measure, remove_m0 = FALSE)
 
 \item{e}{experiment index}
 
-\item{remove_m0}{whether to remove M+0 from MIDs (TRUE if MIDs are corrected for the natural 13C. FALSE by default)}
+\item{similarity_measure}{A similarity function on MIDs}
 
-\item{similarity}{A similarity function on MIDs}
+\item{remove_m0}{whether to remove M+0 from MIDs (TRUE if MIDs are corrected for the natural 13C. FALSE by default)}
 }
 \value{
 the resulting similarity matrix
