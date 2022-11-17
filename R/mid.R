@@ -111,6 +111,17 @@ convolute <- function(x, y)
 }
 
 
+#' Convolute x*y for all column vectors y in matrix y_mat
+#' @param x an MID vector
+#' @param y_mat a matrix whose columns are MID vectors
+#' @returns the matrix of convolution vectors x*y for each column y in y_mat
+#' @export
+convolute_cols <- function(x, y_mat)
+{
+  return(convolution_matrix(x, nrow(y_mat)-1) %*% y_mat)
+}
+
+
 # find the non-negative least-squares solution to A y = z
 # such that sum(y) = 1, y >= 0
 nnls_solution <- function(A, z)

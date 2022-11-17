@@ -38,6 +38,19 @@ test_that("MID convolution is correct", {
   expect_equal(convolute(c(0,0), c(1,0)), c(0,0,0))
 })
 
+test_that("matrix MID convolution equals vector MID convolution", {
+  x <- c(0.8, 0.2)
+  # random MID matrix, each column is one MID
+  y_mat <- matrix(runif(3*4), nrow = 3, ncol = 4)
+  y_mat <- t(t(y_mat) / colSums(y_mat))
+  # test convolution
+  expect_equal(
+    convolute_cols(x, y_mat),
+    apply(y_mat, MARGIN = 2, function(y) convolute(x, y))
+  )
+})
+
+
 test_that("13C correction is correct", {
   # case where simplex constraints must be enforced
   expect_equal(c13correct(c(1,0,0)), c(1,0,0))
