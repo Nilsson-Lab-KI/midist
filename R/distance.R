@@ -171,18 +171,17 @@ conv_reduce <- function(mi_data, x, y, e, f, g, default = 0)
   }
   else {
     # x is strictly smaller than y
-    # index of metabolites to convolute with
+    # index of metabolites z to convolute with
     carbon_diff <- n_atom_y - n_atom_x
-    conv_met_index <- get_peak_index_n_atoms(mi_data, carbon_diff)
+    z_index <- get_peak_index_n_atoms(mi_data, carbon_diff)
 
-    if (length(conv_met_index) > 0) {
-      # get all possible convolutions
-      convolutions <- lapply(
-        conv_met_index,
-        function(m) convolute(get_avg_mid(mi_data, m, e), mid_x))
-
+    if (length(z_index) > 0) {
+      # get all MIDs z
+      mids_z = sapply(z_index, function(i) get_avg_mid(mi_data, i, e))
+      # compute all convolutions x*z for each z
+      convolutions <- convolute_cols(mid_x, mids_z)
       # calculate f between the larger metabolite and all possible convolutions
-      f_values <- unlist(lapply(convolutions, f, mid_y))
+      f_values <- apply(convolutions, MARGIN = 2, f, mid_y)
       # remove any missing values
       f_values <- f_values[!is.na(f_values)]
       if(length(f_values) == 0) {
