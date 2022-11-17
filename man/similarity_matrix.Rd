@@ -2,23 +2,22 @@
 % Please edit documentation in R/distance.R
 \name{similarity_matrix}
 \alias{similarity_matrix}
-\title{Calculate similarity matrix, based on a specific similarity/distance measure, for metabolites from an MIData object}
+\title{Calculate similarity matrix, based on parameters specified in an InputData object}
 \usage{
-similarity_matrix(midata, e, similarity_measure, remove_m0 = FALSE)
+similarity_matrix(e, input_data, write_to_file = F, return = T)
 }
 \arguments{
-\item{midata}{the MIdata object}
+\item{e}{experiment index that corresponds to the same index in MIData}
 
-\item{e}{experiment index}
+\item{input_data}{InputData object (for more detail see ...)}
 
-\item{similarity_measure}{A similarity function on MIDs}
+\item{write_to_file}{TRUE writes the similarity matrix to file. FALSE by default}
 
-\item{remove_m0}{whether to remove M+0 from MIDs (TRUE if MIDs are corrected for the natural 13C. FALSE by default)}
-}
-\value{
-the resulting similarity matrix
+\item{return}{whether to return the similarity matrix. Choose FALSE for commandline runs}
 }
 \description{
-Calculates a similarity matrix based on the given similarity function for all MID pairs for
-experiment e from an MIData object (midata).
+Calculates a similarity matrix based on the given similarity function for all peak pairs
+for experiment e from an MIData object (midata).
+If a list of reactions is input to input_data$reaction_data, the given similarity function will only be applied to peak pairs
+whose formula or mass difference (depending on "input_data$reaction_restriction") can be matched an allowed reaction
 }

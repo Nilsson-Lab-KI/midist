@@ -63,7 +63,6 @@ MIData <- function(peak_areas, exp_names)
 }
 
 
-
 #' Create an index list mapping each number of atoms n to the indices of the peaks having n atoms
 #'
 #' @param peak_n_atoms number of C atoms per peak
@@ -94,20 +93,6 @@ calc_avg_mids <- function(mi_data)
   return(avg_mids)
 }
 
-
-# subset mids and avg_mids
-bring_mids <- function(peak, mi_data)
-{
-  start_ind <- mi_data$peak_index[peak]
-  end_ind <- start_ind + mi_data$peak_n_atom[peak]
-  return(mi_data$mids[start_ind:end_ind,])
-}
-bring_avg_mids <- function(peak, mi_data)
-{
-  start_ind <- mi_data$peak_index[peak]
-  end_ind <- start_ind + mi_data$peak_n_atom[peak]
-  return(mi_data$avg_mids[start_ind:end_ind,])
-}
 
 # 
 # 
@@ -214,17 +199,6 @@ collapse_replicates <- function(mid_matrix)
     return(rep(0, nrow(mid_matrix)))
 }
 
-# #
-# # get peak areas for a given peak p, experiment e
-# # (indices into the peak and experiment vectors)
-# #
-# get_peak_areas <- function(mi_data, p, e)
-# {
-#   rows <- get_mi_indices(mi_data, p)
-#   cols <- get_exp_indices(mi_data, e)
-#   return(as.matrix(
-#     mi_data$peak_areas[rows, cols], nrow = length(rows), ncol = length(col)))
-# }
 
 #
 # get MIDs, as above
@@ -304,3 +278,29 @@ get_peak_n_atoms <- function(mi_data, p)
   return(mi_data$peak_n_atoms[[p]])
 }
 
+#' @export
+get_formula <- function(mi_data, p)
+{
+  return(
+    mi_data$peak_formulas[p])
+}
+
+#' @export
+get_mass <- function(midata, p){
+  return(
+    midata$peak_masses[p])
+}
+
+# subset mids and avg_mids
+bring_mids <- function(peak, mi_data)
+{
+  start_ind <- mi_data$peak_index[peak]
+  end_ind <- start_ind + mi_data$peak_n_atom[peak]
+  return(mi_data$mids[start_ind:end_ind,])
+}
+bring_avg_mids <- function(peak, mi_data)
+{
+  start_ind <- mi_data$peak_index[peak]
+  end_ind <- start_ind + mi_data$peak_n_atom[peak]
+  return(mi_data$avg_mids[start_ind:end_ind,])
+}

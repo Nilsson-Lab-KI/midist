@@ -32,6 +32,8 @@ cosine_dist <- function(x, y)
   return(1 - cosine_sim(x,y))
 }
 
+calc_dot <- function(x, y) {1 - sum(x*y)}
+
 #' Apply a function on MIDs x,y after removing M+0
 #'
 #' This simply removes the first component of each vector before applying f
@@ -46,9 +48,7 @@ apply_no_m0 <- function(f, x, y)
   return(f(x[-1], y[-1]))
 }
 
-
-calc_dot <- function(x, y) {1 - sum(x*y)}
-
+cosine_sim_no_m0 <- function(x, y) apply_no_m0(similarity_measure, x, y)
 
 
 #' Calculate similarity between average MIDs from an MIData object
@@ -120,230 +120,84 @@ conv_similarity <- function(mi_data, x, y, e, similarity)
 }
 
 
-#' Calculate similarity matrix, based on a specific similarity/distance measure, for metabolites from an MIData object
-#'
-#' Calculates a similarity matrix based on the given similarity function for all MID pairs for
-#' experiment e from an MIData object (midata).
-#'
-#' @param midata the MIdata object
-#' @param e experiment index
-#' @param similarity_measure A similarity function on MIDs
-#' @param remove_m0 whether to remove M+0 from MIDs (TRUE if MIDs are corrected for the natural 13C. FALSE by default)
-#' @returns the resulting similarity matrix
-#' @export
-
-similarity_matrix <- function(midata, e, similarity_measure, remove_m0 = FALSE)
-{
-  
-  # c13 correct midata, and update similarity to remove M+0
-  if (remove_m0 == TRUE)
-  {
-    midata <- midata_transform(midata, c13correct)
-    similarity <- function(x,y) apply_no_m0(similarity_measure, x,y)
-  }
-  
-  # data dimensions
-  n_metabolites <- length(midata$peak_ids)
-  
-  # met names
-  met_names <- midata$peak_ids
-  
-  # create an empty matrix to be filled in with similarities
-  sm <- matrix(NA, n_metabolites, n_metabolites)
-  colnames(sm) <- midata$peak_ids
-  rownames(sm) <- midata$peak_ids
-  
-  # loop over matrix elements (r2,d2) such that r2 <= d2
-  for (x in 1:n_metabolites) 
-  {
-    for (y in x:n_metabolites) 
-    {
-      sm[x,y] <- sm[y,x] <- conv_similarity(midata, x, y, e, similarity)
-    }
-  }
-  
-  return(sm)
-  
-}
-
-
-#' Calculate similarity matrix, IF THE FORMULA OR MASS DIFFERENCE IS ACCEPTABLE, 
-#' based on a specific similarity/distance measure, for metabolites from an MIData object
-#'
-#' Calculates a similarity matrix based on the given similarity function for all peak pairs  
-#' whose formula or mass difference can be matched an allowed reaction
+#' Calculate similarity matrix, based on parameters specified in an InputData object
+#' 
+#' Calculates a similarity matrix based on the given similarity function for all peak pairs
 #' for experiment e from an MIData object (midata).
+#' If a list of reactions is input to input_data$reaction_data, the given similarity function will only be applied to peak pairs  
+#' whose formula or mass difference (depending on "input_data$reaction_restriction") can be matched an allowed reaction
 #'
-#' @param midata the MIdata object
-#' @param e experiment index
-#' @param similarity_measure A similarity function on MIDs
-#' @param allowed_reactions a vector of allowed reactions. Either formulas or masses depending on whether type is "formulas" or "masses", respectively
-#' @param type how to asses the intermediate reaction - based on whether formula or mass.
-#' @param remove_m0 whether to remove M+0 from MIDs (TRUE if MIDs are corrected for the natural 13C. FALSE by default)
-#' @returns the resulting similarity matrix
+#' @param e experiment index that corresponds to the same index in MIData
+#' @param input_data InputData object (for more detail see ...)
+#' @param write_to_file TRUE writes the similarity matrix to file. FALSE by default
+#' @param return whether to return the similarity matrix. Choose FALSE for commandline runs
 #' @export
 
-similarity_matrix_with_reaction_filter <- function(midata, e, similarity_measure, allowed_reactions, type = "formula", 
-                                                   remove_m0 = FALSE, tol = 10)
+similarity_matrix <- function(e, input_data, write_to_file = F, return = T)
 {
   
-  # c13 correct midata, and update similarity to remove M+0
-  if (remove_m0 == TRUE)
-  {
-    midata <- midata_transform(midata, c13correct)
-    similarity <- function(x,y) apply_no_m0(similarity_measure, x,y)
-  }
+  experiment <- input_data$midata$experiments[e]
+  cat("Computing ", input_data$similarity_name, " matrix for experiment ",  experiment, '\n')
+  if (input_data$reaction_restriction == F)
+    cat("for all possible convolutions in data") else if (input_data$reaction_restriction == "mass")
+      cat("for a restriction on mass difference") else
+        cat("for a restriction on formula difference")
+  
   
   # data dimensions
-  n_metabolites <- length(midata$peak_ids)
+  n_metabolites <- length(input_data$midata$peak_ids)
   
   # met names
-  met_names <- midata$peak_ids
+  met_names <- input_data$midata$peak_ids
   
   # create an empty matrix to be filled in with similarities
   sm <- matrix(NA, n_metabolites, n_metabolites)
-  colnames(sm) <- midata$peak_ids
-  rownames(sm) <- midata$peak_ids
+  colnames(sm) <- input_data$midata$peak_ids
+  rownames(sm) <- input_data$midata$peak_ids
   
-  # loop over matrix elements (r2,d2) such that r2 <= d2
+  # loop over matrix elements (x,y) such that x <= y
   for (x in 1:n_metabolites) 
   {
     for (y in x:n_metabolites) 
     {
-      
-      # check if the formula difference of the two metabolites match an allowed reaction
-      if (type == "mass"){
-        mass_diff <- abs(get_mass(midata, x) - get_mass(midata, y))
-        if (length(compare_mass_diff_to_list(mass_diff, allowed_reactions, tol)) > 0)
-          sm[x,y] <- sm[y,x] <- conv_similarity(midata, x, y, e, similarity)
+      # if type == "mass"
+      if (input_data$reaction_restriction == "mass")
+      {
+        # check if the mass difference of the two metabolites match an allowed reaction
+        mass_diff <- abs(get_mass(input_data$midata, x) - get_mass(input_data$midata, y))
+        if (length(compare_mass_diff_to_list(mass_diff, input_data$reaction_data, input_data$tolerance)) > 0)
+          sm[x,y] <- sm[y,x] <- conv_similarity(input_data$midata, x, y, e, input_data$similarity)
       }
       # if type == "formula"
-      else {
-        formula_diff <- get_formula_difference(list(get_formula(midata, x), get_formula(midata, y)))
-        if (length(which(is.na(unlist(lapply(formula_diff, match, allowed_reactions))) != T)) > 0)
-          sm[x,y] <- sm[y,x] <- conv_similarity(midata, x, y, e, similarity)
+      else if (input_data$reaction_restriction == "formula")
+      {
+        # check if the formula difference of the two metabolites match an allowed reaction
+        formula_diff <- get_formula_difference(list(get_formula(input_data$midata, x), get_formula(input_data$midata, y)))
+        if (length(which(is.na(unlist(lapply(formula_diff, match, input_data$reaction_data))) != T)) > 0)
+          sm[x,y] <- sm[y,x] <- conv_similarity(input_data$midata, x, y, e, input_data$similarity)
+      }
+      else
+      {
+        sm[x,y] <- sm[y,x] <- conv_similarity(input_data$midata, x, y, e, input_data$similarity)
       }
       
     }
   }
   
-  return(sm)
+  if (write_to_file == T)
+  {
+    # check if the directory exists and if not create it
+    print(paste0("Checking if ", input_data$file_dir, " exists, and if not creating it"))
+    dir.create(input_data$file_dir)
+    
+    # write sm to file
+    file_name <- file.path(input_data$file_dir, paste0(experiment, "_", input_data$similarity_name, ".tsv"))
+    write.table(sm, file_name, col.names = T, row.names = F, quote = F, sep = "\t")
+    cat("'", input_data$similarity_name, "'", " matrix for experiment '", experiment, "' was written to file:", '\n',  file_name)
+  }
+  
+  if (return == T)
+    return(sm)
   
 }
 
-
-########## DON'T REALLY KNOW WHERE TO PUT THESE FUNCTIONS ###########
-
-
-# formulas is a list of length two, that stores the formulas to be compared to each other
-# the output is a list that represents the reaction in both directions
-#' @export
-get_formula_difference <- function(formulas)
-{
-  broken_formulas <- lapply(formulas, break_formula)
-  diff <- list()
-  diff[[1]] <- data.frame(Symbol = broken_formulas[[1]]$Symbol,
-                          ElementNumber = broken_formulas[[1]]$ElementNumber - broken_formulas[[2]]$ElementNumber)
-  diff[[2]] <- data.frame(Symbol = broken_formulas[[1]]$Symbol,
-                          ElementNumber = broken_formulas[[2]]$ElementNumber - broken_formulas[[1]]$ElementNumber)
-  
-  return(lapply(diff, merge_formula))
-}
-#' @export
-break_formula <- function(formula)
-{
-  # get the periodic table elements (symbols)
-  Symbol <- c("C", "H", "He", "Li", "Be", "B", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu",
-              "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Xe", "Cs", "Ba", "La", "Ce",
-              "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At", "Rn", "Fr",
-              "Ra", "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Nh", "Fl", "Mc", "Lv",
-              "Ts", "Og")
-  
-  # make a data frame for the input formula
-  brokenFormula <- as.data.frame(Symbol)
-  brokenFormula$ElementNumber <- 0
-  
-  # splitting the formula into the smallest pieces
-  formula_split <- unlist(strsplit(formula, ""))
-  
-  # merging the lower case letters (if there is any) to their upper case letter
-  grep_lower <- grepl("[a-z]", formula_split)
-  l <- which(grep_lower == TRUE)
-  if (length(l) > 0){
-    formula_split[l-1] <- paste(formula_split[l-1], formula_split[l], sep = "")
-    formula_split[l] <- NA
-    formula_split <- formula_split[-which(is.na(formula_split)==TRUE)]
-  }
-  
-  
-  # find elements' location in the broken formula
-  element_ind <- which(formula_split %in% Symbol)
-  
-  # now we need to assign "1" in case the last element doesn't have a number
-  if (element_ind[length(element_ind)] == length(formula_split)){
-    formula_split <- c(formula_split, "1")
-  }
-  
-  # now we need to assign "1" to any element in the middle that doesn't have a number
-  if (length(element_ind) > 1){
-    for (i in 1:(length(element_ind)-1)){
-      row_index <- which(brokenFormula$Symbol == formula_split[element_ind[i]])
-      if (element_ind[i]+1 == element_ind[i+1]){
-        brokenFormula$ElementNumber[row_index] <- 1
-      }
-      if (element_ind[i]+1 != element_ind[i+1]){
-        brokenFormula$ElementNumber[row_index] <- as.numeric(paste(formula_split[(element_ind[i]+1):(element_ind[i+1]-1)], collapse = ""))
-      }
-    }
-  }
-  
-  i <- length(element_ind)
-  row_index <- which(brokenFormula$Symbol == formula_split[element_ind[i]])
-  brokenFormula$ElementNumber[row_index] <- as.numeric(paste(formula_split[(element_ind[i]+1):length(formula_split)], collapse = ""))
-  # brokenFormula <- brokenFormula[which(brokenFormula$ElementNumber!=0),]
-  return(brokenFormula)
-}
-#' @export
-get_formula_mass <- function(formula, periodic_table)
-{
-  broken_formula <- break_formula(formula)
-  broken_formula$mass <- periodic_table$AtomicMass[match(broken_formula$Symbol, periodic_table$Symbol)] * broken_formula$ElementNumber
-  return(sum(broken_formula$mass))
-}
-#' @export
-get_mass <- function(midata, p){
-  return(
-    midata$peak_masses[p])
-}
-#' @export
-merge_formula <- function(broken_formula)
-{
-  broken_formula <- broken_formula[which(broken_formula$ElementNumber != 0),]
-  merged_formula <- as.vector(apply(as.data.frame(apply(broken_formula, 1, paste0, collapse = "")), 2, paste0, collapse = ""))
-  return(gsub(" ", "", merged_formula))
-}
-#' @export
-compare_formula_diff_to_list <- function(formula_diff, allowed_reactions)
-{
-  ind <- which(is.na(unlist(lapply(formula_diff, match, allowed_reactions))) != T)
-  if (length(ind) > 0){
-    return(formula_diff[[ind]])
-  }
-}
-#' @export
-compare_mass_diff_to_list <- function(mass_diff, allowed_masses, tol = 10)
-{
-  error_l <- mass_diff - mass_diff*tol*10^-6
-  error_u <- mass_diff + mass_diff*tol*10^-6
-  
-  ind <- which(allowed_masses > error_l & allowed_masses < error_u)
-  if (length(ind) > 0){
-    return(allowed_masses[ind])
-  }
-}
-#' @export
-get_formula <- function(mi_data, p)
-{
-  return(
-    mi_data$peak_formulas[p])
-}
