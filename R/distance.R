@@ -188,12 +188,12 @@ similarity_matrix <- function(e, input_data, write_to_file = F, return = T)
   {
     # check if the directory exists and if not create it
     print(paste0("Checking if ", input_data$file_dir, " exists, and if not creating it"))
-    dir.create(input_data$file_dir)
+    dir.create(input_data$file_dir, recursive = T)
     
     # write sm to file
     file_name <- file.path(input_data$file_dir, paste0(experiment, "_", input_data$similarity_name, ".tsv"))
     write.table(sm, file_name, col.names = T, row.names = F, quote = F, sep = "\t")
-    cat("'", input_data$similarity_name, "'", " matrix for experiment '", experiment, "' was written to file:", '\n',  file_name)
+    cat("'", input_data$similarity_name, "'", " matrix for experiment '", experiment, "' was written to file:", '\n',  file_name, '\n')
   }
   
   if (return == T)
