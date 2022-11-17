@@ -48,7 +48,9 @@ apply_no_m0 <- function(f, x, y)
   return(f(x[-1], y[-1]))
 }
 
-cosine_sim_no_m0 <- function(x, y) apply_no_m0(similarity_measure, x, y)
+#' @export
+#'
+cosine_sim_no_m0 <- function(x, y) apply_no_m0(cosine_sim, x, y)
 
 
 #' Calculate similarity between average MIDs from an MIData object
