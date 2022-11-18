@@ -23,8 +23,6 @@ conv_reduce(mi_data, x, y, e, f, g)
 \item{f}{A function f(x, y) taking two MIDs.}
 
 \item{g}{a function g taking a vector of values f1, f2, ...}
-
-\item{default}{value to use when there is no possible convolution}
 }
 \value{
 the resulting value g(f1, f2, ...)
