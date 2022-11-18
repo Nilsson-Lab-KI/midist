@@ -232,26 +232,26 @@ conv_reduce_all <- function(mi_data, e, f, g)
   # loop over x
   for(i in 1:length(n_atoms)) {
     n_atoms_x <- n_atoms[[i]]
-    for(x in get_peak_index_n_atoms(mi_data, n_atoms_x)) {
+    for(j in i : length(n_atoms)) {
+      n_atoms_y <- n_atoms[[j]]
+      # get all MIDs y
+      y_index <- get_peak_index_n_atoms(mi_data, n_atoms_y)
+      mids_y <- sapply(y_index, function(i) get_avg_mid(mi_data, i, e))
 
-      # MIDs of metabolite with index x
-      mid_x <- get_avg_mid(mi_data, x, e)
+      # metabolites z to convolute with x
+      n_atoms_z <- n_atoms_y - n_atoms_x
+      mids_z <- get_avg_mids_by_size(mi_data, n_atoms_z, e)
 
-      for(j in i : length(n_atoms)) {
-        n_atoms_y <- n_atoms[[j]]
-        # get all MIDs y
-        y_index <- get_peak_index_n_atoms(mi_data, n_atoms_y)
-        mids_y <- sapply(y_index, function(i) get_avg_mid(mi_data, i, e))
+      for(x in get_peak_index_n_atoms(mi_data, n_atoms_x)) {
+        # MIDs of metabolite with index x
+        mid_x <- get_avg_mid(mi_data, x, e)
+
         if(n_atoms_x == n_atoms_y) {
           # for metabolites y of same size as x, just calculate f(x,y)
           result[x, y_index] <- apply(mids_y, MARGIN = 2,
                                       function(y) g(c(f(mid_x, y))))
         }
         else {
-          # size of metabolites z to convolute with x
-          n_atoms_z <- n_atoms_y - n_atoms_x
-          mids_z <- get_avg_mids_by_size(mi_data, n_atoms_z, e)
-
           if(length(mids_z) > 0) {
             # compute all convolutions x*z for each z
             convolutions <- convolute_cols(mid_x, mids_z)
