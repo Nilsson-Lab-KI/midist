@@ -48,19 +48,66 @@ apply_no_m0 <- function(f, x, y)
   return(f(x[-1], y[-1]))
 }
 
+
 #' @export
 #'
 cosine_sim_no_m0 <- function(x, y) apply_no_m0(cosine_sim, x, y)
 
+#' Dot product similarity
+#' @param x a vector
+#' @param y a vector
+#' @returns the dot (scalar) product x.y
+#' @export
+#'
+dot_sim <- function(x, y)
+{
+  return(sum(x*y))
+}
 
-#' Calculate similarity between average MIDs from an MIData object
+#' Dot product distance (not really a distance)
+#' @param x a vector
+#' @param y a vector
+#' @returns a distance based on the dot (scalar) product x.y
+#' This is always nonnegative if both vectors are MIDs, and zero if x = y
+#' @export
+#'
+dot_dist <- function(x, y)
+{
+  return(sqrt(sum(x*x)*sum(y*y)) - sum(x*y))
+}
+
+
+
+#' The squared Euclidean distance (sum of squares)
+#'
+#' @param x a vector
+#' @param y a vector
+#' @returns the square of the Euclidean distance between x and y
+#' @export
+#'
+euclidean_dist_sq <- function(x, y)
+{
+  diff <- x - y
+  return(sum(diff*diff))
+}
+
+#' The Euclidean distance
+#'
+#' @param x a vector
+#' @param y a vector
+#' @returns the Euclidean distance between x and y
+#' @export
+#'
+euclidean_dist <- function(x, y)
+{
+  return(sqrt(euclidean_dist_sq(x, y)))
+}
+
+
+#' Find maximum similarity between average MIDs from an MIData object
 #'
 #' Calculates the given similarity function between MIDs for peak x and y for
 #' experiment e from an MIData object (mi_data).
-#' If x,y have unequal atom numbers, computes all convolutions x*z of the same
-#' size as y (if y is the longer vector) and returns the largest similarity;
-#' if similarity returns NA for some pair, the NA value is ignored when taking
-#' maximum similarity; if there are no possible convolutions, returns 0
 #'
 #' @param mi_data the MIdata object
 #' @param x peak index
@@ -72,12 +119,54 @@ cosine_sim_no_m0 <- function(x, y) apply_no_m0(cosine_sim, x, y)
 
 conv_similarity <- function(mi_data, x, y, e, similarity)
 {
+  conv_reduce(mi_data, x, y, e, similarity, max, 0)
+}
+
+#' Find minimum distance between average MIDs from an MIData object
+#'
+#' Calculates the given similarity function between MIDs for peak x and y for
+#' experiment e from an MIData object (mi_data).
+#'
+#' @param mi_data the MIdata object
+#' @param x peak index
+#' @param y peak index
+#' @param e experiment index
+#' @param distance A similarity function on MIDs.
+#' @param default Distance value to use when there is no possible convolution
+#' @returns the resulting similarity value
+#' @export
+conv_distance <- function(mi_data, x, y, e, distance, default = Inf)
+{
+  conv_reduce(mi_data, x, y, e, distance, min, default)
+}
+
+
+#' Calculates f(x, y) between MIDs for peak x and y for
+#' experiment e from an MIData object (mi_data)
+#' If x,y have unequal atom numbers, computes f(x*z, y) for all atoms of the same
+#' size as y (if y is the longer vector) and returns g( ... ) of the list of
+#' value of f. For example f = max gives the maximum value.
+#' if similarity returns NA for some pair, the NA value is ignored when taking
+#' maximum similarity; if there are no possible convolutions, returns 0
+#'
+#' @param mi_data the MIdata object
+#' @param x peak index
+#' @param y peak index
+#' @param e experiment index
+#' @param f A function f(x, y) taking two MIDs.
+#' @param g a function g taking a vector of values f1, f2, ...
+#' @param default value to use when there is no possible convolution
+#' @returns the resulting value g(f1, f2, ...)
+#' @export
+
+conv_reduce <- function(mi_data, x, y, e, f, g, default = 0)
+{
   # number of carbon atoms of metabolites x, y
   n_atom_x <- get_peak_n_atoms(mi_data, x)
   n_atom_y <- get_peak_n_atoms(mi_data, y)
   # ensure MID x is smaller or equal to MID y
   if(n_atom_x > n_atom_y) {
-    return(conv_similarity(mi_data, y, x, e, similarity))
+    return(conv_reduce(mi_data, y, x, e, f, g, default))
   }
 
   # find the MIDs of metabolite with index x, y from experiment e
@@ -85,8 +174,8 @@ conv_similarity <- function(mi_data, x, y, e, similarity)
   mid_y <- get_avg_mid(mi_data, y, e)
 
   if (n_atom_x == n_atom_y) {
-    # in case of equal number, just calculate the similarity
-    return(similarity(mid_x, mid_y))
+    # in case of equal number, just calculate f
+    return(f(mid_x, mid_y))
   }
   else {
     # x is strictly smaller than y
@@ -100,23 +189,23 @@ conv_similarity <- function(mi_data, x, y, e, similarity)
         conv_met_index,
         function(m) convolute(get_avg_mid(mi_data, m, e), mid_x))
 
-      # calculate similarities between the larger metabolite and all possible convolutions
-      similarities <- unlist(lapply(convolutions, similarity, mid_y))
+      # calculate f between the larger metabolite and all possible convolutions
+      f_values <- unlist(lapply(convolutions, f, mid_y))
       # remove any missing values
-      similarities <- similarities[!is.na(similarities)]
-      if(length(similarities) == 0) {
+      f_values <- f_values[!is.na(f_values)]
+      if(length(f_values) == 0) {
         # all NA, so return NA
         return(NA)
       }
       else {
-        # return the maximum similarity
-        return(max(similarities))
+        # return the function g
+        return(g(f_values))
       }
     }
     else {
       # no matching metabolites to convolute with
-      # return zero similarity
-      return(0)
+      # return default
+      return(default)
     }
   }
 }
