@@ -6,11 +6,10 @@
 experiment e from an MIData object (mi_data)
 If x,y have unequal atom numbers, computes f(x*z, y) for all atoms of the same
 size as y (if y is the longer vector) and returns g( ... ) of the list of
-value of f. For example f = max gives the maximum value.
-if similarity returns NA for some pair, the NA value is ignored when taking
-maximum similarity; if there are no possible convolutions, returns 0}
+value of f. For example f = max gives the maximum value. The function g
+must handle empty lists g(c()) in case there are no possible convolutions.}
 \usage{
-conv_reduce(mi_data, x, y, e, f, g, default = 0)
+conv_reduce(mi_data, x, y, e, f, g)
 }
 \arguments{
 \item{mi_data}{the MIdata object}
@@ -24,8 +23,6 @@ conv_reduce(mi_data, x, y, e, f, g, default = 0)
 \item{f}{A function f(x, y) taking two MIDs.}
 
 \item{g}{a function g taking a vector of values f1, f2, ...}
-
-\item{default}{value to use when there is no possible convolution}
 }
 \value{
 the resulting value g(f1, f2, ...)
@@ -35,7 +32,6 @@ Calculates f(x, y) between MIDs for peak x and y for
 experiment e from an MIData object (mi_data)
 If x,y have unequal atom numbers, computes f(x*z, y) for all atoms of the same
 size as y (if y is the longer vector) and returns g( ... ) of the list of
-value of f. For example f = max gives the maximum value.
-if similarity returns NA for some pair, the NA value is ignored when taking
-maximum similarity; if there are no possible convolutions, returns 0
+value of f. For example f = max gives the maximum value. The function g
+must handle empty lists g(c()) in case there are no possible convolutions.
 }

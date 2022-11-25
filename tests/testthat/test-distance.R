@@ -71,3 +71,15 @@ test_that("conv_distance returns a valid distance", {
     conv_distance(midata, 1, 4, 1, euclidean_dist),
     conv_distance(midata, 4, 1, 1, euclidean_dist))
 })
+
+test_that("conv_reduce_all gives same values as conv_reduce", {
+  # create MIData object
+  midata <- MIData(peak_areas_example, exp_names = "exp1")
+  # distance matrix from conv_reduce_all
+  dist_mat <- conv_reduce_all(midata, 1, euclidean_dist, min_dist)
+  # first row using conv_reduce
+  dist_row <- sapply(1:5,
+                     function(y) conv_reduce(midata, 1, y, 1, euclidean_dist, min_dist))
+  expect_equal(dist_mat[1,], dist_row)
+})
+
