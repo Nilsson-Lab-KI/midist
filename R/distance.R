@@ -89,6 +89,11 @@ euclidean_dist_sq <- function(x, y)
   return(sum(diff*diff))
 }
 
+#' @export
+#'
+euclidean_dist_sq_no_m0 <- function(x, y) apply_no_m0(euclidean_dist_sq, x, y)
+
+
 #' The Euclidean distance
 #'
 #' @param x a vector
