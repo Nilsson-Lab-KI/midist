@@ -46,6 +46,11 @@ apply_no_m0 <- function(f, x, y)
   return(f(x[-1], y[-1]))
 }
 
+
+#' @export
+#'
+cosine_sim_no_m0 <- function(x, y) apply_no_m0(cosine_sim, x, y)
+
 #' Dot product similarity
 #' @param x a vector
 #' @param y a vector
@@ -70,6 +75,7 @@ dot_dist <- function(x, y)
 }
 
 
+
 #' The squared Euclidean distance (sum of squares)
 #'
 #' @param x a vector
@@ -82,6 +88,11 @@ euclidean_dist_sq <- function(x, y)
   diff <- x - y
   return(sum(diff*diff))
 }
+
+#' @export
+#'
+euclidean_dist_sq_no_m0 <- function(x, y) apply_no_m0(euclidean_dist_sq, x, y)
+
 
 #' The Euclidean distance
 #'
@@ -273,5 +284,202 @@ conv_reduce_all <- function(mi_data, e, f, g)
 }
 
 
+#' Calculate similarity matrix, based on parameters specified in an InputData object
+#' 
+#' Calculates a similarity matrix based on the given similarity function for all peak pairs
+#' for experiment e from an MIData object (midata).
+#' If a list of reactions is input to input_data$reaction_data, the given similarity function will only be applied to peak pairs  
+#' whose formula or mass difference (depending on "input_data$reaction_restriction") can be matched an allowed reaction
+#'
+#' @param e experiment index that corresponds to the same index in MIData
+#' @param input_data InputData object (for more detail see ...)
+#' @param write_to_file TRUE writes the similarity matrix to file. FALSE by default
+#' @param return whether to return the similarity matrix. Choose FALSE for commandline runs
+#' @export
 
+pairwise_matrix_ds <- function(e, input_data, write_to_file = F, return = T)
+{
+  
+  experiment <- input_data$midata$experiments[e]
+  
+  # print progress
+  cat("Computing ", input_data$measure, " matrix for experiment: ",  experiment, '\n')
+  if (input_data$reaction_restriction == F)
+    cat("for all possible convolutions in data", '\n') else if (input_data$reaction_restriction == "mass")
+      cat("for a restriction on mass difference", '\n') else
+        cat("for a restriction on formula difference", '\n')
+  
+  
+  # data dimensions
+  n_metabolites <- length(input_data$midata$peak_ids)
+  # met names
+  met_names <- input_data$midata$peak_ids
+  
+  # create an empty matrix to be filled in with similarities
+  pairwise_matrix <- matrix(NA, n_metabolites, n_metabolites)
+  colnames(pairwise_matrix) <- rownames(pairwise_matrix) <- input_data$midata$peak_ids
+  
+  # loop over matrix elements (x,y) such that x <= y
+  for (x in 1:n_metabolites) 
+  {
+    for (y in x:n_metabolites) 
+    {
+      
+      if (input_data$reaction_restriction == F)
+        pairwise_matrix[x,y] <- pairwise_matrix[y,x] <- conv_reduce(input_data$midata, 
+                                                                    x, y, e, 
+                                                                    input_data$fun, 
+                                                                    input_data$perfection) 
+      else # handle restrictions
+      {
+        reactions <- check_reactions(input_data)
+        if (length(reactions) > 0)
+          pairwise_matrix[x,y] <- pairwise_matrix[y,x] <- conv_reduce(input_data$midata, 
+                                                                      x, y, e, 
+                                                                      input_data$measure, 
+                                                                      input_data$perfection, 
+                                                                      input_data$what_to_assign_to_na)
+      }
+    }
+  }
+  
+  
+  if (write_to_file == T)
+  {
+    # check if the directory exists and if not create it
+    print(paste0("Checking if ", input_data$file_dir, " exists, and if not creating it"))
+    dir.create(input_data$file_dir, recursive = T)
+    
+    # write pairwise_matrix to file
+    file_name <- file.path(input_data$file_dir, paste0(experiment, "_", input_data$measure, ".tsv"))
+    write.table(pairwise_matrix, file_name, col.names = T, row.names = F, quote = F, sep = "\t")
+  }
+  
+  if (return == T)
+    return(pairwise_matrix)
+  
+}
+
+
+#' @export
+
+pairwise_matrix_all_ds <- function(e, input_data, write_to_file = F, return = T)
+{
+  
+  experiment <- input_data$midata$experiments[e]
+  
+  # print progress
+  cat("Computing ", input_data$measure, " matrix for experiment: ",  experiment, '\n')
+  if (input_data$reaction_restriction == F)
+    cat("for all possible convolutions in data", '\n') else if (input_data$reaction_restriction == "mass")
+      cat("for a restriction on mass difference", '\n') else
+        cat("for a restriction on formula difference", '\n')
+  
+  
+  # data dimensions
+  n_metabolites <- length(input_data$midata$peak_ids)
+  # met names
+  met_names <- input_data$midata$peak_ids
+  
+  # create an empty matrix to be filled in with similarities
+  pairwise_matrix <- matrix(NA, n_metabolites, n_metabolites)
+  colnames(pairwise_matrix) <- rownames(pairwise_matrix) <- input_data$midata$peak_ids
+  
+  pairwise_matrix <- conv_reduce_all(input_data$midata, e, 
+                                     input_data$fun, 
+                                     input_data$perfection)
+                  
+  
+  # # loop over matrix elements (x,y) such that x <= y
+  # for (x in 1:n_metabolites) 
+  # {
+  #   for (y in x:n_metabolites) 
+  #   {
+  #     
+  #     if (input_data$reaction_restriction == F)
+  #       pairwise_matrix[x,y] <- pairwise_matrix[y,x] <- conv_reduce_all(input_data$midata, 
+  #                                                                   e, 
+  #                                                                   input_data$fun, 
+  #                                                                   input_data$perfection) 
+  #     else # handle restrictions
+  #     {
+  #       reactions <- check_reactions(input_data)
+  #       if (length(reactions) > 0)
+  #         pairwise_matrix[x,y] <- pairwise_matrix[y,x] <- conv_reduce_all(input_data$midata, 
+  #                                                                     e, 
+  #                                                                     input_data$measure, 
+  #                                                                     input_data$perfection)
+  #     }
+  #   }
+  # }
+  
+  
+  if (write_to_file == T)
+  {
+    # check if the directory exists and if not create it
+    print(paste0("Checking if ", input_data$file_dir, " exists, and if not creating it"))
+    dir.create(input_data$file_dir, recursive = T)
+    
+    # write pairwise_matrix to file
+    file_name <- file.path(input_data$file_dir, paste0(experiment, "_", input_data$measure, ".tsv"))
+    write.table(pairwise_matrix, file_name, col.names = T, row.names = F, quote = F, sep = "\t")
+  }
+  
+  if (return == T)
+    return(pairwise_matrix)
+  
+}
+
+
+
+check_reactions <- function(input_data, x, y)
+{
+  fun_main <- eval(parse(text = paste0("get_", input_data$reaction_restriction, "_difference")))
+  fun <- eval(parse(text = paste0("get_", input_data$reaction_restriction)))
+  
+  # compute difference from the function above
+  diff <- fun_main(list(fun(input_data$midata, x), fun(input_data$midata, y)))
+  
+  # compare this difference to the "allowed" reaction list
+  # for formula
+  if (is.character(diff))
+  {
+    reaction <- input_data$reaction_data[match(diff, input_data$reaction_data)]
+    return(reaction)
+  }
+    
+  
+  
+}
+
+
+#' @export
+combine_sqrt_sum <- function(pairwise_matrices){
+  return(sqrt(Reduce('+', pairwise_matrices)))
+}
+
+#' @export
+combine_sum <- function(pairwise_matrices){
+  return(Reduce('+', pairwise_matrices))
+}
+
+#' @export
+combine_max <- function(pairwise_matrices){
+  return(Reduce(max, pairwise_matrices))
+}
+
+#' @export
+combine_min <- function(pairwise_matrices){
+  return(Reduce(min, pairwise_matrices))
+}
+
+#' @export
+combine_mean <- function(pairwise_matrices){
+  return(Reduce(mean, pairwise_matrices))
+}
+
+#' @export
+combine_median <- function(pairwise_matrices){
+  return(Reduce(median, pairwise_matrices))
+}
 
