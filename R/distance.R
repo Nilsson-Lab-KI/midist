@@ -32,8 +32,6 @@ cosine_dist <- function(x, y)
   return(1 - cosine_sim(x,y))
 }
 
-calc_dot <- function(x, y) {1 - sum(x*y)}
-
 #' Apply a function on MIDs x,y after removing M+0
 #'
 #' This simply removes the first component of each vector before applying f
@@ -224,56 +222,53 @@ conv_reduce <- function(mi_data, x, y, e, f, g, default = 0)
 #' @param return whether to return the similarity matrix. Choose FALSE for commandline runs
 #' @export
 
-similarity_matrix <- function(e, input_data, write_to_file = F, return = T)
+pairwise_matrix_ds <- function(e, input_data, write_to_file = F, return = T)
 {
   
   experiment <- input_data$midata$experiments[e]
-  cat("Computing ", input_data$similarity_name, " matrix for experiment ",  experiment, '\n')
+  
+  # print progress
+  cat("Computing ", input_data$measure, " matrix for experiment: ",  experiment, '\n')
   if (input_data$reaction_restriction == F)
-    cat("for all possible convolutions in data") else if (input_data$reaction_restriction == "mass")
-      cat("for a restriction on mass difference") else
-        cat("for a restriction on formula difference")
+    cat("for all possible convolutions in data", '\n') else if (input_data$reaction_restriction == "mass")
+      cat("for a restriction on mass difference", '\n') else
+        cat("for a restriction on formula difference", '\n')
   
   
   # data dimensions
   n_metabolites <- length(input_data$midata$peak_ids)
-  
   # met names
   met_names <- input_data$midata$peak_ids
   
   # create an empty matrix to be filled in with similarities
-  sm <- matrix(NA, n_metabolites, n_metabolites)
-  colnames(sm) <- input_data$midata$peak_ids
-  rownames(sm) <- input_data$midata$peak_ids
+  pairwise_matrix <- matrix(NA, n_metabolites, n_metabolites)
+  colnames(pairwise_matrix) <- rownames(pairwise_matrix) <- input_data$midata$peak_ids
   
   # loop over matrix elements (x,y) such that x <= y
   for (x in 1:n_metabolites) 
   {
     for (y in x:n_metabolites) 
     {
-      # if type == "mass"
-      if (input_data$reaction_restriction == "mass")
-      {
-        # check if the mass difference of the two metabolites match an allowed reaction
-        mass_diff <- abs(get_mass(input_data$midata, x) - get_mass(input_data$midata, y))
-        if (length(compare_mass_diff_to_list(mass_diff, input_data$reaction_data, input_data$tolerance)) > 0)
-          sm[x,y] <- sm[y,x] <- conv_similarity(input_data$midata, x, y, e, input_data$similarity)
-      }
-      # if type == "formula"
-      else if (input_data$reaction_restriction == "formula")
-      {
-        # check if the formula difference of the two metabolites match an allowed reaction
-        formula_diff <- get_formula_difference(list(get_formula(input_data$midata, x), get_formula(input_data$midata, y)))
-        if (length(which(is.na(unlist(lapply(formula_diff, match, input_data$reaction_data))) != T)) > 0)
-          sm[x,y] <- sm[y,x] <- conv_similarity(input_data$midata, x, y, e, input_data$similarity)
-      }
-      else
-      {
-        sm[x,y] <- sm[y,x] <- conv_similarity(input_data$midata, x, y, e, input_data$similarity)
-      }
       
+      if (input_data$reaction_restriction == F)
+        pairwise_matrix[x,y] <- pairwise_matrix[y,x] <- conv_reduce(input_data$midata, 
+                                                                    x, y, e, 
+                                                                    input_data$fun, 
+                                                                    input_data$perfection, 
+                                                                    input_data$what_to_assign_to_na) 
+      else # handle restrictions
+      {
+        reactions <- check_reactions(input_data)
+        if (length(reactions) > 0)
+          pairwise_matrix[x,y] <- pairwise_matrix[y,x] <- conv_reduce(input_data$midata, 
+                                                                      x, y, e, 
+                                                                      input_data$measure, 
+                                                                      input_data$perfection, 
+                                                                      input_data$what_to_assign_to_na)
+      }
     }
   }
+  
   
   if (write_to_file == T)
   {
@@ -281,14 +276,64 @@ similarity_matrix <- function(e, input_data, write_to_file = F, return = T)
     print(paste0("Checking if ", input_data$file_dir, " exists, and if not creating it"))
     dir.create(input_data$file_dir, recursive = T)
     
-    # write sm to file
-    file_name <- file.path(input_data$file_dir, paste0(experiment, "_", input_data$similarity_name, ".tsv"))
-    write.table(sm, file_name, col.names = T, row.names = F, quote = F, sep = "\t")
-    cat("'", input_data$similarity_name, "'", " matrix for experiment '", experiment, "' was written to file:", '\n',  file_name, '\n')
+    # write pairwise_matrix to file
+    file_name <- file.path(input_data$file_dir, paste0(experiment, "_", input_data$measure, ".tsv"))
+    write.table(pairwise_matrix, file_name, col.names = T, row.names = F, quote = F, sep = "\t")
   }
   
   if (return == T)
-    return(sm)
+    return(pairwise_matrix)
   
 }
 
+
+check_reactions <- function(input_data, x, y)
+{
+  fun_main <- eval(parse(text = paste0("get_", input_data$reaction_restriction, "_difference")))
+  fun <- eval(parse(text = paste0("get_", input_data$reaction_restriction)))
+  
+  # compute difference from the function above
+  diff <- fun_main(list(fun(input_data$midata, x), fun(input_data$midata, y)))
+  
+  # compare this difference to the "allowed" reaction list
+  # for formula
+  if (is.character(diff))
+  {
+    reaction <- input_data$reaction_data[match(diff, input_data$reaction_data)]
+    return(reaction)
+  }
+    
+  
+  
+}
+
+
+#' @export
+combine_sqrt_sum <- function(pairwise_matrices){
+  return(sqrt(Reduce('+', pairwise_matrices)))
+}
+
+#' @export
+combine_sum <- function(pairwise_matrices){
+  return(Reduce('+', pairwise_matrices))
+}
+
+#' @export
+combine_max <- function(pairwise_matrices){
+  return(Reduce(max, pairwise_matrices))
+}
+
+#' @export
+combine_min <- function(pairwise_matrices){
+  return(Reduce(min, pairwise_matrices))
+}
+
+#' @export
+combine_mean <- function(pairwise_matrices){
+  return(Reduce(mean, pairwise_matrices))
+}
+
+#' @export
+combine_median <- function(pairwise_matrices){
+  return(Reduce(median, pairwise_matrices))
+}

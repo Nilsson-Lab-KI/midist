@@ -2,20 +2,24 @@
 % Please edit documentation in R/input-arguments.R
 \name{parse_input_args}
 \alias{parse_input_args}
-\title{Creates an InputData object to be used as input to similarity_matrix()}
+\title{Creates an InputData object to be used as input to similarity_matrix() or distance_matrix()}
 \usage{
 parse_input_args(input_args)
 }
 \arguments{
-\item{input_args}{a dataframe with fields listed above}
+\item{input_args}{a data frame with fields listed above}
 }
 \description{
 It takes as input a data frame with the required fields (see example below)
 input_args <- data.frame(peak_areas_file_path = file.path(base_path, "Data", "simulation", "sim-data.tsv"),
 c13_correction = "F",
-similarity_measure = "cosine_sim",
+measure = "cosine",
+fun = "cosine_sim",
+type = "similarity",
+perfection = "max",
+what_to_assign_to_na = 0,
 reaction_restriction = "F",
 reactions_file_path = "NULL",
 tolerance_ppm = 10,
-similarity_matrix_file_dir = paste0(local_file_path, "similarity-matrices/"))
+matrix_file_dir = paste0(local_file_path, type, "-matrices/"))
 }
