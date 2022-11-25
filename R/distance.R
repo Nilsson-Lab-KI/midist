@@ -229,10 +229,11 @@ conv_reduce_all <- function(mi_data, e, f, g)
   result <- matrix(0, nrow = n_met, ncol = n_met)
   # unique metabolite sizes
   n_atoms <- unique(mi_data$peak_n_atoms)
+  n_atoms <- n_atoms[order(n_atoms)]
   # loop over x
   for(i in 1:length(n_atoms)) {
     n_atoms_x <- n_atoms[[i]]
-    for(j in i : length(n_atoms)) {
+    for(j in i:length(n_atoms)) {
       n_atoms_y <- n_atoms[[j]]
       # get all MIDs y
       y_index <- get_peak_index_n_atoms(mi_data, n_atoms_y)
