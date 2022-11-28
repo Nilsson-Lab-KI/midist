@@ -72,14 +72,28 @@ test_that("conv_distance returns a valid distance", {
     conv_distance(midata, 4, 1, 1, euclidean_dist))
 })
 
+# example peak area data for testing conv_reduce_all, one experiment
+# here atom numbers are not increasing over peaks
+peak_areas_example2 <- data.frame(
+  peak_id <- c(rep("a",2), rep("b",3), rep("c",3), rep("d",4), rep("e",6)),
+  exp1 <- c(
+    0.8, 0.05, 0.1, 0.05,
+    0.8, 0.1, 0.1,
+    0.98, 0.02,
+    0.1, 0.0, 0.3, 0.0, 0.2, 0.05,
+    0.0, 0.0, 0.0)
+)
+
 test_that("conv_reduce_all gives same values as conv_reduce", {
   # create MIData object
-  midata <- MIData(peak_areas_example, exp_names = "exp1")
+  midata <- MIData(peak_areas_example2, exp_names = "exp1")
   # distance matrix from conv_reduce_all
   dist_mat <- conv_reduce_all(midata, 1, euclidean_dist, min_dist)
-  # first row using conv_reduce
-  dist_row <- sapply(1:5,
-                     function(y) conv_reduce(midata, 1, y, 1, euclidean_dist, min_dist))
-  expect_equal(dist_mat[1,], dist_row)
+  # test row by row against conv_reduce
+  for(x in 1:5) {
+    dist_row <- sapply(1:5,
+                       function(y) conv_reduce(midata, x, y, 1, euclidean_dist, min_dist))
+    expect_equal(dist_mat[x,], dist_row)
+  }
 })
 
