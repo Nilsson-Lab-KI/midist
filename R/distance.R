@@ -2,6 +2,20 @@
 # distance and similarity measures
 #
 
+#' Apply a function on MIDs x,y after removing M+0
+#'
+#' This simply removes the first component of each vector before applying f
+#' @param f function to apply
+#' @param x a vector
+#' @param y a vector
+#' @returns the result of calling f
+#' @export
+#'
+apply_no_m0 <- function(f, x, y)
+{
+  return(f(x[-1], y[-1]))
+}
+
 #' Cosine similarity between two vectors of the same length.
 #' @param x a vector
 #' @param y a vector
@@ -19,6 +33,10 @@ cosine_sim <- function(x, y)
     return(sum(x * y) / (x_norm * y_norm))
 }
 
+#' @export
+#'
+cosine_sim_no_m0 <- function(x, y) apply_no_m0(cosine_sim, x, y)
+
 #' Cosine distance between two vectors of the same length.
 #'
 #' This is 1 minus the cosine similarity.
@@ -32,24 +50,10 @@ cosine_dist <- function(x, y)
   return(1 - cosine_sim(x,y))
 }
 
-#' Apply a function on MIDs x,y after removing M+0
-#'
-#' This simply removes the first component of each vector before applying f
-#' @param f function to apply
-#' @param x a vector
-#' @param y a vector
-#' @returns the result of calling f
 #' @export
 #'
-apply_no_m0 <- function(f, x, y)
-{
-  return(f(x[-1], y[-1]))
-}
+cosine_dist_no_m0 <- function(x, y) apply_no_m0(cosine_dist, x, y)
 
-
-#' @export
-#'
-cosine_sim_no_m0 <- function(x, y) apply_no_m0(cosine_sim, x, y)
 
 #' Dot product similarity
 #' @param x a vector
@@ -61,6 +65,10 @@ dot_sim <- function(x, y)
 {
   return(sum(x*y))
 }
+
+#' @export
+#'
+dot_sim_no_m0 <- function(x, y) apply_no_m0(dot_sim, x, y)
 
 #' Dot product distance (not really a distance)
 #' @param x a vector
@@ -74,7 +82,9 @@ dot_dist <- function(x, y)
   return(sqrt(sum(x*x)*sum(y*y)) - sum(x*y))
 }
 
-
+#' @export
+#'
+dot_dist_no_m0 <- function(x, y) apply_no_m0(dot_dist, x, y)
 
 #' The squared Euclidean distance (sum of squares)
 #'
@@ -106,6 +116,9 @@ euclidean_dist <- function(x, y)
   return(sqrt(euclidean_dist_sq(x, y)))
 }
 
+#' @export
+#'
+euclidean_dist_no_m0 <- function(x, y) apply_no_m0(euclidean_dist, x, y)
 
 #' Find maximum similarity between average MIDs from an MIData object
 #'
@@ -346,8 +359,8 @@ pairwise_matrix_ds <- function(e, input_data, write_to_file = F, return = T)
   
   if (write_to_file == T)
   {
-    # check if the directory exists and if not create it
-    print(paste0("Checking if ", input_data$file_dir, " exists, and if not creating it"))
+    # # check if the directory exists and if not create it
+    # print(paste0("Checking if ", input_data$file_dir, " exists, and if not creating it"))
     dir.create(input_data$file_dir, recursive = T)
     
     # write pairwise_matrix to file
@@ -362,7 +375,6 @@ pairwise_matrix_ds <- function(e, input_data, write_to_file = F, return = T)
 
 
 #' @export
-
 pairwise_matrix_all_ds <- function(e, input_data, write_to_file = F, return = T)
 {
   
@@ -381,13 +393,11 @@ pairwise_matrix_all_ds <- function(e, input_data, write_to_file = F, return = T)
   # met names
   met_names <- input_data$midata$peak_ids
   
-  # create an empty matrix to be filled in with similarities
-  pairwise_matrix <- matrix(NA, n_metabolites, n_metabolites)
-  colnames(pairwise_matrix) <- rownames(pairwise_matrix) <- input_data$midata$peak_ids
-  
+  # compute the pairwise matrix
   pairwise_matrix <- conv_reduce_all(input_data$midata, e, 
                                      input_data$fun, 
                                      input_data$perfection)
+  colnames(pairwise_matrix) <- rownames(pairwise_matrix) <- input_data$midata$peak_ids
                   
   
   # # loop over matrix elements (x,y) such that x <= y
@@ -416,8 +426,8 @@ pairwise_matrix_all_ds <- function(e, input_data, write_to_file = F, return = T)
   
   if (write_to_file == T)
   {
-    # check if the directory exists and if not create it
-    print(paste0("Checking if ", input_data$file_dir, " exists, and if not creating it"))
+    # # check if the directory exists and if not create it
+    # print(paste0("Checking if ", input_data$file_dir, " exists, and if not creating it"))
     dir.create(input_data$file_dir, recursive = T)
     
     # write pairwise_matrix to file
@@ -464,22 +474,62 @@ combine_sum <- function(pairwise_matrices){
 }
 
 #' @export
-combine_max <- function(pairwise_matrices){
-  return(Reduce(max, pairwise_matrices))
+apply_summary_function <- function(vector, summary_function, exclude_missing_values = T)
+{
+  
+  new_vector <- vector[which(is.na(vector) == F & is.infinite(vector) == F)]
+  
+  if (exclude_missing_values == F)
+    new_vector <- vector
+  
+  return(summary_function(new_vector))
 }
 
 #' @export
-combine_min <- function(pairwise_matrices){
-  return(Reduce(min, pairwise_matrices))
+combine_max <- function(pairwise_matrices)
+{
+  return(matrix(apply(do.call(rbind.data.frame, 
+                              lapply(pairwise_matrices, as.vector)), 
+                      2, 
+                      apply_summary_function, 
+                      max), 
+                ncol = ncol(pairwise_matrices[[1]]), 
+                byrow = F))
 }
 
 #' @export
-combine_mean <- function(pairwise_matrices){
-  return(Reduce(mean, pairwise_matrices))
+combine_min <- function(pairwise_matrices)
+{
+  return(matrix(apply(do.call(rbind.data.frame, 
+                              lapply(pairwise_matrices, as.vector)), 
+                      2, 
+                      apply_summary_function, 
+                      min), 
+                ncol = ncol(pairwise_matrices[[1]]), 
+                byrow = F))
 }
 
 #' @export
-combine_median <- function(pairwise_matrices){
-  return(Reduce(median, pairwise_matrices))
+combine_mean <- function(pairwise_matrices)
+{
+  return(matrix(apply(do.call(rbind.data.frame, 
+                              lapply(pairwise_matrices, as.vector)), 
+                      2, 
+                      apply_summary_function, 
+                      mean), 
+                ncol = ncol(pairwise_matrices[[1]]), 
+                byrow = F))
+}
+
+#' @export
+combine_median <- function(pairwise_matrices)
+{
+  return(matrix(apply(do.call(rbind.data.frame, 
+                              lapply(pairwise_matrices, as.vector)), 
+                      2, 
+                      apply_summary_function, 
+                      median), 
+                ncol = ncol(pairwise_matrices[[1]]), 
+                byrow = F))
 }
 

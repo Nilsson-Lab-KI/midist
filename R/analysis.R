@@ -20,6 +20,45 @@ fix_na <- function(matri, value)
   return(matri)
 }
 
+
+#' @export
+scatter <- function(results_df, c13_correction = F, measure = "cosine", 
+                    color = "black", marginals = "histogram", 
+                    cor_method = "spearman")
+{
+  # subset results_df based on input
+  df <- results_df[which(results_df$c13_correction == c13_correction & results_df$measure_name == measure),]
+  # remove NAs and infs from data frame
+  df <- df[-which(is.na(df$distance) | is.infinite(df$distance)),]
+  
+  # calculate correlation
+  corr <- cor(df$distance, df$gs_fraction, method = cor_method)
+  
+  # plot name
+  if (c13_correction == F)
+    plot_title <- paste("Measure:", measure, "distance | 13C correction: False") else
+      plot_title <- paste("Measure:", measure, "distance | 13C correction: True")
+  
+  # standard scatter :
+  p <- ggplot(df, aes(x = distance, y = gs_fraction, text = text)) +
+    # set color and add transparency for a better density visualization
+    geom_point(color = color, alpha = 0.1) +
+    # turn off legend and remove the grid
+    theme(legend.position="none") + theme_classic() +
+    # set plot axis titles
+    ggtitle(plot_title,
+            subtitle = paste(cor_method, "correlation =", format(corr, digits = 2))) +
+    xlab("Distance") + ylab("Fraction in gold standard")
+  
+  # with marginal histogram
+  if (is.null(marginals) == F)
+    p <- ggMarginal(p, type = marginals)
+  
+  return(p)
+  
+}
+
+
 #' @export
 distribution_plot <- function(matri, color = "black", measure_type = "Similarity")
 {
@@ -93,7 +132,7 @@ cluster_tree <- function(matri, distance = F, method = "average")
 }
 
 #' @export
-scatter <- function(matrix_list, color = "black", correlation_method = "spearman",
+scatter_old <- function(matrix_list, color = "black", correlation_method = "spearman",
                     x_name = "Similarity matrix", y_name = "Gold standard")
 {
   # convert these matrices into rows of a data frame
@@ -105,6 +144,8 @@ scatter <- function(matrix_list, color = "black", correlation_method = "spearman
                    format(cor(df$measure, df$gold_standard, method = correlation_method), digits = 2)))
   return(scatter_plot)
 }
+
+
 
 #' @export
 subset_matrix <- function(carbon_group, matrix, midata)
@@ -128,6 +169,13 @@ intersection_matrix <- function(matrix_1, matrix_2)
                           match(mets, colnames(matrix_2))], drop = F)
   
   return(output)
+}
+
+#' @export
+add_text <- function(row){
+  return(paste("Met_1:",as.character(row[1]),"\n",
+               "Met_2:",as.character(row[2]),"\n",
+               "Measure:",as.character(row[3]),"distance","\n"))
 }
 
 
