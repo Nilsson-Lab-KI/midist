@@ -251,12 +251,16 @@ conv_reduce_all <- function(mi_data, e, f, g)
   # allocate square matrix
   n_met <- length(mi_data$peak_ids)
   result <- matrix(0, nrow = n_met, ncol = n_met)
+  
   # unique metabolite sizes
   n_atoms <- unique(mi_data$peak_n_atoms)
+  # order atom numbers so that we always move from smaller to larger
   n_atoms <- n_atoms[order(n_atoms)]
-  # loop over x
+  
+  # loop over x (unique carbon groups)
   for(i in 1:length(n_atoms)) {
     n_atoms_x <- n_atoms[[i]]
+    # loop over y - all other carbon groups
     for(j in i:length(n_atoms)) {
       n_atoms_y <- n_atoms[[j]]
       # get all MIDs y
@@ -296,6 +300,76 @@ conv_reduce_all <- function(mi_data, e, f, g)
   return(result)
 }
 
+#' @export
+conv_reduce_all_ds <- function(mi_data, e, f, g, get_middle_met_matrix = F, g_select)
+{
+  # allocate square matrix
+  n_met <- length(mi_data$peak_ids)
+  result <- matrix(0, nrow = n_met, ncol = n_met)
+  if (get_middle_met_matrix == T)
+    middle_met_matrix <- matrix(NA, nrow = n_met, ncol = n_met)
+  
+  # unique metabolite sizes
+  n_atoms <- unique(mi_data$peak_n_atoms)
+  n_atoms <- n_atoms[order(n_atoms)]
+  # loop over x
+  for(i in 1:length(n_atoms)) {
+    n_atoms_x <- n_atoms[[i]]
+    for(j in i:length(n_atoms)) {
+      n_atoms_y <- n_atoms[[j]]
+      # get all MIDs y
+      y_index <- get_peak_index_n_atoms(mi_data, n_atoms_y)
+      mids_y <- sapply(y_index, function(i) get_avg_mid(mi_data, i, e))
+      
+      # metabolites z to convolute with x
+      n_atoms_z <- n_atoms_y - n_atoms_x
+      mids_z <- get_avg_mids_by_size(mi_data, n_atoms_z, e)
+      
+      for(x in get_peak_index_n_atoms(mi_data, n_atoms_x)) {
+        # MIDs of metabolite with index x
+        mid_x <- get_avg_mid(mi_data, x, e)
+        
+        if(n_atoms_x == n_atoms_y) {
+          # for metabolites y of same size as x, just calculate f(x,y)
+          result[x, y_index] <- result[y_index, x] <- apply(mids_y, MARGIN = 2,
+                                                            function(y) g(c(f(mid_x, y))))
+        }
+        else {
+          if(length(mids_z) > 0) {
+            # get indices of all z
+            z_ind <-  get_peak_index_n_atoms(mi_data, n_atoms_z)
+            # compute all convolutions x*z for each z
+            convolutions <- convolute_cols(mid_x, mids_z)
+            # for each y, calculate g(f(x*z, y)) over all convolutions x*z
+            # get pairwise measures for each convolution
+            pm_conv <- apply(mids_y, 2, function(y) apply(convolutions, MARGIN = 2, f, y))
+            
+            if (length(z_ind) == 1){
+              result[x, y_index] <- result[y_index, x] <- pm_conv
+              if (get_middle_met_matrix == T)
+                middle_met_matrix[x, y_index] <- middle_met_matrix[y_index, x] <- z_ind
+            } else {
+              result[x, y_index] <- result[y_index, x] <- apply(pm_conv, 2, g)
+              if (get_middle_met_matrix == T)
+                middle_met_matrix[x, y_index] <- middle_met_matrix[y_index, x] <- z_ind[apply(pm_conv, 2, g_select)]
+            }
+            
+          }
+          else {
+            # no metabolites z to convolute x with
+            result[x, y_index] <- result[y_index, x] <- rep(g(c()), n = length(y_index))
+            if (get_middle_met_matrix == T)
+              middle_met_matrix[x, y_index] <- middle_met_matrix[y_index, x] <- NA
+          }
+        }
+      }
+    }
+  }
+  if (get_middle_met_matrix == T)
+    return(list(result, middle_met_matrix)) else
+      return(result)
+}
+
 
 #' Calculate similarity matrix, based on parameters specified in an InputData object
 #' 
@@ -309,73 +383,7 @@ conv_reduce_all <- function(mi_data, e, f, g)
 #' @param write_to_file TRUE writes the similarity matrix to file. FALSE by default
 #' @param return whether to return the similarity matrix. Choose FALSE for commandline runs
 #' @export
-
-pairwise_matrix_ds <- function(e, input_data, write_to_file = F, return = T)
-{
-  
-  experiment <- input_data$midata$experiments[e]
-  
-  # print progress
-  cat("Computing ", input_data$measure, " matrix for experiment: ",  experiment, '\n')
-  if (input_data$reaction_restriction == F)
-    cat("for all possible convolutions in data", '\n') else if (input_data$reaction_restriction == "mass")
-      cat("for a restriction on mass difference", '\n') else
-        cat("for a restriction on formula difference", '\n')
-  
-  
-  # data dimensions
-  n_metabolites <- length(input_data$midata$peak_ids)
-  # met names
-  met_names <- input_data$midata$peak_ids
-  
-  # create an empty matrix to be filled in with similarities
-  pairwise_matrix <- matrix(NA, n_metabolites, n_metabolites)
-  colnames(pairwise_matrix) <- rownames(pairwise_matrix) <- input_data$midata$peak_ids
-  
-  # loop over matrix elements (x,y) such that x <= y
-  for (x in 1:n_metabolites) 
-  {
-    for (y in x:n_metabolites) 
-    {
-      
-      if (input_data$reaction_restriction == F)
-        pairwise_matrix[x,y] <- pairwise_matrix[y,x] <- conv_reduce(input_data$midata, 
-                                                                    x, y, e, 
-                                                                    input_data$fun, 
-                                                                    input_data$perfection) 
-      else # handle restrictions
-      {
-        reactions <- check_reactions(input_data)
-        if (length(reactions) > 0)
-          pairwise_matrix[x,y] <- pairwise_matrix[y,x] <- conv_reduce(input_data$midata, 
-                                                                      x, y, e, 
-                                                                      input_data$measure, 
-                                                                      input_data$perfection, 
-                                                                      input_data$what_to_assign_to_na)
-      }
-    }
-  }
-  
-  
-  if (write_to_file == T)
-  {
-    # # check if the directory exists and if not create it
-    # print(paste0("Checking if ", input_data$file_dir, " exists, and if not creating it"))
-    dir.create(input_data$file_dir, recursive = T)
-    
-    # write pairwise_matrix to file
-    file_name <- file.path(input_data$file_dir, paste0(experiment, "_", input_data$measure, ".tsv"))
-    write.table(pairwise_matrix, file_name, col.names = T, row.names = F, quote = F, sep = "\t")
-  }
-  
-  if (return == T)
-    return(pairwise_matrix)
-  
-}
-
-
-#' @export
-pairwise_matrix_all_ds <- function(e, input_data, write_to_file = F, return = T)
+pairwise_matrix_all_ds <- function(e, input_data, get_middle_met_matrix = T, write_to_file = F, return = T)
 {
   
   experiment <- input_data$midata$experiments[e]
@@ -394,11 +402,18 @@ pairwise_matrix_all_ds <- function(e, input_data, write_to_file = F, return = T)
   met_names <- input_data$midata$peak_ids
   
   # compute the pairwise matrix
-  pairwise_matrix <- conv_reduce_all(input_data$midata, e, 
+  pairwise_matrix <- conv_reduce_all_ds(input_data$midata, e, 
                                      input_data$fun, 
-                                     input_data$perfection)
-  colnames(pairwise_matrix) <- rownames(pairwise_matrix) <- input_data$midata$peak_ids
-                  
+                                     input_data$perfection,
+                                     get_middle_met_matrix = get_middle_met_matrix,
+                                     g_select = input$g_select
+  )
+  if (get_middle_met_matrix == T)
+    colnames(pairwise_matrix[[1]]) <- rownames(pairwise_matrix[[1]]) <- 
+    colnames(pairwise_matrix[[2]]) <- rownames(pairwise_matrix[[2]]) <- 
+    input_data$midata$peak_ids else
+      colnames(pairwise_matrix) <- rownames(pairwise_matrix) <- input_data$midata$peak_ids
+  
   
   # # loop over matrix elements (x,y) such that x <= y
   # for (x in 1:n_metabolites) 
@@ -439,7 +454,6 @@ pairwise_matrix_all_ds <- function(e, input_data, write_to_file = F, return = T)
     return(pairwise_matrix)
   
 }
-
 
 
 check_reactions <- function(input_data, x, y)

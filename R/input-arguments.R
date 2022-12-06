@@ -48,6 +48,7 @@ parse_input_args <- function(input_args)
   input_data$fun <- eval(parse(text = input_args$fun))
   input_data$type <- input_args$type
   input_data$perfection <- eval(parse(text = input_args$perfection))
+  input_data$g_select <- eval(parse(text = input_args$g_select))
   input_data$what_to_assign_to_na <- eval(parse(text = input_args$what_to_assign_to_na))
   #
   
