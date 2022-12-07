@@ -487,28 +487,37 @@ combine_sum <- function(pairwise_matrices){
   return(Reduce('+', pairwise_matrices))
 }
 
-#' @export
-apply_summary_function <- function(vector, summary_function, exclude_missing_values = T)
-{
-  
-  new_vector <- vector[which(is.na(vector) == F & is.infinite(vector) == F)]
-  
-  if (exclude_missing_values == F)
-    new_vector <- vector
-  
-  return(summary_function(new_vector))
-}
 
 #' @export
-combine_max <- function(pairwise_matrices)
+get_fun_index <- function(vector, fun)
 {
-  return(matrix(apply(do.call(rbind.data.frame, 
-                              lapply(pairwise_matrices, as.vector)), 
-                      2, 
-                      apply_summary_function, 
-                      max), 
+  vector <- as.vector(vector)
+  non_na_inf_ind <- which(is.na(vector) == F & is.infinite(vector) == F)
+  new_vector <- vector[non_na_inf_ind]
+  
+  return(non_na_inf_ind[which(new_vector == fun(new_vector))][1])
+}
+
+
+#' @export
+combine <- function(pairwise_matrices, middle_met_matrices, fun)
+{
+  
+  pairwise_vec <- do.call(rbind.data.frame, lapply(pairwise_matrices, as.vector))
+  middle_met_vec <- do.call(rbind.data.frame, lapply(middle_met_matrices, as.vector))
+  
+  index <- as.vector(unlist(apply(pairwise_vec, 2, get_fun_index, fun)))
+  
+  pm <- matrix(unlist(lapply(1:length(index), function(x, pairwise_vec, index) pairwise_vec[[x]][index[[x]][1]], pairwise_vec, index)),
+               ncol = ncol(pairwise_matrices[[1]]), 
+               byrow = F)
+  
+  mmm <- matrix(unlist(lapply(1:length(index), function(x, pairwise_vec, index) middle_met_vec[[x]][index[[x]][1]], vector, index)),
                 ncol = ncol(pairwise_matrices[[1]]), 
-                byrow = F))
+                byrow = F)
+  
+  
+  return(list(pm, mmm))
 }
 
 #' @export
