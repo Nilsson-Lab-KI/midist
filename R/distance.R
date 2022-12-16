@@ -455,6 +455,56 @@ pairwise_matrix_all_ds <- function(e, input_data, get_middle_met_matrix = T, wri
   
 }
 
+#' @export
+weight_pm_by_enrichment <- function(pairwise_matrix, middle_met_matrix, experiment_matrix, mi_data){
+  # create an empty matrix to be filled in by weighted pairwise measures
+  weighted_pm <- matrix(NA, nrow(pairwise_matrix), ncol(pairwise_matrix))
+  colnames(weighted_pm) <- rownames(weighted_pm) <- colnames(pairwise_matrix)
+  # loop over rows and columns
+  for (i in 1:nrow(pairwise_matrix)){
+    for (j in i:nrow(pairwise_matrix)){
+      # pairwise measure should be non infinite
+      if (is.infinite(pairwise_matrix[i,j]) == F){
+        ie_1 <- isotopic_enrichment(get_avg_mid(mi_data, i, experiment_matrix[i,j]))
+        ie_2 <- isotopic_enrichment(get_avg_mid(mi_data, j, experiment_matrix[i,j]))
+        # for equal C pairs multiply enrichments of the two MIDs
+        if (is.na(middle_met_matrix[i,j]) == T)
+          weighted_pm[i,j] <- weighted_pm[j,i] <- pairwise_matrix[i,j]/(ie_1 * ie_2) else {
+            # for different C number we need the middle metabolite
+            ie_3 <- isotopic_enrichment(get_avg_mid(mi_data, middle_met_matrix[i,j], experiment_matrix[i,j]))
+            weighted_pm[i,j] <- weighted_pm[j,i] <- pairwise_matrix[i,j]/(ie_1 * ie_2 * ie_3)
+          }
+      }
+    }
+  }
+  return(weighted_pm)
+}
+
+#' @export
+filter_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01)
+{
+  
+  # create an empty matrix to be filled in only by those who pass the filtering criteria
+  filtered_pm <- matrix(NA, nrow(pairwise_matrix), ncol(pairwise_matrix))
+  colnames(filtered_pm) <- rownames(filtered_pm) <- colnames(pairwise_matrix)
+  
+  # make selections for each row
+  for (i in 1:nrow(pairwise_matrix))
+  {
+    # get infinite and NA indices
+    non_inf_ind <- which(is.infinite(pairwise_matrix[i,]) == F & is.na(pairwise_matrix[i,]) == F)
+    # exclude infinites and NAs
+    non_inf_vec <- pairwise_matrix[i,][non_inf_ind]
+    
+    # compute the percentile (top 1%)
+    threshold <- as.numeric(quantile(non_inf_vec, probs = percentile))
+    
+    # fill in 
+    filtered_pm[i, as.numeric(non_inf_ind[which(non_inf_vec <= threshold)])] <- pairwise_matrix[i, as.numeric(non_inf_ind[which(non_inf_vec <= threshold)])]
+  }
+  
+  return(filtered_pm)
+}
 
 check_reactions <- function(input_data, x, y)
 {
@@ -507,7 +557,7 @@ combine <- function(pairwise_matrices, middle_met_matrices, fun)
   middle_met_vec <- do.call(rbind.data.frame, lapply(middle_met_matrices, as.vector))
   
   index <- as.vector(unlist(apply(pairwise_vec, 2, get_fun_index, fun)))
-  
+
   pm <- matrix(unlist(lapply(1:length(index), function(x, pairwise_vec, index) pairwise_vec[[x]][index[[x]][1]], pairwise_vec, index)),
                ncol = ncol(pairwise_matrices[[1]]), 
                byrow = F)
@@ -516,43 +566,8 @@ combine <- function(pairwise_matrices, middle_met_matrices, fun)
                 ncol = ncol(pairwise_matrices[[1]]), 
                 byrow = F)
   
-  
-  return(list(pm, mmm))
+  ei <- matrix(index, 
+               ncol = ncol(pairwise_matrices[[1]]), 
+               byrow = F)
+  return(list(pm, mmm, ei))
 }
-
-#' @export
-combine_min <- function(pairwise_matrices)
-{
-  return(matrix(apply(do.call(rbind.data.frame, 
-                              lapply(pairwise_matrices, as.vector)), 
-                      2, 
-                      apply_summary_function, 
-                      min), 
-                ncol = ncol(pairwise_matrices[[1]]), 
-                byrow = F))
-}
-
-#' @export
-combine_mean <- function(pairwise_matrices)
-{
-  return(matrix(apply(do.call(rbind.data.frame, 
-                              lapply(pairwise_matrices, as.vector)), 
-                      2, 
-                      apply_summary_function, 
-                      mean), 
-                ncol = ncol(pairwise_matrices[[1]]), 
-                byrow = F))
-}
-
-#' @export
-combine_median <- function(pairwise_matrices)
-{
-  return(matrix(apply(do.call(rbind.data.frame, 
-                              lapply(pairwise_matrices, as.vector)), 
-                      2, 
-                      apply_summary_function, 
-                      median), 
-                ncol = ncol(pairwise_matrices[[1]]), 
-                byrow = F))
-}
-
