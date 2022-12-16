@@ -49,6 +49,7 @@ parse_input_args <- function(input_args)
   input_data$type <- input_args$type
   input_data$perfection <- eval(parse(text = input_args$perfection))
   input_data$g_select <- eval(parse(text = input_args$g_select))
+  input_data$get_middle_met_matrix <- eval(parse(text = input_args$get_middle_met_matrix))
   input_data$what_to_assign_to_na <- eval(parse(text = input_args$what_to_assign_to_na))
   #
   
@@ -63,17 +64,6 @@ parse_input_args <- function(input_args)
   # tolerance
   input_data$tolerance <- eval(parse(text = input_args$tolerance_ppm))*10^-6
   
-  # c13 dir
-  if (eval(parse(text = input_args$c13_correction)) == T)
-    c13_dir <- paste0(input_args$similarity_matrix_file_dir, "with_13c_correction/") else
-      c13_dir <- paste0(input_args$similarity_matrix_file_dir, "without_13c_correction/")
-  
-  # restriction sub-dir
-  if (input_data$reaction_restriction == F)
-    input_data$file_dir <- paste0(c13_dir, "no_restriction") else if (input_args$reaction_restriction == "formula")
-      input_data$file_dir <- paste0(c13_dir, "formula_restriction") else
-        input_data$file_dir <- paste0(c13_dir, "mass_restriction")
-  
   return(input_data)
 }
 
@@ -81,6 +71,7 @@ parse_input_args <- function(input_args)
 #' @export
 fetch_input_args <- function(input_row_index, input_file_name)
 {
+  options(warn = -1)
   input_args <- as.data.frame(read.delim(input_file_name, header = T, sep = "\t", check.names = F))
   return(input_args[input_row_index, ])
 }

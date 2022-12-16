@@ -255,10 +255,8 @@ conv_reduce_all <- function(mi_data, e, f, g, get_middle_met_matrix = F, g_selec
 #'
 #' @param e experiment index that corresponds to the same index in MIData
 #' @param input_data InputData object (for more detail see ...)
-#' @param write_to_file TRUE writes the similarity matrix to file. FALSE by default
-#' @param return whether to return the similarity matrix. Choose FALSE for commandline runs
 #' @export
-pairwise_matrix_all_ds <- function(e, input_data, get_middle_met_matrix = T, write_to_file = F, return = T)
+pairwise_matrix_all_ds <- function(e, input_data)
 {
   
   experiment <- input_data$midata$experiments[e]
@@ -280,30 +278,18 @@ pairwise_matrix_all_ds <- function(e, input_data, get_middle_met_matrix = T, wri
   pairwise_matrix <- conv_reduce_all(input_data$midata, e, 
                                      input_data$fun, 
                                      input_data$perfection,
-                                     get_middle_met_matrix = get_middle_met_matrix,
-                                     g_select = input$g_select
-  )
-  if (get_middle_met_matrix == T)
+                                     eval(parse(text = input_data$get_middle_met_matrix)),
+                                     input_data$g_select)
+  
+  # assigning column names
+  if (input_data$get_middle_met_matrix == T)
     colnames(pairwise_matrix[[1]]) <- rownames(pairwise_matrix[[1]]) <- 
     colnames(pairwise_matrix[[2]]) <- rownames(pairwise_matrix[[2]]) <- 
     input_data$midata$peak_ids else
       colnames(pairwise_matrix) <- rownames(pairwise_matrix) <- input_data$midata$peak_ids
   
-  
-  if (write_to_file == T)
-  {
-    # # check if the directory exists and if not create it
-    # print(paste0("Checking if ", input_data$file_dir, " exists, and if not creating it"))
-    dir.create(input_data$file_dir, recursive = T)
-    
-    # write pairwise_matrix to file
-    file_name <- file.path(input_data$file_dir, paste0(experiment, "_", input_data$measure, ".tsv"))
-    write.table(pairwise_matrix, file_name, col.names = T, row.names = F, quote = F, sep = "\t")
-  }
-  
-  if (return == T)
-    return(pairwise_matrix)
-  
+  # return the final matrix (or matrices)
+  return(pairwise_matrix)
 }
 
 #' @export

@@ -237,6 +237,7 @@ get_avg_mid_all <- function(mi_data, index)
 
 
 # could perhaps be moved to midata.R
+#' @export
 get_avg_mids_by_size <- function(mi_data, n_atoms, e)
 {
   index <- get_peak_index_n_atoms(mi_data, n_atoms)

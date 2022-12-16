@@ -4,22 +4,12 @@
 \alias{pairwise_matrix_all_ds}
 \title{Calculate similarity matrix, based on parameters specified in an InputData object}
 \usage{
-pairwise_matrix_all_ds(
-  e,
-  input_data,
-  get_middle_met_matrix = T,
-  write_to_file = F,
-  return = T
-)
+pairwise_matrix_all_ds(e, input_data)
 }
 \arguments{
 \item{e}{experiment index that corresponds to the same index in MIData}
 
 \item{input_data}{InputData object (for more detail see ...)}
-
-\item{write_to_file}{TRUE writes the similarity matrix to file. FALSE by default}
-
-\item{return}{whether to return the similarity matrix. Choose FALSE for commandline runs}
 }
 \description{
 Calculates a similarity matrix based on the given similarity function for all peak pairs
