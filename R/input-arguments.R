@@ -30,6 +30,9 @@ parse_input_args <- function(input_args)
   # if (is.character(peak_areas)) 
   peak_areas <- as.data.frame(read.delim(input_args$peak_areas_file_path, header = T, sep = "\t"))
   
+  if ("MassIsotopomer" %in% colnames(peak_areas))
+    peak_areas <- peak_areas[, -which(colnames(peak_areas) == "MassIsotopomer")]
+  
   # make an MIData object from peak_areas, fetching experiments from column names of the matrix
   midata <- MIData(peak_areas, colnames(peak_areas)[-(1:3)])
   

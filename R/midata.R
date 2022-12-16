@@ -14,7 +14,7 @@ MIData <- function(peak_areas, exp_names)
   # stopifnot(ncol(peak_areas) == length(exp_names) + 1)
   
   # verify first three column names
-  stopifnot(colnames(peak_areas)[1:3] %in% c("Metabolite", "Formula", "MassIsotopomer"))
+  stopifnot(colnames(peak_areas)[1:2] %in% c("Metabolite", "Formula"))
   
   # create object
   mi_data <- list()
