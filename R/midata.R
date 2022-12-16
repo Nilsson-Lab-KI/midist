@@ -134,9 +134,9 @@ midata_subset <- function(mi_data, peak_index)
     as.numeric(table(factor(midata_subset$experiments, levels = midata_subset$experiments)))
   
   # subset mids and avg_mids
-  midata_subset$mids <- as.matrix(do.call(rbind.data.frame, lapply(peak_index, bring_mids, mi_data)))
+  midata_subset$mids <- as.matrix(do.call(rbind.data.frame, lapply(peak_index, function(x, mi_data) get_mids(mi_data, x), mi_data)))
   colnames(midata_subset$mids) <- rownames(midata_subset$mids) <- NULL
-  midata_subset$avg_mids <- as.matrix(do.call(rbind.data.frame, lapply(peak_index, bring_avg_mids, mi_data)))
+  midata_subset$avg_mids <- as.matrix(do.call(rbind.data.frame, lapply(peak_index, function(x, mi_data) get_avg_mid(mi_data, x), mi_data)))
   colnames(midata_subset$avg_mids) <- rownames(midata_subset$avg_mids) <- NULL
   
   return(midata_subset)
@@ -235,6 +235,15 @@ get_avg_mid_all <- function(mi_data, index)
   return(mi_data$avg_mids[get_mi_indices(mi_data, index), ])
 }
 
+
+# could perhaps be moved to midata.R
+get_avg_mids_by_size <- function(mi_data, n_atoms, e)
+{
+  index <- get_peak_index_n_atoms(mi_data, n_atoms)
+  return(sapply(index, function(i) get_avg_mid(mi_data, i, e)))
+}
+
+
 #' Get MI indices of a given peak
 #'
 #' @param mi_data an MIData object
@@ -289,18 +298,4 @@ get_formula <- function(mi_data, p)
 get_mass <- function(midata, p){
   return(
     midata$peak_masses[p])
-}
-
-# subset mids and avg_mids
-bring_mids <- function(peak, mi_data)
-{
-  start_ind <- mi_data$peak_index[peak]
-  end_ind <- start_ind + mi_data$peak_n_atom[peak]
-  return(mi_data$mids[start_ind:end_ind,])
-}
-bring_avg_mids <- function(peak, mi_data)
-{
-  start_ind <- mi_data$peak_index[peak]
-  end_ind <- start_ind + mi_data$peak_n_atom[peak]
-  return(mi_data$avg_mids[start_ind:end_ind,])
 }
