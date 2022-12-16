@@ -292,6 +292,18 @@ pairwise_matrix_all_ds <- function(e, input_data)
   return(pairwise_matrix)
 }
 
+
+
+#' Weighs the pairwise measure by the enrichment scores of metabolites involved.
+#' Assumes distances only.
+#' In case of equal C, the pairwise distance is divided by isotopic_enrichment(mid_x)*isotopic_enrichment(mid_y) for pair (x,y)
+#' In case of unequal C, it is divided by isotopic_enrichment(mid_x)*isotopic_enrichment(mid_z)*isotopic_enrichment(mid_y) for pair (x*z,y)
+#' Returns a penalized pairwise distance matrix.
+#'
+#' @param pairwise_matrix distance matrix
+#' @param middle_met_matrix matrix of middle metabolites that were chosen as the best convolutions
+#' @param experiment_matrix matrix of the same size, whose cells denote the experiment that was the output of g_select()
+#' @param mi_data the MIData object
 #' @export
 weight_pm_by_enrichment <- function(pairwise_matrix, middle_met_matrix, experiment_matrix, mi_data){
   # create an empty matrix to be filled in by weighted pairwise measures
@@ -317,6 +329,13 @@ weight_pm_by_enrichment <- function(pairwise_matrix, middle_met_matrix, experime
   return(weighted_pm)
 }
 
+
+#' Filters the pairwise distance matrix by only including the top percent distances from the CDF.
+#' Filtering is performed for each row.
+#' Assumes distances only.
+#'
+#' @param pairwise_matrix a pairwise distance matrix
+#' @param percentile top X percent of the predictions will be kept where X is 1 per default.
 #' @export
 filter_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01)
 {
@@ -344,17 +363,28 @@ filter_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01)
 }
 
 
+#' Combines pairwise matrices across multiple experiments by their squared sum.
+#' Note that this cannot be used if the middle metabolite matrix and experiment index matrix are to be tracked.
+#'
+#' @param pairwise_matrices a list of pairwise matrices across different experiments
 #' @export
 combine_sqrt_sum <- function(pairwise_matrices){
   return(sqrt(Reduce('+', pairwise_matrices)))
 }
 
+#' Combines pairwise matrices across multiple experiments by their sum.
+#' Note that this cannot be used if the middle metabolite matrix and experiment index matrix are to be tracked.
+#'
+#' @param pairwise_matrices a list of pairwise matrices across different experiments
 #' @export
 combine_sum <- function(pairwise_matrices){
   return(Reduce('+', pairwise_matrices))
 }
 
 
+#' Returns the metabolite index which was chosen by fun. It is supposed to be used in the combine() function.
+#' @param vector a row from a pairwise matrix
+#' @param fun a function like max() or min() 
 #' @export
 get_fun_index <- function(vector, fun)
 {
@@ -365,6 +395,13 @@ get_fun_index <- function(vector, fun)
   return(non_na_inf_ind[which(new_vector == fun(new_vector))][1])
 }
 
+
+#' Combines pairwise matrices across multiple experiments based on the fun function.
+#' Suitable for cases where the middle metabolite matrix is known and experiment index matrix is to be tracked.
+#'
+#' @param pairwise_matrices a list of pairwise matrices across different experiments
+#' @param middle_met_matrices a list of middle metabolite matrices across different experiments, where a middle metabolite denotes the metabolite that was chosen as the best convolution for a given metabolite pair of unequal carbon number
+#' 
 #' @export
 combine <- function(pairwise_matrices, middle_met_matrices, fun)
 {
@@ -386,24 +423,4 @@ combine <- function(pairwise_matrices, middle_met_matrices, fun)
                ncol = ncol(pairwise_matrices[[1]]), 
                byrow = F)
   return(list(pm, mmm, ei))
-}
-
-check_reactions <- function(input_data, x, y)
-{
-  fun_main <- eval(parse(text = paste0("get_", input_data$reaction_restriction, "_difference")))
-  fun <- eval(parse(text = paste0("get_", input_data$reaction_restriction)))
-  
-  # compute difference from the function above
-  diff <- fun_main(list(fun(input_data$midata, x), fun(input_data$midata, y)))
-  
-  # compare this difference to the "allowed" reaction list
-  # for formula
-  if (is.character(diff))
-  {
-    reaction <- input_data$reaction_data[match(diff, input_data$reaction_data)]
-    return(reaction)
-  }
-  
-  
-  
 }

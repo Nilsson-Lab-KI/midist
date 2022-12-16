@@ -8,14 +8,14 @@
 #' input_args <- data.frame(peak_areas_file_path = file.path(base_path, "Data", "simulation", "sim-data.tsv"),
 #'    c13_correction = "F",
 #'    measure = "cosine",
-#'    fun = "cosine_sim",
-#'    type = "similarity",
-#'    perfection = "max",
-#'    what_to_assign_to_na = 0,
+#'    fun = "cosine_dist",
+#'    type = "distance",
+#'    perfection = "min",
+#'    what_to_assign_to_na = max,
+#'    get_middle_met_matrix = T,
 #'    reaction_restriction = "F",
 #'    reactions_file_path = "NULL",
 #'    tolerance_ppm = 10,
-#'    matrix_file_dir = paste0(local_file_path, type, "-matrices/"))
 #'
 #' @param input_args a data frame with fields listed above 
 #' @export
@@ -70,7 +70,8 @@ parse_input_args <- function(input_args)
   return(input_data)
 }
 
-
+#' Reads input_args from input_file_name and returns the input set for the row input_row_index
+#' 
 #' @export
 fetch_input_args <- function(input_row_index, input_file_name)
 {

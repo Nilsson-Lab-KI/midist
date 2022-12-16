@@ -96,7 +96,7 @@ calc_avg_mids <- function(mi_data)
 
 # 
 # 
-# TODO
+# TODO - WORK MORE ON THIS
 
 #' Subset an MIData object to the peaks given by peak_index, and return a new MIData object
 #'
@@ -236,7 +236,6 @@ get_avg_mid_all <- function(mi_data, index)
 }
 
 
-# could perhaps be moved to midata.R
 #' @export
 get_avg_mids_by_size <- function(mi_data, n_atoms, e)
 {

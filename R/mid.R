@@ -32,7 +32,8 @@ filter_enrichment <- function(mid, tol = 0.0107)
 }
 
 # calculate binom values
-binomvals <- function(is, n, p){
+binomvals <- function(is, n, p)
+{
   bins <- c()
   for (j in 1:length(is)){
     bin <- dbinom(is[j], n, p)
@@ -77,7 +78,8 @@ c13correct <- function(mid, p = 0.0107, constraint = TRUE)
 #' Correct an MID vector for naturally occurring isotopes and remove M+0
 #' @param mid An MID vector to correct
 #' @export
-correct_and_remove <- function(mid){
+correct_and_remove <- function(mid)
+{
   return(c13correct(mid)[-1])
 }
 
