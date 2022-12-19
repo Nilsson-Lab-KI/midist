@@ -65,8 +65,8 @@ test_that("conv_reduce_all returns a valid distance for example-1", {
   expect_true(isSymmetric(conv_reduce_all(midata, 1, cosine_dist, min, get_middle_met_matrix = F)))
   
   # for c (a zero vector) all cosine distances should be NAs due to division by zero
-  expect_true(is.na(conv_reduce_all(midata, 1, cosine_dist, min, get_middle_met_matrix = F)[,3]))
-  expect_true(is.na(conv_reduce_all(midata, 1, cosine_dist, min, get_middle_met_matrix = F)[3,]))
+  expect_true(unique(is.na(conv_reduce_all(midata, 1, cosine_dist, min, get_middle_met_matrix = F))[,3]))
+  expect_true(unique(is.na(conv_reduce_all(midata, 1, cosine_dist, min, get_middle_met_matrix = F))[3,]))
   
   expect_equal(as.numeric(format(conv_reduce_all(midata, 1, cosine_dist, min, get_middle_met_matrix = F)[2,1], digits = 4)),
                as.numeric(format(1.101622e-02, digits = 4)))

@@ -158,6 +158,58 @@ euclidean_dist <- function(x, y)
 #'
 euclidean_dist_no_m0 <- function(x, y) apply_no_m0(euclidean_dist, x, y)
 
+#' Calculates f(x, y) between MIDs for peak x and y for
+#' experiment e from an MIData object (mi_data)
+#' If x,y have unequal atom numbers, computes f(x*z, y) for all atoms of the same
+#' size as y (if y is the longer vector) and returns g( ... ) of the list of
+#' value of f. For example f = max gives the maximum value. The function g
+#' must handle empty lists g(c()) in case there are no possible convolutions.
+#'
+#' @param mi_data the MIdata object
+#' @param x peak index
+#' @param y peak index
+#' @param e experiment index
+#' @param f A function f(x, y) taking two MIDs.
+#' @param g a function g taking a vector of values f1, f2, ...
+#' @returns the resulting value g(f1, f2, ...)
+#' @export
+
+conv_reduce <- function(mi_data, x, y, e, f, g)
+{
+  # number of carbon atoms of metabolites x, y
+  n_atom_x <- get_peak_n_atoms(mi_data, x)
+  n_atom_y <- get_peak_n_atoms(mi_data, y)
+  # ensure MID x is smaller or equal to MID y
+  if(n_atom_x > n_atom_y) {
+    return(conv_reduce(mi_data, y, x, e, f, g))
+  }
+  # find the MIDs of metabolite with index x, y from experiment e
+  mid_x <- get_avg_mid(mi_data, x, e)
+  mid_y <- get_avg_mid(mi_data, y, e)
+  
+  if (n_atom_x == n_atom_y) {
+    # equal numbers just calculate f
+    return(g(c(f(mid_x, mid_y))))
+  }
+  else {
+    # x is strictly smaller than y
+    # get MIDs of metabolites z to convolute with
+    n_atom_z <- n_atom_y - n_atom_x
+    mids_z <- get_avg_mids_by_size(mi_data, n_atom_z, e)
+    if(length(mids_z) > 0) {
+      # compute all convolutions x*z for each z
+      convolutions <- convolute_cols(mid_x, mids_z)
+      # calculate f between the larger metabolite and all possible convolutions
+      f_values <- apply(convolutions, MARGIN = 2, f, mid_y)
+      # return the function g
+      return(g(f_values))
+    }
+    else {
+      # no matching metabolites to convolute with
+      return(g(c()))
+    }
+  }
+}
 
 #' Calculates f(x, y) between MIDs for peak x and y = (y_1, ..., y_n) for
 #' experiment e from an MIData object (mi_data)
