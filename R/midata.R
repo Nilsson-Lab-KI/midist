@@ -41,7 +41,7 @@ MIData <- function(peak_areas, exp_names)
     as.numeric(table(factor(exp_names, levels = mi_data$experiments)))
 
   # remove first three columns (peak_ids / metabolite names, formulas, and mass isotopomers)
-  peak_areas <- as.matrix(peak_areas[4:ncol(peak_areas)])
+  peak_areas <- as.matrix(peak_areas[3:ncol(peak_areas)])
   
   # MIDs
   mi_data$mids <- matrix(
