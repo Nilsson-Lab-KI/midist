@@ -206,7 +206,7 @@ conv_reduce <- function(mi_data, x, y, e, f, g)
     }
     else {
       # no matching metabolites to convolute with
-      return(g(c()))
+      return(suppressWarnings(g(c())))
     }
   }
 }
@@ -284,7 +284,7 @@ conv_reduce_all <- function(mi_data, e, f, g, get_middle_met_matrix = F, g_selec
           }
           else {
             # no metabolites z to convolute x with
-            result[x, y_index] <- result[y_index, x] <- rep(g(c()), n = length(y_index))
+            result[x, y_index] <- result[y_index, x] <- rep(suppressWarnings(g(c())), n = length(y_index))
             if (get_middle_met_matrix == T)
               middle_met_matrix[x, y_index] <- middle_met_matrix[y_index, x] <- NA
           }

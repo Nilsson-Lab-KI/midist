@@ -1,5 +1,4 @@
-# turn off warnings
-options(warn = -1)
+
 
 test_that("cosine_sim is correct", {
   # identical vectors have similarity 1
