@@ -10,19 +10,25 @@
 #' @export
 MIData <- function(peak_areas, exp_names)
 {
-  # verify dimensions
-  stopifnot(ncol(peak_areas) == length(exp_names) + 1)
+  # # verify dimensions
+  # stopifnot(ncol(peak_areas) == length(exp_names) + 1)
+  
+  # verify first three column names
+  stopifnot(colnames(peak_areas)[1:2] %in% c("Metabolite", "Formula"))
+  
   # create object
   mi_data <- list()
   class(mi_data) <-"MIData"
 
   # unique peak ids
-  mi_data$peak_ids <- unique(peak_areas[[1]])
+  mi_data$peak_ids <- unique(peak_areas[["Metabolite"]])
   # start index of each peak
   mi_data$peak_index <- match(mi_data$peak_ids, peak_areas[[1]])
+  # unique formulas
+  mi_data$peak_formulas <- peak_areas[["Formula"]][mi_data$peak_index]
   # find no. atoms for each peak (no. MIs = no.atoms + 1)
   mi_data$peak_n_atoms <-
-    as.numeric(table(factor(peak_areas[[1]], levels = mi_data$peak_ids))) - 1
+    as.numeric(table(factor(peak_areas[["Metabolite"]], levels = mi_data$peak_ids))) - 1
   # # precompute list of peak index vectors for each atom number
   mi_data$n_atoms_index <- create_atom_index(mi_data$peak_n_atoms)
 
@@ -34,21 +40,19 @@ MIData <- function(peak_areas, exp_names)
   mi_data$exp_n_rep <-
     as.numeric(table(factor(exp_names, levels = mi_data$experiments)))
 
-  # store the peak area data as matrix
-  mi_data$peak_areas <- as.matrix(peak_areas[2:ncol(peak_areas)])
-  # ensure all peak areas are non-negative
-  stopifnot(min(mi_data$peak_areas) >= 0)
-
+  # remove first three columns (peak_ids / metabolite names, formulas, and mass isotopomers)
+  peak_areas <- as.matrix(peak_areas[3:ncol(peak_areas)])
+  
   # MIDs
   mi_data$mids <- matrix(
-    nrow = nrow(mi_data$peak_areas), ncol = ncol(mi_data$peak_areas))
+    nrow = nrow(peak_areas), ncol = ncol(peak_areas))
   # compute MIDs
   for(p in 1:length(mi_data$peak_ids)) {
     rows <- get_mi_indices(mi_data, p)
     for(e in 1:length(mi_data$experiments)) {
       cols <- get_exp_indices(mi_data, e)
       # compute MID
-      pa <- mi_data$peak_areas[rows, cols, drop = FALSE]
+      pa <- peak_areas[rows, cols, drop = FALSE]
       # normalize nonzero mids
       mi_data$mids[rows, cols] <- normalize_mids(pa)
     }
@@ -59,8 +63,10 @@ MIData <- function(peak_areas, exp_names)
 }
 
 
-# create an index list mapping each number of atoms n
-# to the indices of the peaks having n atoms
+#' Create an index list mapping each number of atoms n to the indices of the peaks having n atoms
+#'
+#' @param peak_n_atoms number of C atoms per peak
+#' @export
 create_atom_index <- function(peak_n_atoms)
 {
   index <- lapply(
@@ -74,7 +80,7 @@ create_atom_index <- function(peak_n_atoms)
 calc_avg_mids <- function(mi_data)
 {
   avg_mids <- matrix(
-    nrow = nrow(mi_data$peak_areas), ncol = length(mi_data$experiments))
+    nrow = nrow(mi_data$mids), ncol = length(mi_data$experiments))
   # compute MIDs
   for(p in 1:length(mi_data$peak_ids)) {
     rows <- get_mi_indices(mi_data, p)
@@ -88,18 +94,53 @@ calc_avg_mids <- function(mi_data)
 }
 
 
-# subset an MIData object to the peaks given by peak_index
-# and return a new MIData object
-# TODO
-midata_subset <- function(midata, peak_index)
+# 
+# 
+# TODO - WORK MORE ON THIS
+
+#' Subset an MIData object to the peaks given by peak_index, and return a new MIData object
+#'
+#' @param mi_data MIData object
+#' @param peak_index indices of peaks to be included in the subset
+#' @export
+midata_subset <- function(mi_data, peak_index)
 {
-  new_midata <- midata
-  # subset peaks ...
-
-  # recompute the atoms index
-  mi_data$n_atoms_index <- create_atom_index(mi_data$peak_n_atoms)
-
-  # subset the peak area matrices ...
+  # create subset midata object
+  midata_subset <- list()
+  class(midata_subset) <-"MIData"
+  
+  # unique peak ids
+  midata_subset$peak_ids <- mi_data$peak_ids[peak_index]
+  
+  # unique peak formulas
+  midata_subset$peak_formulas <- mi_data$peak_formulas[peak_index]
+  
+  # number of atoms per peak
+  midata_subset$peak_n_atoms <- mi_data$peak_n_atoms[peak_index]
+  
+  # indices of peaks per C group
+  midata_subset$n_atoms_index <- create_atom_index(midata_subset$peak_n_atoms)
+  
+  # peak indices
+  midata_subset$peak_index <- match(midata_subset$peak_ids, rep(midata_subset$peak_ids, (midata_subset$peak_n_atoms + 1)))
+  
+  # experiments 
+  midata_subset$experiments <- mi_data$experiments
+  
+  # experiment index
+  midata_subset$exp_index <- match(midata_subset$experiments, as.vector(unique(as.factor(midata_subset$experiments))))
+  
+  midata_subset$exp_n_rep <-
+    as.numeric(table(factor(midata_subset$experiments, levels = midata_subset$experiments)))
+  
+  # subset mids and avg_mids
+  midata_subset$mids <- as.matrix(do.call(rbind.data.frame, lapply(peak_index, function(x, mi_data) get_mids(mi_data, x), mi_data)))
+  colnames(midata_subset$mids) <- rownames(midata_subset$mids) <- NULL
+  midata_subset$avg_mids <- as.matrix(do.call(rbind.data.frame, lapply(peak_index, function(x, mi_data) get_avg_mid(mi_data, x), mi_data)))
+  colnames(midata_subset$avg_mids) <- rownames(midata_subset$avg_mids) <- NULL
+  
+  return(midata_subset)
+  
 }
 
 #'
@@ -158,17 +199,6 @@ collapse_replicates <- function(mid_matrix)
     return(rep(0, nrow(mid_matrix)))
 }
 
-#
-# get peak areas for a given peak p, experiment e
-# (indices into the peak and experiment vectors)
-#
-get_peak_areas <- function(mi_data, p, e)
-{
-  rows <- get_mi_indices(mi_data, p)
-  cols <- get_exp_indices(mi_data, e)
-  return(as.matrix(
-    mi_data$peak_areas[rows, cols], nrow = length(rows), ncol = length(col)))
-}
 
 #
 # get MIDs, as above
@@ -204,6 +234,15 @@ get_avg_mid_all <- function(mi_data, index)
 {
   return(mi_data$avg_mids[get_mi_indices(mi_data, index), ])
 }
+
+
+#' @export
+get_avg_mids_by_size <- function(mi_data, n_atoms, e)
+{
+  index <- get_peak_index_n_atoms(mi_data, n_atoms)
+  return(sapply(index, function(i) get_avg_mid(mi_data, i, e)))
+}
+
 
 #' Get MI indices of a given peak
 #'
@@ -248,3 +287,15 @@ get_peak_n_atoms <- function(mi_data, p)
   return(mi_data$peak_n_atoms[[p]])
 }
 
+#' @export
+get_formula <- function(mi_data, p)
+{
+  return(
+    mi_data$peak_formulas[p])
+}
+
+#' @export
+get_mass <- function(midata, p){
+  return(
+    midata$peak_masses[p])
+}

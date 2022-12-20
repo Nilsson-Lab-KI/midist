@@ -2,10 +2,16 @@
 % Please edit documentation in R/distance.R
 \name{conv_reduce_all}
 \alias{conv_reduce_all}
-\title{Same as conv_reduce, but for all pairs x*y, returns a matrix.
-this avoids recalculating convolutions}
+\title{Calculates f(x, y) between MIDs for peak x and y = (y_1, ..., y_n) for
+experiment e from an MIData object (mi_data)
+If x,y_i have unequal atom numbers, computes f(x*z, y_i) for all atoms (z) of the same
+size as y-x (if y is the longer vector) and returns g( ... ) of the list of
+value of f. It also returns g_select of g, if get_middle_met_matrix was set to TRUE.
+For example g = max gives the maximum value, and g_select = which.max gives the index of the maximum value.
+The function g must handle empty lists g(c()) in case there are no possible convolutions.
+In that case, g_select will not be applied.}
 \usage{
-conv_reduce_all(mi_data, e, f, g)
+conv_reduce_all(mi_data, e, f, g, get_middle_met_matrix = F, g_select)
 }
 \arguments{
 \item{mi_data}{the MIdata object}
@@ -15,11 +21,21 @@ conv_reduce_all(mi_data, e, f, g)
 \item{f}{A function f(x, y) taking two MIDs.}
 
 \item{g}{a function g taking a vector of values f1, f2, ...}
+
+\item{get_middle_met_matrix}{TRUE or FALSE for whether the middle metabolite that was chosen for convolution is stored or not}
+
+\item{g_select}{either which.max() or which.min() dependent on g being max() or min()}
 }
 \value{
-the matrix of g(f(x,y) ...) values for all x,y
+the matrix of g(f(x,y) ...) (and g_select(f(x,y) ...) if get_middle_met_matrix is T) values for all x,y
 }
 \description{
-Same as conv_reduce, but for all pairs x*y, returns a matrix.
-this avoids recalculating convolutions
+Calculates f(x, y) between MIDs for peak x and y = (y_1, ..., y_n) for
+experiment e from an MIData object (mi_data)
+If x,y_i have unequal atom numbers, computes f(x*z, y_i) for all atoms (z) of the same
+size as y-x (if y is the longer vector) and returns g( ... ) of the list of
+value of f. It also returns g_select of g, if get_middle_met_matrix was set to TRUE.
+For example g = max gives the maximum value, and g_select = which.max gives the index of the maximum value.
+The function g must handle empty lists g(c()) in case there are no possible convolutions.
+In that case, g_select will not be applied.
 }
