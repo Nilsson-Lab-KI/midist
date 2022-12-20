@@ -113,44 +113,52 @@ convolute_cols <- function(x, y_mat)
 # such that sum(y) = 1, y >= 0
 nnls_solution <- function(A, z)
 {
-  return(pnnls(a = A, b = z, k = 0, sum = 1)$x)
+  return(pnnls(a = A, b = z, sum = 1)$x)
 }
 
-# returns the solution y for x*y = z,
-# where x and z are the shorter and longer mids, respectively
-solution <- function(longer.mid, shorter.mid)
+# returns the MID y minimizing || x*y = z ||
+# where x and z are MIDs and z is longer than x
+solution <- function(z, x)
 {
-  # RN: here there should probably be a check that
-  # length(longer.mid) > length(shorter.mid)
-
-  # DS: it will produce a matrix dimension error if length(longer.mid) < length(shorter.mid)
-  A <- convolution_matrix(longer.mid, shorter.mid)
-
-  # calculating the solution that minimizes the difference between the two MIDs
-  # when the smaller metabolite convolutes to the larger one
-  return(nnls_solution(A, longer.mid))
+  # number of atoms in MIDs
+  n_x <- length(x) - 1
+  n_z <- length(z) - 1
+  # z must be larger than x
+  stopifnot(n_x < n_z)
+  n_y <- n_z - n_x
+  A <- convolution_matrix(x, n_y)
+  # solve the problem min || A.y - z || s.t. y >= 0 and sum(y) = 1
+  return(nnls_solution(A, z))
 }
 
 #' Find the optimal convolution for two MIDs
 #'
 #' Computes the convolution x*y (for x*y = z), where x and z are the shorter and
-#' longer mids, respectively and y is the unknown mid
-#' @param longer.mid the longer mid z
-#' @param shorter.mid the shorter mid x
+#' longer MIDs, respectively, and y is the unknown MID
+#' @param z the longer MID
+#' @param x the shorter MID
 #' @param tol a threshold below which the convolution is not computed
-#' @returns the convoluted MID vector, or NA if isotopoic enrichment is less than than tolerance
+#' @returns the convoluted MID vector, or NA if isotopic enrichment is
+#' less than than tolerance
 #' @export
 
-find_convolution <- function(longer.mid, shorter.mid, tol = 0.0107)
+find_convolution <- function(z, x, tol = 0.0107)
 {
-  A <- convolution_matrix(longer.mid, shorter.mid)
-  sol <- nnls_solution(A, longer.mid)
+  # this is redundant with solution() but avoids re-computing the matrix A ...
+  n_x <- length(x) - 1
+  n_z <- length(z) - 1
+  # z must be larger than x
+  stopifnot(n_x < n_z)
+  n_y <- n_z - n_x
+  A <- convolution_matrix(x, n_y)
+  y <- nnls_solution(A, z)
 
-  if(isotopic_enrichment(sol) < tol)
+  if(isotopic_enrichment(y) < tol)
     return(NA)
-  con <- A %*% sol
+  # the convolution x*y
+  con <- as.vector(A %*% y)
   if(isotopic_enrichment(con) < tol)
     return(NA)
-
-  return(con)
+  else
+    return(con)
 }

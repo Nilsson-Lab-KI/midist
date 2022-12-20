@@ -4,19 +4,20 @@
 \alias{find_convolution}
 \title{Find the optimal convolution for two MIDs}
 \usage{
-find_convolution(longer.mid, shorter.mid, tol = 0.0107)
+find_convolution(z, x, tol = 0.0107)
 }
 \arguments{
-\item{longer.mid}{the longer mid z}
+\item{z}{the longer MID}
 
-\item{shorter.mid}{the shorter mid x}
+\item{x}{the shorter MID}
 
 \item{tol}{a threshold below which the convolution is not computed}
 }
 \value{
-the convoluted MID vector, or NA if isotopoic enrichment is less than than tolerance
+the convoluted MID vector, or NA if isotopic enrichment is
+less than than tolerance
 }
 \description{
 Computes the convolution x\emph{y (for x}y = z), where x and z are the shorter and
-longer mids, respectively and y is the unknown mid
+longer MIDs, respectively, and y is the unknown MID
 }
