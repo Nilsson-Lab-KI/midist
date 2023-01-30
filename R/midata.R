@@ -133,7 +133,7 @@ midata_subset <- function(mi_data, peak_index) {
     as.numeric(table(factor(midata_subset$experiments, levels = midata_subset$experiments)))
 
   # subset mids and avg_mids
-  midata_subset$mids <- as.matrix(do.call(rbind.data.frame, lapply(lapply(peak_index, function(x, mi_data) get_avg_mid(mi_data, x), mi_data), function(x) as.matrix(x))))
+  midata_subset$mids <- as.matrix(do.call(rbind.data.frame, lapply(lapply(peak_index, function(x, mi_data) get_mids(mi_data, x), mi_data), function(x) as.matrix(x))))
   colnames(midata_subset$mids) <- rownames(midata_subset$mids) <- NULL
   midata_subset$avg_mids <- as.matrix(do.call(rbind.data.frame, lapply(lapply(peak_index, function(x, mi_data) get_avg_mid(mi_data, x), mi_data), function(x) as.matrix(x))))
   colnames(midata_subset$avg_mids) <- rownames(midata_subset$avg_mids) <- NULL
@@ -196,14 +196,24 @@ collapse_replicates <- function(mid_matrix) {
 }
 
 
+# #
+# # get MIDs, as above
+# #
+# get_mids <- function(mi_data, p, e) {
+#   return(
+#     mi_data$mids[get_mi_indices(mi_data, p), get_exp_indices(mi_data, e), drop = FALSE]
+#   )
+# }
+
 #
 # get MIDs, as above
 #
 get_mids <- function(mi_data, p, e) {
   return(
-    mi_data$mids[get_mi_indices(mi_data, p), get_exp_indices(mi_data, e), drop = FALSE]
+    mi_data$mids[get_mi_indices(mi_data, p), e, drop = FALSE]
   )
 }
+
 
 #' Get an averaged MID vector
 #'

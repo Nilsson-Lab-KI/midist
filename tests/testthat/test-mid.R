@@ -22,6 +22,15 @@ test_that("filter_enrichment works correctly", {
   )
 })
 
+test_that("add_gamma_noise works correctly", {
+  # the noisy MID should sum to 1
+  expect_equal(sum(add_gamma_noise(c(0.8, 0.01, 0.1, 0.09), stdev = 0.01)), 1)
+  # a zero vector results in NA
+  expect_equal(is.na(max(add_gamma_noise(c(0,0,0,0), stdev = 0.01))), T)
+  # unlabelled remains unlabelled
+  expect_equal(add_gamma_noise(c(1,0,0,0), stdev = 5), c(1,0,0,0))
+})
+
 test_that("convolution matrix has right dimensions", {
   # convolution 2-carbon x with 3-carbon y
   A <- convolution_matrix(x = c(0.1, 0.3, 0.6), y_carbons = 3)
