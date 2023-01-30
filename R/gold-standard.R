@@ -33,6 +33,144 @@ get_convoluted_gs <- function(mmm, gs_raw, input, symmetrize_by = max){
   
   return(gs)
 }
+
+# some functions that I don't know where to put
+#' @export
+calc_accuracy <- function(true_matrix, predicted_matrix){
+  accuracy <- list()
+  # basic counts
+  tp <- length(which(true_matrix == 1 & predicted_matrix == 1))
+  fp <- length(which(true_matrix == 0 & predicted_matrix == 1))
+  tn <- length(which(true_matrix == 0 & predicted_matrix == 0))
+  fn <- length(which(true_matrix == 1 & predicted_matrix == 0))
+  stopifnot(tp+fp+tn+fn == length(true_matrix))
+  #
+  # accuracy measures
+  #
+  accuracy$tpr <- tp/(tp+fn)
+  accuracy$fpr <- fp/(fp+tn)
+  accuracy$precision <- tp/(tp+fp)
+  accuracy$fdr <- fp/(fp+tp)
+  accuracy$f1_score <- 2*tp/(2*tp + fp + fn)
+  
+  return(accuracy)
+}
+#' @export
+get_percentile_accuracy <- function(pairwise_matrix, gold_standard, measure, noise, experiment, subset_size, percentiles){
+  # create an empty data frame to store the accuracy results
+  accuracy_df <- data.frame(measure = NA, noise = NA, percentile = NA, 
+                            tpr = NA, fpr = NA, precision = NA, fdr = NA, f1_score = NA,
+                            experiment = NA, subset_size = NA)
+  
+  # make sure the diagonal is NA
+  diag(pairwise_matrix) <- NA
+  
+  # now we go from full to empty
+  tpr <- c(); fpr <- c(); precision <- c(); fdr <- c(); f1_score <- c()
+  for (p in 1:length(percentiles)){
+    # filter for percentile
+    filtered_pm <- filter_pairwise_matrix(pairwise_matrix, percentile = percentiles[p]*0.01)
+    # binarize
+    filtered_pm[which(is.na(filtered_pm))] <- 0
+    filtered_pm[which(filtered_pm != 0)] <- 1
+    
+    # now we have to binary matrices to compare to each other: from gs-fraction and MID-distance
+    accuracy <- calc_accuracy(gold_standard, filtered_pm)
+    tpr[p] <- accuracy$tpr
+    fpr[p] <- accuracy$fpr
+    precision[p] <- accuracy$precision
+    fdr[p] <- accuracy$fdr
+    f1_score[p] <- accuracy$f1_score
+  }
+  
+  accuracy_df <- rbind(accuracy_df, data.frame(measure = measure, noise = noise, percentile = percentiles,
+                                               tpr = tpr, fpr = fpr, precision = precision, fdr = fdr, f1_score = f1_score,
+                                               experiment = experiment, subset_size = subset_size))
+  
+  # remove the NA line
+  accuracy_df <- accuracy_df[-1,]
+  
+  return(accuracy_df)
+  
+}
+#' @export
+get_global_percentile_accuracy <- function(pairwise_matrix, gold_standard, measure, noise, experiment, subset_size, percentiles){
+  # create an empty data frame to store the accuracy results
+  accuracy_df <- data.frame(measure = NA, noise = NA, percentile = NA, 
+                            tpr = NA, fpr = NA, precision = NA, fdr = NA, f1_score = NA,
+                            experiment = NA, subset_size = NA)
+  
+  # make sure the diagonal is NA
+  diag(pairwise_matrix) <- NA
+  
+  # now we go from full to empty
+  tpr <- c(); fpr <- c(); precision <- c(); fdr <- c(); f1_score <- c()
+  for (p in 1:length(percentiles)){
+    # filter for percentile
+    filtered_pm <- filter_pairwise_matrix_global(pairwise_matrix, percentile = percentiles[p]*0.01)
+    # binarize
+    filtered_pm[which(is.na(filtered_pm))] <- 0
+    filtered_pm[which(filtered_pm != 0)] <- 1
+    
+    # now we have to binary matrices to compare to each other: from gs-fraction and MID-distance
+    accuracy <- calc_accuracy(gold_standard, filtered_pm)
+    tpr[p] <- accuracy$tpr
+    fpr[p] <- accuracy$fpr
+    precision[p] <- accuracy$precision
+    fdr[p] <- accuracy$fdr
+    f1_score[p] <- accuracy$f1_score
+  }
+  
+  accuracy_df <- rbind(accuracy_df, data.frame(measure = measure, noise = noise, percentile = percentiles,
+                                               tpr = tpr, fpr = fpr, precision = precision, fdr = fdr, f1_score = f1_score,
+                                               experiment = experiment, subset_size = subset_size))
+  
+  # remove the NA line
+  accuracy_df <- accuracy_df[-1,]
+  
+  return(accuracy_df)
+  
+}
+#' @export
+get_threshold_accuracy <- function(pairwise_matrix, gold_standard, measure, noise, experiment, thresholds){
+  # create an empty data frame to store the accuracy results
+  accuracy_df <- data.frame(measure = NA, noise = NA, threshold = NA, 
+                            tpr = NA, fpr = NA, precision = NA, fdr = NA, f1_score = NA,
+                            experiment = NA)
+  
+  # make sure the diagonal is NA
+  diag(pairwise_matrix) <- NA
+  pairwise_matrix[which(is.na(pairwise_matrix))] <- max(pairwise_matrix, na.rm = T)
+  
+  # now we go from full to empty
+  tpr <- c(); fpr <- c(); precision <- c(); fdr <- c(); f1_score <- c()
+  for (p in 1:length(thresholds)){
+    # filter for threshold
+    filtered_pm <- pairwise_matrix
+    filtered_pm[which(filtered_pm > thresholds[p])] <- 0
+    # binarize
+    filtered_pm[which(filtered_pm != 0)] <- 1
+    
+    # now we have to binary matrices to compare to each other: from gs-fraction and MID-distance
+    accuracy <- calc_accuracy(gold_standard, filtered_pm)
+    tpr[p] <- accuracy$tpr
+    fpr[p] <- accuracy$fpr
+    precision[p] <- accuracy$precision
+    fdr[p] <- accuracy$fdr
+    f1_score[p] <- accuracy$f1_score
+  }
+  
+  accuracy_df <- rbind(accuracy_df, data.frame(measure = measure, noise = noise, threshold = thresholds,
+                                               tpr = tpr, fpr = fpr, precision = precision, fdr = fdr, f1_score = f1_score,
+                                               experiment = experiment))
+  
+  # remove the NA line
+  accuracy_df <- accuracy_df[-1,]
+  
+  return(accuracy_df)
+  
+}
+
   
 
 
