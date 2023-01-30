@@ -133,9 +133,9 @@ midata_subset <- function(mi_data, peak_index) {
     as.numeric(table(factor(midata_subset$experiments, levels = midata_subset$experiments)))
 
   # subset mids and avg_mids
-  midata_subset$mids <- as.matrix(do.call(rbind.data.frame, lapply(peak_index, function(x, mi_data) get_avg_mid(mi_data, x), mi_data)))
+  midata_subset$mids <- as.matrix(do.call(rbind.data.frame, lapply(lapply(peak_index, function(x, mi_data) get_avg_mid(mi_data, x), mi_data), function(x) as.matrix(x))))
   colnames(midata_subset$mids) <- rownames(midata_subset$mids) <- NULL
-  midata_subset$avg_mids <- as.matrix(do.call(rbind.data.frame, lapply(peak_index, function(x, mi_data) get_avg_mid(mi_data, x), mi_data)))
+  midata_subset$avg_mids <- as.matrix(do.call(rbind.data.frame, lapply(lapply(peak_index, function(x, mi_data) get_avg_mid(mi_data, x), mi_data), function(x) as.matrix(x))))
   colnames(midata_subset$avg_mids) <- rownames(midata_subset$avg_mids) <- NULL
 
   return(midata_subset)
