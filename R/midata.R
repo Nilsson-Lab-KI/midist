@@ -12,10 +12,10 @@ MIData <- function(peak_areas, exp_names)
 {
   # # verify dimensions
   # stopifnot(ncol(peak_areas) == length(exp_names) + 1)
-  
+
   # verify first three column names
   stopifnot(colnames(peak_areas)[1:2] %in% c("Metabolite", "Formula"))
-  
+
   # create object
   mi_data <- list()
   class(mi_data) <-"MIData"
@@ -42,7 +42,7 @@ MIData <- function(peak_areas, exp_names)
 
   # remove first three columns (peak_ids / metabolite names, formulas, and mass isotopomers)
   peak_areas <- as.matrix(peak_areas[3:ncol(peak_areas)])
-  
+
   # MIDs
   mi_data$mids <- matrix(
     nrow = nrow(peak_areas), ncol = ncol(peak_areas))
@@ -94,8 +94,8 @@ calc_avg_mids <- function(mi_data)
 }
 
 
-# 
-# 
+#
+#
 # TODO - WORK MORE ON THIS
 
 #' Subset an MIData object to the peaks given by peak_index, and return a new MIData object
@@ -108,39 +108,39 @@ midata_subset <- function(mi_data, peak_index)
   # create subset midata object
   midata_subset <- list()
   class(midata_subset) <-"MIData"
-  
+
   # unique peak ids
   midata_subset$peak_ids <- mi_data$peak_ids[peak_index]
-  
+
   # unique peak formulas
   midata_subset$peak_formulas <- mi_data$peak_formulas[peak_index]
-  
+
   # number of atoms per peak
   midata_subset$peak_n_atoms <- mi_data$peak_n_atoms[peak_index]
-  
+
   # indices of peaks per C group
   midata_subset$n_atoms_index <- create_atom_index(midata_subset$peak_n_atoms)
-  
+
   # peak indices
   midata_subset$peak_index <- match(midata_subset$peak_ids, rep(midata_subset$peak_ids, (midata_subset$peak_n_atoms + 1)))
-  
-  # experiments 
+
+  # experiments
   midata_subset$experiments <- mi_data$experiments
-  
+
   # experiment index
   midata_subset$exp_index <- match(midata_subset$experiments, as.vector(unique(as.factor(midata_subset$experiments))))
-  
+
   midata_subset$exp_n_rep <-
     as.numeric(table(factor(midata_subset$experiments, levels = midata_subset$experiments)))
-  
+
   # subset mids and avg_mids
   midata_subset$mids <- as.matrix(do.call(rbind.data.frame, lapply(peak_index, function(x, mi_data) get_mids(mi_data, x), mi_data)))
   colnames(midata_subset$mids) <- rownames(midata_subset$mids) <- NULL
   midata_subset$avg_mids <- as.matrix(do.call(rbind.data.frame, lapply(peak_index, function(x, mi_data) get_avg_mid(mi_data, x), mi_data)))
   colnames(midata_subset$avg_mids) <- rownames(midata_subset$avg_mids) <- NULL
-  
+
   return(midata_subset)
-  
+
 }
 
 #'
@@ -201,7 +201,7 @@ collapse_replicates <- function(mid_matrix)
 
 
 #
-# get MIDs, as above
+# Get MID vectors for peak p, for all replicates in experiment e
 #
 get_mids <- function(mi_data, p, e)
 {
