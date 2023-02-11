@@ -56,102 +56,94 @@ peak_areas_example_1 <- data.frame(
 midata_1 <- MIData(peak_areas_example_1, exp_names = "exp1")
 
 
-test_that("conv_reduce is correct on euclidean distance", {
-  # minimum euclidean distance
-  f <- euclidean_dist
-  g <- min
-  # distance for b vs a = f(b, a*a)
-  expect_equal(
-    conv_reduce(midata_1, 2, 1, 1, f, g),
-    f(b_mid, convolute(a_mid, a_mid)),
-    tolerance = 1e-7)
-  # distance for a vs d = max(f(d, a*b), f(d, a*c))
-  expect_equal(
-    conv_reduce(midata_1, 1, 4, 1, f, g),
-    g(
-      f(d_mid, convolute(a_mid, b_mid)),
-      f(d_mid, convolute(a_mid, c_mid))),
-    tolerance = 1e-7)
+
+# test conv_reduce on example 1 with given f and g functions
+test_conv_reduce_1 <- function(f, g)
+{
+  # compute full matrix row by row
+  conv_mat <- matrix(NA, nrow = 5, ncol = 5)
+  for(x in 1:5) {
+    conv_mat[x,] <- sapply(1:5, function(y) conv_reduce(midata_1, x, y, 1, f, g))
+  }
+
+  # make sure matrix is symmetric
+  expect_true(isSymmetric(conv_mat))
+
+  # distance for a vs b = f(a*a, b)
+  expect_equal(conv_mat[1,2],
+               g(c(f(convolute(a_mid, a_mid), b_mid))),
+               tolerance = 1e-7)
+  # distance for a vs c = f(a*a, c)
+  expect_equal(conv_mat[1,3],
+               g(c(f(convolute(a_mid, a_mid), c_mid))),
+               tolerance = 1e-7)
+  # distance for a vs d = g(f(d, a*b), f(d, a*c))
+  expect_equal(conv_mat[1,4],
+               g(c(
+                 f(d_mid, convolute(a_mid, b_mid)),
+                 f(d_mid, convolute(a_mid, c_mid)))),
+               tolerance = 1e-7)
+  # for a vs. e there is no 4-carbon peak to convolute with,
+  # so expect g(c())
+  expect_equal(conv_mat[1,5],
+               g(c()),
+               tolerance = 1e-7)
+  # distance for b vs d = f(a*b, d)
+  expect_equal(conv_mat[2,4],
+               g(c(f(convolute(a_mid, b_mid), d_mid))),
+               tolerance = 1e-7)
+  return(conv_mat)
+}
+
+
+test_that("conv_reduce is correct on minimum euclidean distance", {
+  test_conv_reduce_1(euclidean_dist, min_nonempty)
 })
 
 
-test_that("conv_reduce is correct on cosine similarity", {
+test_that("conv_reduce is correct on max cosine similarity", {
   # maximum cosine similarity
   # in this case, the zero vector c causes NA values which must be handled
-  f <- cosine_sim
-  g <- max
-  # distance for b vs a = f(b, a*a)
-  expect_equal(
-    conv_reduce(midata_1, 2, 1, 1, f, g),
-    f(b_mid, convolute(a_mid, a_mid)),
-    tolerance = 1e-7)
-  # for a vs d = max(f(d, a*b), f(d, a*c)) = f(d, a*b)
-  # since f(d, a*c) is NA
-  expect_equal(
-    conv_reduce(midata_1, 1, 4, 1, f, g),
-    f(d_mid, convolute(a_mid, b_mid)),
-    tolerance = 1e-7)
+  sim_mat <- test_conv_reduce_1(cosine_sim, max_nonempty)
+  # for c (a zero vector) all cosine distances should be NAs due to division by zero
+  expect_true(all(is.na(sim_mat[,3])))
+  expect_true(all(is.na(sim_mat[3,])))
 })
+
+
+# compare conv_reduce_all to conv_reduce on the given mi_data
+# with functions f and g
+test_conv_reduce_all <- function(mi_data, f, g)
+{
+  # matrix from conv_reduce_all
+  conv_all_mat <- conv_reduce_all(mi_data, 1, f, g)
+
+  # check against conv_reduce row by row
+  n_peaks <- length(mi_data$peak_ids)
+  for(x in 1:n_peaks) {
+    row <- sapply(1:n_peaks,
+                  function(y) conv_reduce(mi_data, x, y, 1, f, g))
+    expect_equal(conv_all_mat[x,], row)
+  }
+}
 
 
 test_that("conv_reduce_all returns a valid similarity for example-1", {
   # maximum cosine similarity
-  # in this case, the zero vector c causes NA values which must be handled
-  f <- cosine_sim
-  g <- max
-
-  sm_max <- conv_reduce_all(midata_1, 1, f, g, get_middle_met_matrix = F)
-  # make sure matrix has correct size
-  expect_equal(dim(sm_max), c(5,5))
-  # make sure matrix is symmetric
-  expect_true(isSymmetric(sm_max))
-  # for c (a zero vector) all cosine distances should be NAs due to division by zero
-  expect_true(all(is.na(sm_max[,3])))
-  expect_true(all(is.na(sm_max[3,])))
-
-  # distance for a vs d = min(f(d, a*b), f(d, a*c)) = f(d, a*b)
-  # since f(d, a*c) is NA
-  # TODO: this fails because conv_select all does not handle NA values correctly
-  expect_equal(
-    sm_max[1,4],
-    f(d_mid, convolute(a_mid, b_mid)),
-    tolerance = 1e-7)
-
-  # for b vs d = f(d, a*b)
-  expect_equal(
-    sm_max[4,2],
-    f(d_mid, convolute(a_mid, b_mid)),
-    tolerance = 1e-7)
-  # for a vs b = f(a*a, b)
-  expect_equal(
-    sm_max[2,1],
-    f(convolute(a_mid, a_mid), b_mid),
-    tolerance = 1e-7)
-  # for a vs c, we get a*a vs c which is NA
-  expect_true(is.na(sm_max[3,1]))
-  # for a vs. e there is no 4-carbon peak to convolute with, return inf
-  expect_true(is.infinite(sm_max[5,1]))
+  test_conv_reduce_all(midata_1, cosine_sim, max_nonempty)
 })
 
 
 test_that("conv_reduce_all returns a valid distance for example-1", {
-  # compute distance matrix with g = min
-  dm_min <- conv_reduce_all(midata_1, 1, cosine_dist, min, get_middle_met_matrix = F)
-  # make sure matrix is symmetric
-  expect_true(isSymmetric(dm_min))
-  # distance for b vs a = 0.01101622
-  expect_equal(
-    dm_min[2,1],
-    cosine_dist(b_mid, convolute(a_mid, a_mid)),
-    tolerance = 1e-7)
+  test_conv_reduce_all(midata_1, cosine_dist, min_nonempty)
 })
 
 
-test_that("conv_reduce_all returns a valid middle metabolite matrix for example-1", {
+test_that("conv_reduce_all_select returns a valid middle metabolite matrix for example-1", {
   # compute similarity and middle metabolite matrices
   f <- cosine_sim
   g <- max
-  output <- conv_reduce_all(midata_1, 1, f, g, get_middle_met_matrix = T, which.max)
+  output <- conv_reduce_all_select(midata_1, 1, f, g, which.max)
 
   # make sure the output is a list
   expect_true(is.list(output))
@@ -172,16 +164,19 @@ test_that("conv_reduce_all returns a valid middle metabolite matrix for example-
 })
 
 
+########### TODO BELOW
+
 # example-2: here atom numbers are not increasing over peaks
+# (same as example 1 but peaks are permuted)
 
 # individual MIDs
-a_mid <- c(0.8, 0.05, 0.1, 0.05)
-b_mid <- c(0.8, 0.1, 0.1)
-c_mid <- c(0.98, 0.02)
-d_mid <- c(0.1, 0.0, 0.3, 0.0, 0.2, 0.05)
-e_mid <- c(0.0, 0.0, 0.0)           # zero vector
+a_mid <- c(0.8, 0.05, 0.1, 0.05) # d
+b_mid <- c(0.8, 0.1, 0.1) # b
+c_mid <- c(0.98, 0.02) # a
+d_mid <- c(0.1, 0.0, 0.3, 0.0, 0.2, 0.05) # e
+e_mid <- c(0.0, 0.0, 0.0)     # c
 
-peak_areas_example2 <- data.frame(
+peak_areas_example_2 <- data.frame(
   # metabolite and #atoms: a 3, b 2, c 1, d 5, e 2
   Metabolite = c(rep("a",4), rep("b",3), rep("c",2), rep("d",6), rep("e",3)),
   # RN: not sure what Formula is used for here?
@@ -189,12 +184,12 @@ peak_areas_example2 <- data.frame(
   exp1 = c(a_mid, b_mid, c_mid, d_mid, e_mid)
 )
 
-midata_2 <- MIData(peak_areas_example2, exp_names = "exp1")
+midata_2 <- MIData(peak_areas_example_2, exp_names = "exp1")
 
 
 test_that("conv_reduce_all returns a valid distance matrix for example-2", {
   # compute distance matrix for experiment 1 with g = min
-  dm_min <- conv_reduce_all(midata_2, 1, f = cosine_dist, g = min, get_middle_met_matrix = F)
+  dm_min <- conv_reduce_all(midata_2, 1, f = cosine_dist, g = min)
 
   # make sure distance matrix of correct size
   expect_equal(dim(dm_min), c(5,5))
@@ -210,7 +205,7 @@ test_that("conv_reduce_all returns a valid distance matrix for example-2", {
                tolerance = 1e-7)
 
   # compute similarity matrix with g = max
-  sm_max <- conv_reduce_all(midata_2, 1, cosine_sim, max, F, which.max)
+  sm_max <- conv_reduce_all(midata_2, 1, cosine_sim, max)
   # similarity for d vs b = sim(d, a * b)
   expect_equal(sm_max[4,2],
                cosine_sim(d_mid, convolute(a_mid, b_mid)),
@@ -227,9 +222,9 @@ test_that("conv_reduce_all returns a valid distance matrix for example-2", {
 })
 
 
-test_that("conv_reduce_all returns a valid middle metabolite matrix for example-2", {
+test_that("conv_reduce_all_select returns a valid middle metabolite matrix for example-2", {
   # compute similarity and middle metabolite matrices
-  output <- conv_reduce_all(midata_2, 1, cosine_sim, max, get_middle_met_matrix = T, which.max)
+  output <- conv_reduce_all_select(midata_2, 1, cosine_sim, max, which.max)
 
   # make sure the output is a list
   expect_true(is.list(output))
@@ -255,11 +250,13 @@ test_that("conv_reduce_all returns a valid middle metabolite matrix for example-
 
 test_that("conv_reduce_all gives same values as conv_reduce", {
   # distance matrix from conv_reduce_all
-  dist_mat <- conv_reduce_all(midata_2, 1, euclidean_dist, min, F, which.min)
+  f <- euclidean_dist
+  g <- min_nonempty
+  dist_mat <- conv_reduce_all(midata_2, 1, f, g)
   # test row by row against conv_reduce
   for(x in 1:5) {
     dist_row <- sapply(1:5,
-                       function(y) conv_reduce(midata_2, x, y, 1, euclidean_dist, min))
+                       function(y) conv_reduce(midata_2, x, y, 1, f, g))
     expect_equal(dist_mat[x,], dist_row)
   }
 })
