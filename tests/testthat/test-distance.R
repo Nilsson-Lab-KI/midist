@@ -2,37 +2,37 @@
 
 test_that("cosine_sim is correct", {
   # identical vectors have similarity 1
-  expect_equal(cosine_sim(c(2,3), c(2,3)), 1)
+  expect_equal(cosine_sim(c(2, 3), c(2, 3)), 1)
   # orthogonal vectors have zero similarity
-  expect_equal(cosine_sim(c(1,0), c(0,1)), 0)
+  expect_equal(cosine_sim(c(1, 0), c(0, 1)), 0)
   # with a zero vector similarity is NA
-  expect_true(is.na(cosine_sim(c(1,0), c(0,0))))
+  expect_true(is.na(cosine_sim(c(1, 0), c(0, 0))))
 })
 
 
 test_that("cosine_dist is correct", {
   # identical vectors have similarity 0
-  expect_equal(cosine_dist(c(2,3), c(2,3)), 0)
+  expect_equal(cosine_dist(c(2, 3), c(2, 3)), 0)
   # orthogonal vectors have distance 1
-  expect_equal(cosine_dist(c(1,0), c(0,1)), 1)
+  expect_equal(cosine_dist(c(1, 0), c(0, 1)), 1)
   # with a zero vector distance is NA
-  expect_true(is.na(cosine_dist(c(1,0), c(0,0))))
+  expect_true(is.na(cosine_dist(c(1, 0), c(0, 0))))
 })
 
 
 test_that("euclidean distance is correct", {
   # identical vectors have similarity 0
-  expect_equal(euclidean_dist(c(2,3), c(2,3)), 0)
+  expect_equal(euclidean_dist(c(2, 3), c(2, 3)), 0)
   # squared distance between unit vectors is 2
-  expect_equal(euclidean_dist(c(1,0), c(0,1)), sqrt(2))
+  expect_equal(euclidean_dist(c(1, 0), c(0, 1)), sqrt(2))
 })
 
 
 test_that("squared euclidean distance is correct", {
   # identical vectors have similarity 0
-  expect_equal(euclidean_dist_sq(c(2,3), c(2,3)), 0)
+  expect_equal(euclidean_dist_sq(c(2, 3), c(2, 3)), 0)
   # squared distance between unit vectors is 2
-  expect_equal(euclidean_dist_sq(c(1,0), c(0,1)), 2)
+  expect_equal(euclidean_dist_sq(c(1, 0), c(0, 1)), 2)
 })
 
 
@@ -54,8 +54,6 @@ peak_areas_example_1 <- data.frame(
 
 # create MIData object
 midata_1 <- MIData(peak_areas_example_1, exp_names = "exp1")
-
-
 
 # test conv_reduce on example 1 with given f and g functions
 test_conv_reduce_1 <- function(f, g)
@@ -149,6 +147,7 @@ test_that("conv_reduce_all_select returns a valid middle metabolite matrix for e
   expect_true(is.list(output))
   # of length 2 (one for similarity and one for the middle metabolite)
   expect_equal(length(output), 2)
+
   #print(output[[2]])
   n_atoms <- midata_1$peak_n_atoms
   # atom number difference for all pairs of metabolites
@@ -254,11 +253,10 @@ test_that("conv_reduce_all gives same values as conv_reduce", {
   g <- min_nonempty
   dist_mat <- conv_reduce_all(midata_2, 1, f, g)
   # test row by row against conv_reduce
-  for(x in 1:5) {
+< for(x in 1:5) {
     dist_row <- sapply(1:5,
                        function(y) conv_reduce(midata_2, x, y, 1, f, g))
     expect_equal(dist_mat[x,], dist_row)
   }
 })
-
 
