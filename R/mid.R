@@ -28,41 +28,27 @@ filter_enrichment <- function(mid, tol = 0.0107) {
   }
 }
 
-# calculate binom values
-binomvals <- function(is, n, p) {
-  bins <- c()
-  for (j in 1:length(is)) {
-    bin <- dbinom(is[j], n, p)
-    bins <- c(bins, bin)
-  }
-  return(bins)
-}
-
 #' Correct an MID vector for naturally occurring isotopes
 #' @param mid An MID vector to correct
 #' @param p heavy atom natural abundance
 #' @param constraint whether to constrain sum of corrected vector to 1
 #' @export
-c13correct <- function(mid, p = 0.0107, constraint = TRUE) {
-  # number of carbon atoms
-  nrCarbon <- length(mid) - 1
+c13correct <- function(mid, p = 0.0107, constraint = TRUE)
+{
   # dimensions of the correction matrix
   end <- length(mid)
   # an empty correction matrix to be filled in by binom values
   correct <- matrix(0, end, end)
 
   # column-wise filling in the correction matrix
-  for (d2 in 1:end) {
-    b1 <- c(0:(end - d2))
-    b2 <- end - d2
-    correct[d2:end, d2] <- binomvals(b1, b2, p)
+  for (j in 1:end) {
+    correct[j:end, j] <- dbinom(c(0:(end-j)), end-j, p)
   }
 
   # if we do not have a constraint on the sum of the values
   if (constraint == FALSE) {
     return(pnnls(a = correct, b = mid)$x)
   }
-
   # if we have a sum 1 constraint (default)
   else {
     return(pnnls(a = correct, b = mid, sum = 1)$x)
@@ -140,45 +126,54 @@ convolute_cols <- function(x, y_mat) {
 
 # find the non-negative least-squares solution to A y = z
 # such that sum(y) = 1, y >= 0
-nnls_solution <- function(A, z) {
-  return(pnnls(a = A, b = z, k = 0, sum = 1)$x)
+nnls_solution <- function(A, z)
+{
+  return(pnnls(a = A, b = z, sum = 1)$x)
 }
 
-# returns the solution y for x*y = z,
-# where x and z are the shorter and longer mids, respectively
-solution <- function(longer.mid, shorter.mid) {
-  # RN: here there should probably be a check that
-  # length(longer.mid) > length(shorter.mid)
-
-  # DS: it will produce a matrix dimension error if length(longer.mid) < length(shorter.mid)
-  A <- convolution_matrix(longer.mid, shorter.mid)
-
-  # calculating the solution that minimizes the difference between the two MIDs
-  # when the smaller metabolite convolutes to the larger one
-  return(nnls_solution(A, longer.mid))
+# returns the MID y minimizing || x*y = z ||
+# where x and z are MIDs and z is longer than x
+solution <- function(z, x)
+{
+  # number of atoms in MIDs
+  n_x <- length(x) - 1
+  n_z <- length(z) - 1
+  # z must be larger than x
+  stopifnot(n_x < n_z)
+  n_y <- n_z - n_x
+  A <- convolution_matrix(x, n_y)
+  # solve the problem min || A.y - z || s.t. y >= 0 and sum(y) = 1
+  return(nnls_solution(A, z))
 }
 
 #' Find the optimal convolution for two MIDs
 #'
 #' Computes the convolution x*y (for x*y = z), where x and z are the shorter and
-#' longer mids, respectively and y is the unknown mid
-#' @param longer.mid the longer mid z
-#' @param shorter.mid the shorter mid x
+#' longer MIDs, respectively, and y is the unknown MID
+#' @param z the longer MID
+#' @param x the shorter MID
 #' @param tol a threshold below which the convolution is not computed
-#' @returns the convoluted MID vector, or NA if isotopoic enrichment is less than than tolerance
+#' @returns the convoluted MID vector, or NA if isotopic enrichment is
+#' less than than tolerance
 #' @export
 
-find_convolution <- function(longer.mid, shorter.mid, tol = 0.0107) {
-  A <- convolution_matrix(longer.mid, shorter.mid)
-  sol <- nnls_solution(A, longer.mid)
+find_convolution <- function(z, x, tol = 0.0107)
+{
+  # this is redundant with solution() but avoids re-computing the matrix A ...
+  n_x <- length(x) - 1
+  n_z <- length(z) - 1
+  # z must be larger than x
+  stopifnot(n_x < n_z)
+  n_y <- n_z - n_x
+  A <- convolution_matrix(x, n_y)
+  y <- nnls_solution(A, z)
 
-  if (isotopic_enrichment(sol) < tol) {
+  if(isotopic_enrichment(y) < tol)
     return(NA)
-  }
-  con <- A %*% sol
-  if (isotopic_enrichment(con) < tol) {
+  # the convolution x*y
+  con <- as.vector(A %*% y)
+  if(isotopic_enrichment(con) < tol)
     return(NA)
-  }
-
-  return(con)
+  else
+    return(con)
 }

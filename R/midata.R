@@ -170,6 +170,7 @@ midata_transform <- function(midata, f) {
 # normalize each column in a matrix of positive values
 # so that each column sums to 1
 # skip columns whose sum is zero
+# TODO: move this to mid.R ?
 #
 normalize_mids <- function(mids) {
   normalized.mids <- matrix(0, nrow(mids), ncol(mids))
@@ -197,7 +198,7 @@ collapse_replicates <- function(mid_matrix) {
 
 
 #
-# get MIDs, as above
+# Get MID vectors for peak p, for all replicates in experiment e
 #
 get_mids <- function(mi_data, p, e) {
   return(
