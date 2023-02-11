@@ -42,6 +42,11 @@ test_that("atom index is created correctly", {
 })
 
 
+test_that("find_mi_index works correctly", {
+  expect_equal(find_mi_index(c(3,2,1,5,2)), c(1,5,8,10,16))
+})
+
+
 test_that("midata_transform works correctly", {
   midata <- MIData(peak_areas_1, exp_names_1)
   # apply identity function
@@ -80,13 +85,25 @@ test_that("midata_subset works correctly", {
   mi_data <- MIData(peak_areas_2, exp_names_2)
 
   # take a subset
-  mi_data_sub <- midata_subset(mi_data, c(1,2,3))
+  sub_index <- c(1,3,2)
+  mi_data_sub <- midata_subset(mi_data, sub_index)
+  expect_equal(mi_data_sub$peak_ids, mi_data$peak_ids[sub_index])
+  expect_equal(mi_data_sub$peak_n_atoms, mi_data$peak_n_atoms[sub_index])
+  expect_equal(
+    get_avg_mid(mi_data_sub, 3, 1),
+    get_avg_mid(mi_data, 2, 1))
 
-  # permute data set
-  mi_data_sub <- midata_subset(mi_data, c(4,2,1,5,3))
+  # permutation (all peaks, but in different order)
+  sub_index <- c(4,2,1,5,3)
+  mi_data_sub <- midata_subset(mi_data, sub_index)
+  expect_equal(mi_data_sub$peak_ids, mi_data$peak_ids[sub_index])
+  expect_equal(mi_data_sub$peak_n_atoms, mi_data$peak_n_atoms[sub_index])
+  expect_equal(
+    get_avg_mid(mi_data_sub, 4, 1),
+    get_avg_mid(mi_data, 5, 1))
 
   # subset to entire range should give identical object
-  mi_data_sub <- midata_subset(mi_data, 1:5)
+  expect_equal(midata_subset(mi_data, 1:5), mi_data)
 
 })
 

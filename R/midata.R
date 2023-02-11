@@ -22,13 +22,15 @@ MIData <- function(peak_areas, exp_names)
 
   # unique peak ids
   mi_data$peak_ids <- unique(peak_areas[["Metabolite"]])
-  # start index of each peak
+  # start index of each peak in the mass isotopomer data
   mi_data$peak_index <- match(mi_data$peak_ids, peak_areas[[1]])
   # unique formulas
   mi_data$peak_formulas <- peak_areas[["Formula"]][mi_data$peak_index]
   # find no. atoms for each peak (no. MIs = no.atoms + 1)
   mi_data$peak_n_atoms <-
     as.numeric(table(factor(peak_areas[["Metabolite"]], levels = mi_data$peak_ids))) - 1
+  # verify that peak_n_atoms matches peak_index
+  stopifnot(all(mi_data$peak_index == find_mi_index(mi_data$peak_n_atoms)))
   # # precompute list of peak index vectors for each atom number
   mi_data$n_atoms_index <- create_atom_index(mi_data$peak_n_atoms)
 
@@ -62,11 +64,22 @@ MIData <- function(peak_areas, exp_names)
   return(mi_data)
 }
 
+#' Compute index vector into the MI data table
+#' for a given list of atom sizes
+find_mi_index <- function(peak_n_atoms)
+{
+  n <- length(peak_n_atoms)
+  return(c(1, (cumsum(peak_n_atoms + 1) + 1)[-n]))
+}
+
+
 
 #' Create an index list mapping each number of atoms n to the indices of the peaks having n atoms
 #'
-#' @param peak_n_atoms number of C atoms per peak
-#' @export
+#' NOTE: this is a more generic function, applicable to any list,
+#' could be moved to util.R
+#'
+#' @param peak_n_atoms number of atoms per peak
 create_atom_index <- function(peak_n_atoms)
 {
   index <- lapply(
@@ -94,52 +107,46 @@ calc_avg_mids <- function(mi_data)
 }
 
 
-#
-#
-# TODO - WORK MORE ON THIS
-
 #' Subset an MIData object to the peaks given by peak_index, and return a new MIData object
 #'
 #' @param mi_data MIData object
-#' @param peak_index indices of peaks to be included in the subset
+#' @param peak_subset_index indices of peaks to be included in the subset
 #' @export
-midata_subset <- function(mi_data, peak_index)
+midata_subset <- function(mi_data, peak_subset_index)
 {
   # create subset midata object
   midata_subset <- list()
   class(midata_subset) <-"MIData"
 
+  new_n_peaks <- length(peak_subset_index)
+  new_n_atoms <- mi_data$peak_n_atoms[peak_subset_index]
+
+  # NOTE: the order or assigning fields below matters,
+  # as fields get assigned a position 1,2,... depending on order,
+  # and e.g. testthat::expect_equal will fail if the positions differ
+
   # unique peak ids
-  midata_subset$peak_ids <- mi_data$peak_ids[peak_index]
+  midata_subset$peak_ids <- mi_data$peak_ids[peak_subset_index]
 
+  # index of each peak into the new MI data table
+  midata_subset$peak_index <- find_mi_index(new_n_atoms)
   # unique peak formulas
-  midata_subset$peak_formulas <- mi_data$peak_formulas[peak_index]
-
+  midata_subset$peak_formulas <- mi_data$peak_formulas[peak_subset_index]
   # number of atoms per peak
-  midata_subset$peak_n_atoms <- mi_data$peak_n_atoms[peak_index]
-
+  midata_subset$peak_n_atoms <- new_n_atoms
   # indices of peaks per C group
   midata_subset$n_atoms_index <- create_atom_index(midata_subset$peak_n_atoms)
 
-  # peak indices
-  midata_subset$peak_index <- match(
-    midata_subset$peak_ids,
-    rep(midata_subset$peak_ids, (midata_subset$peak_n_atoms + 1)))
-
-  # experiments
+  # experiments are unchanged
   midata_subset$experiments <- mi_data$experiments
-
-  # experiment index
-  midata_subset$exp_index <- match(midata_subset$experiments, as.vector(unique(as.factor(midata_subset$experiments))))
-
-  midata_subset$exp_n_rep <-
-    as.numeric(table(factor(midata_subset$experiments, levels = midata_subset$experiments)))
+  midata_subset$exp_index <- mi_data$exp_index
+  midata_subset$exp_n_rep <- mi_data$exp_n_rep
 
   # subset mids and avg_mids
-  midata_subset$mids <- as.matrix(do.call(rbind.data.frame, lapply(peak_index, function(x, mi_data) get_mids(mi_data, x), mi_data)))
-  colnames(midata_subset$mids) <- rownames(midata_subset$mids) <- NULL
-  midata_subset$avg_mids <- as.matrix(do.call(rbind.data.frame, lapply(peak_index, function(x, mi_data) get_avg_mid(mi_data, x), mi_data)))
-  colnames(midata_subset$avg_mids) <- rownames(midata_subset$avg_mids) <- NULL
+  mi_index <- unlist(lapply(peak_subset_index,
+                            function(x) get_mi_indices(mi_data, x)))
+  midata_subset$mids <- mi_data$mids[mi_index, , drop = FALSE]
+  midata_subset$avg_mids <- mi_data$avg_mids[mi_index, , drop = FALSE]
 
   return(midata_subset)
 
@@ -227,7 +234,7 @@ get_avg_mid <- function(mi_data, p, e)
 
 #' Get averaged MID vectors
 #'
-#' for a given peak, for all experiments
+#' for a given peak index, for all experiments
 #'
 #' @param mi_data an MIData object
 #' @param index the peak index
