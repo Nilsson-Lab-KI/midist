@@ -243,7 +243,11 @@ get_avg_mid_all <- function(mi_data, index) {
 }
 
 
+#' Get averaged MIDs for all metabolites of the given size
+#' If no metabolites exists returns an empty list
+#'
 #' @export
+#'
 get_avg_mids_by_size <- function(mi_data, n_atoms, e) {
   index <- get_peak_index_n_atoms(mi_data, n_atoms)
   return(sapply(index, function(i) get_avg_mid(mi_data, i, e)))

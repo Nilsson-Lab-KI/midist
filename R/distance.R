@@ -220,6 +220,7 @@ conv_reduce <- function(mi_data, x, y, e, f, g) {
   }
 }
 
+
 #' Same as conv_reduce, but calculates f(x, y) pairwise for all peaks x and y
 #' from an MIData object (mi_data)
 #'
@@ -243,7 +244,10 @@ conv_reduce_all <- function(mi_data, e, f, g)
   # for each metabolite size for x
   for(i in 1:length(n_atoms)) {
     n_atoms_x <- n_atoms[[i]]
+    # get all MIDs for x
     x_index <- get_peak_index_n_atoms(mi_data, n_atoms_x)
+    mids_x <- sapply(x_index, function(i) get_avg_mid(mi_data, i, e))
+    stopifnot(is.matrix(mids_x))
 
     # for each metabolites size for y, larger than x
     for(j in i:length(n_atoms)) {
@@ -255,62 +259,82 @@ conv_reduce_all <- function(mi_data, e, f, g)
       stopifnot(is.matrix(mids_y))
 
       if(n_atoms_x == n_atoms_y) {
-        # if y has same size as x, just calculate f(x,y)
-        for(xi in x_index) {
-          mid_x <- get_avg_mid(mi_data, xi, e)
-          result[xi, y_index] <- result[y_index, xi] <-
-            apply(mids_y, MARGIN = 2, function(y) g(c(f(mid_x, y))))
-        }
+        block <- conv_reduce_block_equal(mids_x, mids_y, f, g)
+        stopifnot(is.matrix(block))
       }
       else {
-        # metabolites z to convolute with each x
-        n_atoms_z <- n_atoms_y - n_atoms_x
-        z_index <- get_peak_index_n_atoms(mi_data, n_atoms_z)
-        if(length(z_index) > 0) {
-          # matrix, each column one MID
-          mids_z <- get_avg_mids_by_size(mi_data, n_atoms_z, e)
-          if(!is.matrix(mids_z)) {
-            print(z_index)
-            print(mids_z)
-            stop()
-          }
-          for(xi in x_index) {
-            # MID of metabolite x
-            mid_x <- get_avg_mid(mi_data, xi, e)
-            # compute all convolutions x*z for each z
-            xz_mids <- convolute_cols(mid_x, mids_z)
-            stopifnot(is.matrix(xz_mids))
-            # calculate f(x*z, y) for all y (rows) and all convolutions x*z
-            # apply g() here?
-            f_values <- apply(mids_y, MARGIN = 2,
-                              function(y) g(apply(xz_mids, MARGIN = 2, f, y)))
-            if(!is.vector(f_values)) {
-              print(f_values)
-              stop()
-            }
-            result[xi, y_index] <- result[y_index, xi] <- f_values
-
-            #if(length(z_index) == 1){
-            #  result[xi, y_index] <- result[y_index, xi] <- f_values
-            #}
-            #else {
-            #  # compute g(f(y, ..), ...) for each y and store
-            #  result[xi, y_index] <- result[y_index, xi] <- apply(f_values, 2, g)
-            #}
-          }
-        }
-        else {
-          # no metabolites z to convolute x with
-          for(xi in x_index) {
-            result[xi, y_index] <- result[y_index, xi] <-
-              rep(suppressWarnings(g(c())), n = length(y_index))
-          }
-        }
+        # get all "middle" MIDs, each column one MID
+        n_atoms_z = n_atoms_y - n_atoms_x
+        mids_z <- get_avg_mids_by_size(mi_data, n_atoms_z, e)
+        block <- conv_reduce_block(mids_x, mids_y, mids_z, f, g)
+        stopifnot(is.matrix(block))
       }
+      # copy block to full matrix
+      result[x_index, y_index] <- block
+      result[y_index, x_index] <- t(block)
     }
   }
   return(result)
 }
+
+
+#' compute conv_reduce for one matrix block where all x are the same size
+#' and all y are the same size, but y is larger than x
+#'
+#' @param mids_x matrix of MIDs for metabolites x, each column one MID
+#' @param mids_y matrix of MIDs for metabolites y
+#' @param mids_z matrix of MIDs for metabolites z, may be empty
+#'
+conv_reduce_block <- function(mids_x, mids_y, mids_z, f, g)
+{
+  n_atoms_x <- dim(mids_x)[1] - 1
+  n_x <- dim(mids_x)[2]
+  n_atoms_y <- dim(mids_y)[1] - 1
+  n_y <- dim(mids_y)[2]
+
+  ## allocate matrix (this could be skipped, just rbind instead?)
+  block <- matrix(NA, n_x, n_y)
+
+  if(is.matrix(mids_z)) {
+    n_atoms_z <- dim(mids_z)[1] - 1
+    stopifnot(n_atoms_z == n_atoms_y - n_atoms_x)
+
+    for(i in 1:n_x) {
+      # compute all convolutions x*z for each z
+      xz_mids <- convolute_cols(mids_x[, i], mids_z)
+      stopifnot(is.matrix(xz_mids))
+      # calculate g(f(x*z, y) ...) for all y (rows) and all convolutions x*z
+      g_values <- apply(mids_y, MARGIN = 2,
+                        function(y) g(apply(xz_mids, MARGIN = 2, f, y)))
+      stopifnot(is.vector(g_values))
+      block[i, ] <- g_values
+    }
+  }
+  else {
+    # no metabolites z to convolute x with, assign g(c()) to all
+    for(i in 1:n_x) {
+      block[i, ] <- rep(g(c()), n = n_y)
+    }
+  }
+  return(block)
+}
+
+
+# special case of the above, for a block where all x AND y are the same size
+# in this case there is nothing to convolute with
+conv_reduce_block_equal <- function(mids_x, mids_y, f, g)
+{
+  # calculate g(f(x,y)) for each x,y
+  n_x <- dim(mids_x)[2]
+  n_y <- dim(mids_y)[2]
+  block <- matrix(NA, n_x, n_y)
+  for(i in 1:n_x) {
+    block[i, ] <- apply(mids_y, MARGIN = 2,
+                        function(mid_y) g(c(f(mids_x[, i], mid_y))))
+  }
+  return(block)
+}
+
 
 #' Same as conv_reduce_all, but uses a function g_select to pick a particular
 #' convolution, and also returns the matrix of peak indices picked by g_select
@@ -519,11 +543,11 @@ filter_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01)
 
 #' @export
 filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01) {
-  
+
   # create an empty matrix to be filled in only by those who pass the filtering criteria
   filtered_pm <- matrix(NA, nrow(pairwise_matrix), ncol(pairwise_matrix))
   colnames(filtered_pm) <- rownames(filtered_pm) <- colnames(pairwise_matrix)
-  
+
   # get infinite and NA indices
   non_inf_ind <- which(is.infinite(pairwise_matrix) == F & is.na(pairwise_matrix) == F)
   # exclude infinites and NAs
@@ -532,32 +556,32 @@ filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01) {
   threshold <- as.numeric(quantile(non_inf_vec, probs = percentile))
   # fill in
   filtered_pm[as.numeric(non_inf_ind[which(non_inf_vec <= threshold)])] <- pairwise_matrix[as.numeric(non_inf_ind[which(non_inf_vec <= threshold)])]
-  
+
   return(filtered_pm)
 }
 
 
 #' @export
 subsample_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01){
-  
-  
+
+
   # create an empty matrix
   subsampled_pm <- matrix(NA, nrow(pairwise_matrix), ncol(pairwise_matrix))
   colnames(subsampled_pm) <- rownames(subsampled_pm) <- colnames(pairwise_matrix)
-  
+
   # make selections for each row
   for (i in 1:nrow(pairwise_matrix))
   {
     # get infinite and NA indices
     non_inf_ind <- which(is.infinite(pairwise_matrix[i, ]) == F & is.na(pairwise_matrix[i, ]) == F)
-    
+
     # compute the percentile (top 1%)
     ind <- sample(non_inf_ind, round(length(non_inf_ind)*percentiles[p]*0.01))
-    
+
     # fill in
     subsampled_pm[i, ind] <- pairwise_matrix[i, ind]
   }
-  
+
   return(subsampled_pm)
 }
 
