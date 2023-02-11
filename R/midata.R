@@ -122,7 +122,9 @@ midata_subset <- function(mi_data, peak_index)
   midata_subset$n_atoms_index <- create_atom_index(midata_subset$peak_n_atoms)
 
   # peak indices
-  midata_subset$peak_index <- match(midata_subset$peak_ids, rep(midata_subset$peak_ids, (midata_subset$peak_n_atoms + 1)))
+  midata_subset$peak_index <- match(
+    midata_subset$peak_ids,
+    rep(midata_subset$peak_ids, (midata_subset$peak_n_atoms + 1)))
 
   # experiments
   midata_subset$experiments <- mi_data$experiments
@@ -173,6 +175,7 @@ midata_transform <- function(midata, f)
 # normalize each column in a matrix of positive values
 # so that each column sums to 1
 # skip columns whose sum is zero
+# TODO: move this to mid.R ?
 #
 normalize_mids <- function(mids)
 {
