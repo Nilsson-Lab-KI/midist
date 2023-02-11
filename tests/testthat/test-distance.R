@@ -163,61 +163,12 @@ test_that("conv_reduce_all_select returns a valid middle metabolite matrix for e
 })
 
 
-########### TODO BELOW
-
-# example-2: here atom numbers are not increasing over peaks
-# (same as example 1 but peaks are permuted)
-
-# individual MIDs
-a_mid <- c(0.8, 0.05, 0.1, 0.05) # d
-b_mid <- c(0.8, 0.1, 0.1) # b
-c_mid <- c(0.98, 0.02) # a
-d_mid <- c(0.1, 0.0, 0.3, 0.0, 0.2, 0.05) # e
-e_mid <- c(0.0, 0.0, 0.0)     # c
-
-peak_areas_example_2 <- data.frame(
-  # metabolite and #atoms: a 3, b 2, c 1, d 5, e 2
-  Metabolite = c(rep("a",4), rep("b",3), rep("c",2), rep("d",6), rep("e",3)),
-  # RN: not sure what Formula is used for here?
-  Formula = c(rep("a",4), rep("b",3), rep("c",2), rep("d",6), rep("e",3)),
-  exp1 = c(a_mid, b_mid, c_mid, d_mid, e_mid)
-)
-
-midata_2 <- MIData(peak_areas_example_2, exp_names = "exp1")
+# example-2:  as example 1 but peaks are permuted
+midata_2 <- midata_subset(midata_1, c(4,2,1,5,3))
 
 
 test_that("conv_reduce_all returns a valid distance matrix for example-2", {
-  # compute distance matrix for experiment 1 with g = min
-  dm_min <- conv_reduce_all(midata_2, 1, f = cosine_dist, g = min)
-
-  # make sure distance matrix of correct size
-  expect_equal(dim(dm_min), c(5,5))
-  # make sure the distance matrix is symmetric
-  expect_true(isSymmetric(dm_min))
-  # for MID e (a zero vector) all cosine distances should be NAs due to division by zero
-  expect_true(all(is.na(dm_min[,5])))
-  expect_true(all(is.na(dm_min[5,])))
-
-  # distance for b vs a = dist(a, b * c)
-  expect_equal(dm_min[2,1],
-               cosine_dist(a_mid, convolute(b_mid, c_mid)),
-               tolerance = 1e-7)
-
-  # compute similarity matrix with g = max
-  sm_max <- conv_reduce_all(midata_2, 1, cosine_sim, max)
-  # similarity for d vs b = sim(d, a * b)
-  expect_equal(sm_max[4,2],
-               cosine_sim(d_mid, convolute(a_mid, b_mid)),
-               tolerance = 1e-7)
-
-  # test that conv_reduce_all returns a symmetric matrix
-  expect_true(isSymmetric(sm_max))
-  # for a vs b, we get the similarity a*a vs b
-  expect_equal(sm_max[2,1], 0.9949405, tolerance = 1e-7)
-  # for a vs c, we get a*a vs c which is NA
-  expect_true(is.na(sm_max[3,1]))
-  # for c vs. d there is no 4-carbon peak to convolute with, return inf
-  expect_true(is.infinite(sm_max[3,4]))
+  test_conv_reduce_all(midata_2, cosine_dist, min_nonempty)
 })
 
 
@@ -246,17 +197,4 @@ test_that("conv_reduce_all_select returns a valid middle metabolite matrix for e
   expect_equal(length(setdiff(which(is.na(output[[2]]) == F), index)), 0)
 })
 
-
-test_that("conv_reduce_all gives same values as conv_reduce", {
-  # distance matrix from conv_reduce_all
-  f <- euclidean_dist
-  g <- min_nonempty
-  dist_mat <- conv_reduce_all(midata_2, 1, f, g)
-  # test row by row against conv_reduce
-  for(x in 1:5) {
-    dist_row <- sapply(1:5,
-                       function(y) conv_reduce(midata_2, x, y, 1, f, g))
-    expect_equal(dist_mat[x,], dist_row)
-  }
-})
 
