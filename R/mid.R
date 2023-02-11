@@ -9,8 +9,7 @@
 #' @param mid and MID vector
 #' @returns the enrichment value
 #' @export
-isotopic_enrichment <- function(mid)
-{
+isotopic_enrichment <- function(mid) {
   # number of carbon atoms
   n <- length(mid) - 1
   # compute and return isotopic enrichment
@@ -21,16 +20,13 @@ isotopic_enrichment <- function(mid)
 #
 # return a zero vector if the mid enrichment is below a threshold
 #
-filter_enrichment <- function(mid, tol = 0.0107)
-{
+filter_enrichment <- function(mid, tol = 0.0107) {
   if (isotopic_enrichment(mid) <= tol) {
     return(rep(0, length(mid)))
-  }
-  else {
+  } else {
     return(mid)
   }
 }
-
 
 #' Correct an MID vector for naturally occurring isotopes
 #' @param mid An MID vector to correct
@@ -50,23 +46,45 @@ c13correct <- function(mid, p = 0.0107, constraint = TRUE)
   }
 
   # if we do not have a constraint on the sum of the values
-  if (constraint == FALSE){
+  if (constraint == FALSE) {
     return(pnnls(a = correct, b = mid)$x)
   }
   # if we have a sum 1 constraint (default)
-  else
+  else {
     return(pnnls(a = correct, b = mid, sum = 1)$x)
-
+  }
 }
 
 
 #' Correct an MID vector for naturally occurring isotopes and remove M+0
 #' @param mid An MID vector to correct
 #' @export
-correct_and_remove <- function(mid)
-{
+correct_and_remove <- function(mid) {
   return(c13correct(mid)[-1])
 }
+
+
+#' Add multiplicative gamma noise to a given MID from a given standard deviation
+#' @param mid An MID vector
+#' @param stdev standard deviation for the gamma distribution
+#' Returns a noisy MID
+#' @export
+add_gamma_noise <- function(mid, stdev){
+  # mean of the MID
+  m <- mean(mid)
+  # determine theta from stdev^2 = m * theta --> theta = stdev^2 / m
+  theta <- (stdev^2) / m
+  # determine k from stdev^2 = k * theta --> k = stdev^2 / theta
+  k <- (stdev^2) / theta
+  # generate a gamma distribution from these parameters
+  gamma_vals <- rgamma(length(mid), k, scale = theta)
+  # multiply the gamma values by the MID to make the noise multiplicative
+  gamma_noise <- mid*gamma_vals
+  noisy_mid <- (mid + gamma_noise) / sum(mid + gamma_noise)
+  # stopifnot(sum(noisy_mid) == 1)
+  return(noisy_mid)
+}
+
 
 #' Generate a convolution matrix for an MID
 #'
@@ -75,14 +93,13 @@ correct_and_remove <- function(mid)
 #' This function creates the matrix A(x) for a given number of carbons in y
 #' @param x an MID
 #' @param y_carbons the number of carbons in the vector y
-convolution_matrix <- function(x, y_carbons)
-{
+convolution_matrix <- function(x, y_carbons) {
   x_carbons <- length(x) - 1
   # create empty matrix
   A <- matrix(0, x_carbons + y_carbons + 1, y_carbons + 1)
   # fill in columns
   for (i in 1:(y_carbons + 1)) {
-    A[i:(i+x_carbons), i] <- x
+    A[i:(i + x_carbons), i] <- x
   }
   return(A)
 }
@@ -92,9 +109,8 @@ convolution_matrix <- function(x, y_carbons)
 #' @param y an MID vector
 #' @returns the convolution MID vector x*y
 #' @export
-convolute <- function(x, y)
-{
-  return(as.vector(convolution_matrix(x, length(y)-1) %*% y))
+convolute <- function(x, y) {
+  return(as.vector(convolution_matrix(x, length(y) - 1) %*% y))
 }
 
 
@@ -103,9 +119,8 @@ convolute <- function(x, y)
 #' @param y_mat a matrix whose columns are MID vectors
 #' @returns the matrix of convolution vectors x*y for each column y in y_mat
 #' @export
-convolute_cols <- function(x, y_mat)
-{
-  return(convolution_matrix(x, nrow(y_mat)-1) %*% y_mat)
+convolute_cols <- function(x, y_mat) {
+  return(convolution_matrix(x, nrow(y_mat) - 1) %*% y_mat)
 }
 
 

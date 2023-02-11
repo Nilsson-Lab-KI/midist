@@ -20,8 +20,7 @@
 #' @param input_args a data frame with fields listed above
 #' @export
 
-parse_input_args <- function(input_args)
-{
+parse_input_args <- function(input_args) {
   # create an InputData structure
   input_data <- list()
   class(input_data) <- "InputData"
@@ -30,19 +29,20 @@ parse_input_args <- function(input_args)
   # if (is.character(peak_areas))
   peak_areas <- as.data.frame(read.delim(input_args$peak_areas_file_path, header = T, sep = "\t"))
 
-  if ("MassIsotopomer" %in% colnames(peak_areas))
+  if ("MassIsotopomer" %in% colnames(peak_areas)) {
     peak_areas <- peak_areas[, -which(colnames(peak_areas) == "MassIsotopomer")]
+  }
 
   # make an MIData object from peak_areas, fetching experiments from column names of the matrix
-  midata <- MIData(peak_areas, colnames(peak_areas)[-(1:3)])
+  midata <- MIData(peak_areas, colnames(peak_areas)[-which(colnames(peak_areas) %in% c("Metabolite", "Formula", "MassIsotopomer"))])
 
   # correct the MIDs if c13_correction is TRUE
-  if (eval(parse(text = input_args$c13_correction)) == T){
+  if (eval(parse(text = input_args$c13_correction)) == T) {
     midata <- midata_transform(midata, c13correct)
     input_data$c13_correction <- "T"
-  }
-  else
+  } else {
     input_data$c13_correction <- "F"
+  }
 
   #
   input_data$midata <- midata
@@ -59,24 +59,21 @@ parse_input_args <- function(input_args)
   #
 
   # add reaction restriction to input data
-  if (input_args$reaction_restriction == "F" | input_args$reaction_restriction == F)
-    input_data$reaction_restriction <- eval(parse(text = input_args$reaction_restriction)) else {
-      input_data$reaction_restriction <- input_args$reaction_restriction
-      input_data$reaction_data <- as.vector(read.delim(input_args$reactions_file_path, header = FALSE, sep = "\t"))
-    }
-
-
+  if (input_args$reaction_restriction == "F" | input_args$reaction_restriction == F) {
+    input_data$reaction_restriction <- eval(parse(text = input_args$reaction_restriction))
+  } else {
+    input_data$reaction_restriction <- input_args$reaction_restriction
+    input_data$reaction_data <- as.vector(read.delim(input_args$reactions_file_path, header = FALSE, sep = "\t"))
+  }
   # tolerance
-  input_data$tolerance <- eval(parse(text = input_args$tolerance_ppm))*10^-6
-
+  input_data$tolerance <- eval(parse(text = input_args$tolerance_ppm)) * 10^-6
   return(input_data)
 }
 
 #' Reads input_args from input_file_name and returns the input set for the row input_row_index
 #'
 #' @export
-fetch_input_args <- function(input_row_index, input_file_name)
-{
+fetch_input_args <- function(input_row_index, input_file_name) {
   options(warn = -1)
   input_args <- as.data.frame(read.delim(input_file_name, header = T, sep = "\t", check.names = F))
   return(input_args[input_row_index, ])
