@@ -1,4 +1,4 @@
-#
+
 # distance and similarity measures
 #
 
@@ -26,7 +26,7 @@ cosine_sim <- function(x, y) {
   y_norm <- sqrt(sum(y^2))
   # test for zero vector
   if (x_norm == 0 || y_norm == 0) {
-    return(NA)
+    return(as.double(NA))
   } else {
     return(sum(x * y) / (x_norm * y_norm))
   }
@@ -164,12 +164,22 @@ euclidean_dist <- function(x, y) {
 #'
 euclidean_dist_no_m0 <- function(x, y) apply_no_m0(euclidean_dist, x, y)
 
+
+# function adding z_index vector as attribute to f values
+f_attr <- function(mid_y, mids_xz, z_index, f) {
+  f_values <- apply(mids_xz, MARGIN = 2, f, mid_y)
+  attr(f_values, "index") <- z_index
+  return(f_values)
+}
+
+
 #' Calculates a convolution-based measure between MIDs for peak x and y for
 #' experiment e from an MIData object (mi_data).
 #'
-#' The function f(x, y) must return a real value or NA for any x, y with the
-#' same number of atoms.
+#' The function f(x, y) must be symmetric in x, y and return a real value
+#' or NA for any x, y with the same number of atoms.
 #' If x, y have the same number of atoms, f(x,y) is returned.
+#'
 #' If x is smaller than y, this function computes f(x*z, y) for all
 #' peaks z such that x*z is the same size as y (and vice versa), and calls g()
 #' on the resulting vector of values from f.
@@ -186,7 +196,8 @@ euclidean_dist_no_m0 <- function(x, y) apply_no_m0(euclidean_dist, x, y)
 #' @returns the resulting value g(f1, f2, ...)
 #' @export
 
-conv_reduce <- function(mi_data, x, y, e, f, g) {
+conv_reduce <- function(mi_data, x, y, e, f, g)
+{
   # number of carbon atoms of metabolites x, y
   n_atom_x <- get_peak_n_atoms(mi_data, x)
   n_atom_y <- get_peak_n_atoms(mi_data, y)
@@ -201,16 +212,18 @@ conv_reduce <- function(mi_data, x, y, e, f, g) {
   if (n_atom_x == n_atom_y) {
     # equal numbers just calculate f
     return(g(c(f(mid_x, mid_y))))
-  } else {
+  }
+  else {
     # x is strictly smaller than y
     # get MIDs of metabolites z to convolute with
     n_atom_z <- n_atom_y - n_atom_x
-    mids_z <- get_avg_mids_by_size(mi_data, n_atom_z, e)
+    z_index <- get_peak_index_n_atoms(mi_data, n_atom_z)
+    mids_z <- sapply(z_index, function(i) get_avg_mid(mi_data, i, e))
     if (length(mids_z) > 0) {
       # compute all convolutions x*z for each z
-      convolutions <- convolute_cols(mid_x, mids_z)
-      # calculate f between the larger metabolite and all possible convolutions
-      f_values <- apply(convolutions, MARGIN = 2, f, mid_y)
+      mids_xz <- convolute_cols(mid_x, mids_z)
+      # calculate f between y and all x*y and add indices
+      f_values <- f_attr(mid_y, mids_xz, z_index, f)
       # return the function g
       return(g(f_values))
     } else {
@@ -235,9 +248,10 @@ conv_reduce <- function(mi_data, x, y, e, f, g) {
 #' @export
 conv_reduce_all <- function(mi_data, e, f, g)
 {
-  # allocate square matrix
   n_met <- length(mi_data$peak_ids)
-  result <- matrix(0, nrow = n_met, ncol = n_met)
+  # allocate matrices
+  conv_mat <- matrix(as.double(NA), n_met, n_met)
+  conv_index <- matrix(as.integer(NA), n_met, n_met)
 
   # unique metabolite sizes, sorted
   n_atoms <- sort(unique(mi_data$peak_n_atoms))
@@ -246,35 +260,50 @@ conv_reduce_all <- function(mi_data, e, f, g)
     n_atoms_x <- n_atoms[[i]]
     # get all MIDs for x
     x_index <- get_peak_index_n_atoms(mi_data, n_atoms_x)
-    mids_x <- sapply(x_index, function(i) get_avg_mid(mi_data, i, e))
-    stopifnot(is.matrix(mids_x))
 
     # for each metabolites size for y, larger than x
     for(j in i:length(n_atoms)) {
       n_atoms_y <- n_atoms[[j]]
       # get all MIDs y of this size
       y_index <- get_peak_index_n_atoms(mi_data, n_atoms_y)
-      # matrix, each column one MID
-      mids_y <- sapply(y_index, function(i) get_avg_mid(mi_data, i, e))
-      stopifnot(is.matrix(mids_y))
-
+       # compute this block
       if(n_atoms_x == n_atoms_y) {
-        block <- conv_reduce_block_equal(mids_x, mids_y, f, g)
+        block <- conv_reduce_block_equal(mi_data, e, f, g, x_index, y_index)
         stopifnot(is.matrix(block))
       }
       else {
         # get all "middle" MIDs, each column one MID
         n_atoms_z = n_atoms_y - n_atoms_x
-        mids_z <- get_avg_mids_by_size(mi_data, n_atoms_z, e)
-        block <- conv_reduce_block(mids_x, mids_y, mids_z, f, g)
+        z_index <- get_peak_index_n_atoms(mi_data, n_atoms_z)
+        block <- conv_reduce_block(mi_data, e, f, g, x_index, y_index, z_index)
         stopifnot(is.matrix(block))
       }
-      # copy block to full matrix
-      result[x_index, y_index] <- block
-      result[y_index, x_index] <- t(block)
+      # copy block to full matrices
+      conv_mat[x_index, y_index] <- without_attr(block)
+      conv_mat[y_index, x_index] <- t(without_attr(block))
+      conv_index[x_index, y_index] <- attr(block, "index")
+      conv_index[y_index, x_index] <- t(attr(block, "index"))
     }
   }
-  return(result)
+  return(with_attr(conv_mat, "index", conv_index))
+}
+
+
+# compute vector of g values and add z index vector as attribute
+# using apply() for this seems to strip away the attributes ...
+g_attr <- function(mids_y, mids_xz, z_index, f, g)
+{
+  n_y <- dim(mids_y)[2]
+  g_values <- rep(as.double(NA), n_y)
+  g_index <- rep(as.integer(NA), n_y)
+  for(i in 1:n_y) {
+    g_result <- g(f_attr(mids_y[, i], mids_xz, z_index, f))
+    # store values and index separately
+    g_values[i] <- without_attr(g_result)
+    g_index[i] <- attr(g_result, "index")
+  }
+  # add index vector as attribute
+  return(with_attr(g_values, "index", g_index))
 }
 
 
@@ -285,55 +314,79 @@ conv_reduce_all <- function(mi_data, e, f, g)
 #' @param mids_y matrix of MIDs for metabolites y
 #' @param mids_z matrix of MIDs for metabolites z, may be empty
 #'
-conv_reduce_block <- function(mids_x, mids_y, mids_z, f, g)
+conv_reduce_block <- function(mi_data, e, f, g, x_index, y_index, z_index)
 {
-  n_atoms_x <- dim(mids_x)[1] - 1
-  n_x <- dim(mids_x)[2]
-  n_atoms_y <- dim(mids_y)[1] - 1
-  n_y <- dim(mids_y)[2]
+  n_x <- length(x_index)
+  n_y <- length(y_index)
+  ## allocate matrices
+  block <- matrix(as.double(NA), n_x, n_y)
+  block_index <- matrix(as.integer(NA), n_x, n_y)
 
-  ## allocate matrix (this could be skipped, just rbind instead?)
-  block <- matrix(NA, n_x, n_y)
-
-  if(is.matrix(mids_z)) {
-    n_atoms_z <- dim(mids_z)[1] - 1
-    stopifnot(n_atoms_z == n_atoms_y - n_atoms_x)
+  if(length(z_index) > 0) {
+    # get MID matrices
+    mids_x <- sapply(x_index, function(i) get_avg_mid(mi_data, i, e))
+    stopifnot(is.matrix(mids_x))
+    mids_y <- sapply(y_index, function(i) get_avg_mid(mi_data, i, e))
+    stopifnot(is.matrix(mids_y))
+    mids_z <- sapply(z_index, function(i) get_avg_mid(mi_data, i, e))
+    stopifnot(is.matrix(mids_z))
 
     for(i in 1:n_x) {
       # compute all convolutions x*z for each z
-      xz_mids <- convolute_cols(mids_x[, i], mids_z)
-      stopifnot(is.matrix(xz_mids))
+      mids_xz <- convolute_cols(mids_x[, i], mids_z)
+      stopifnot(is.matrix(mids_xz))
       # calculate g(f(x*z, y) ...) for all y (rows) and all convolutions x*z
-      g_values <- apply(mids_y, MARGIN = 2,
-                        function(y) g(apply(xz_mids, MARGIN = 2, f, y)))
-      stopifnot(is.vector(g_values))
-      block[i, ] <- g_values
+      g_values <- g_attr(mids_y, mids_xz, z_index, f, g)
+      # NOTE: is.vector(x) is FALSE when x is a vector but has attributes!
+      # stopifnot(is.vector(g_values))
+      # store value and attributes separately
+      block[i, ] <- without_attr(g_values)
+      block_index[i, ] <- attr(g_values, "index")
     }
   }
-  else {
-    # no metabolites z to convolute x with, assign g(c()) to all
-    for(i in 1:n_x) {
-      block[i, ] <- rep(g(c()), n = n_y)
-    }
-  }
+  # else no metabolites z to convolute x with
+  attr(block, "index") <- block_index
   return(block)
 }
 
 
 # special case of the above, for a block where all x AND y are the same size
 # in this case there is nothing to convolute with
-conv_reduce_block_equal <- function(mids_x, mids_y, f, g)
+conv_reduce_block_equal <- function(mi_data, e, f, g, x_index, y_index)
 {
-  # calculate g(f(x,y)) for each x,y
-  n_x <- dim(mids_x)[2]
-  n_y <- dim(mids_y)[2]
-  block <- matrix(NA, n_x, n_y)
+  n_x <- length(x_index)
+  n_y <- length(y_index)
+  # allocate matrices
+  block <- matrix(as.double(NA), n_x, n_y)
+  block_index <- matrix(as.integer(NA), n_x, n_y)
+
+  mids_x <- sapply(x_index, function(i) get_avg_mid(mi_data, i, e))
+  stopifnot(is.matrix(mids_x))
+  mids_y <- sapply(y_index, function(i) get_avg_mid(mi_data, i, e))
+  stopifnot(is.matrix(mids_y))
+
+  # calculate g(f(x,y)) for each x,y (no attributes in this case)
   for(i in 1:n_x) {
     block[i, ] <- apply(mids_y, MARGIN = 2,
                         function(mid_y) g(c(f(mids_x[, i], mid_y))))
   }
+  # all indices are NA
+  attr(block, "index") <- matrix(as.integer(NA), n_x, n_y)
   return(block)
 }
+
+
+# create a matrix with element type matching that returned by the g function
+# create_conv_matrix <- function(g, n_x, n_y)
+# {
+#   element <- g(c())
+#   if(typeof(element) == "list")
+#      return(matrix(list(), n_x, n_y))
+#   if(typeof(element) == "double")
+#      return(matrix(as.double(NA), n_x, n_y))
+#   # unknown type
+#   stop()
+# }
 
 
 #' Same as conv_reduce_all, but uses a function g_select to pick a particular
@@ -346,11 +399,10 @@ conv_reduce_block_equal <- function(mids_x, mids_y, f, g)
 #' @param mi_data the MIdata object
 #' @param e experiment index
 #' @param f A function f(x, y) taking two MIDs.
-#' @param g a function g taking a vector of values f1, f2, ...
 #' @param g_select either which.max() or which.min() dependent on g being max() or min()
 #' @returns the matrix of g(f(x,y) ...) and g_select(f(x,y) ...) values for all x,y
 #' @export
-conv_reduce_all_select <- function(mi_data, e, f, g, g_select)
+conv_reduce_all_select <- function(mi_data, e, f, g_select)
 {
   # allocate square matrix
   n_met <- length(mi_data$peak_ids)
@@ -416,8 +468,6 @@ conv_reduce_all_select <- function(mi_data, e, f, g, g_select)
   }
  return(list(result, middle_met_matrix))
 }
-
-
 
 
 #' Calculate similarity matrix, based on parameters specified in an InputData object
@@ -562,9 +612,8 @@ filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01) {
 
 
 #' @export
-subsample_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01){
-
-
+subsample_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01)
+{
   # create an empty matrix
   subsampled_pm <- matrix(NA, nrow(pairwise_matrix), ncol(pairwise_matrix))
   colnames(subsampled_pm) <- rownames(subsampled_pm) <- colnames(pairwise_matrix)
@@ -585,30 +634,36 @@ subsample_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01){
   return(subsampled_pm)
 }
 
+
 #' Combines pairwise matrices across multiple experiments by their squared sum.
 #' Note that this cannot be used if the middle metabolite matrix and experiment index matrix are to be tracked.
 #'
 #' @param pairwise_matrices a list of pairwise matrices across different experiments
 #' @export
-combine_sqrt_sum <- function(pairwise_matrices) {
+combine_sqrt_sum <- function(pairwise_matrices)
+{
   return(sqrt(Reduce("+", pairwise_matrices)))
 }
+
 
 #' Combines pairwise matrices across multiple experiments by their sum.
 #' Note that this cannot be used if the middle metabolite matrix and experiment index matrix are to be tracked.
 #'
 #' @param pairwise_matrices a list of pairwise matrices across different experiments
 #' @export
-combine_sum <- function(pairwise_matrices) {
+combine_sum <- function(pairwise_matrices)
+{
   return(Reduce("+", pairwise_matrices))
 }
 
 
-#' Returns the metabolite index which was chosen by fun. It is supposed to be used in the combine() function.
+#' Returns the metabolite index which was chosen by fun.
+#' It is supposed to be used in the combine() function.
 #' @param vector a row from a pairwise matrix
 #' @param fun a function like max() or min()
 #' @export
-get_fun_index <- function(vector, fun) {
+get_fun_index <- function(vector, fun)
+{
   vector <- as.vector(vector)
   non_na_inf_ind <- which(is.na(vector) == F & is.infinite(vector) == F)
   new_vector <- vector[non_na_inf_ind]
@@ -618,10 +673,13 @@ get_fun_index <- function(vector, fun) {
 
 
 #' Combines pairwise matrices across multiple experiments based on the fun function.
-#' Suitable for cases where the middle metabolite matrix is known and experiment index matrix is to be tracked.
+#' Suitable for cases where the middle metabolite matrix is known and experiment index
+#' matrix is to be tracked.
 #'
 #' @param pairwise_matrices a list of pairwise matrices across different experiments
-#' @param middle_met_matrices a list of middle metabolite matrices across different experiments, where a middle metabolite denotes the metabolite that was chosen as the best convolution for a given metabolite pair of unequal carbon number
+#' @param middle_met_matrices a list of middle metabolite matrices across different
+#' experiments, where a middle metabolite denotes the metabolite that was chosen
+#' as the best convolution for a given metabolite pair of unequal carbon number
 #'
 #' @export
 combine <- function(pairwise_matrices, middle_met_matrices, fun)

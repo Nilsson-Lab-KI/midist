@@ -1,4 +1,6 @@
-
+#
+# Tests for function in distance.R
+#
 
 test_that("cosine_sim is correct", {
   # identical vectors have similarity 1
@@ -59,36 +61,43 @@ midata_1 <- MIData(peak_areas_example_1, exp_names = "exp1")
 test_conv_reduce_1 <- function(f, g)
 {
   # compute full matrix row by row
+  # NOTE: assignment to matrix element discards attributes
   conv_mat <- matrix(NA, nrow = 5, ncol = 5)
   for(x in 1:5) {
-    conv_mat[x,] <- sapply(1:5, function(y) conv_reduce(midata_1, x, y, 1, f, g))
+    for(y in 1:5) {
+      conv_mat[x,y] <- conv_reduce(midata_1, x, y, 1, f, g)
+    }
   }
 
   # make sure matrix is symmetric
   expect_true(isSymmetric(conv_mat))
 
-  # distance for a vs b = f(a*a, b)
-  expect_equal(conv_mat[1,2],
-               g(c(f(convolute(a_mid, a_mid), b_mid))),
+  # distance for a vs b = f(a*a, b), selects a
+  expect_equal(conv_reduce(midata_1, 1, 2, 1, f, g),
+               g(with_attr(
+                 c(f(convolute(a_mid, a_mid), b_mid)), "index", c(1))),
                tolerance = 1e-7)
-  # distance for a vs c = f(a*a, c)
-  expect_equal(conv_mat[1,3],
-               g(c(f(convolute(a_mid, a_mid), c_mid))),
+  # distance for a vs c = f(a*a, c), where c is a zero vector, selects a
+  expect_equal(conv_reduce(midata_1, 1, 3, 1, f, g),
+               g(with_attr(
+                 c(f(convolute(a_mid, a_mid), c_mid)), "index", c(1))),
                tolerance = 1e-7)
-  # distance for a vs d = g(f(d, a*b), f(d, a*c))
-  expect_equal(conv_mat[1,4],
-               g(c(
-                 f(d_mid, convolute(a_mid, b_mid)),
-                 f(d_mid, convolute(a_mid, c_mid)))),
+  # distance for a vs d = g(f(a*b, d), f(a*c, d)), selects b
+  expect_equal(conv_reduce(midata_1, 1, 4, 1, f, g),
+               g(with_attr(
+                 c(
+                  f(d_mid, convolute(a_mid, b_mid)),
+                  f(d_mid, convolute(a_mid, c_mid))), "index", c(2,3))),
                tolerance = 1e-7)
   # for a vs. e there is no 4-carbon peak to convolute with,
-  # so expect g(c())
-  expect_equal(conv_mat[1,5],
+  # so expect g(c()), index = NA
+  expect_equal(conv_reduce(midata_1, 1, 5, 1, f, g),
                g(c()),
                tolerance = 1e-7)
-  # distance for b vs d = f(a*b, d)
-  expect_equal(conv_mat[2,4],
-               g(c(f(convolute(a_mid, b_mid), d_mid))),
+  # distance for b vs d = f(a*b, d), select a
+  expect_equal(conv_reduce(midata_1, 2, 4, 1, f, g),
+               g(with_attr(
+                 c(f(convolute(a_mid, b_mid), d_mid)), "index", c(1))),
                tolerance = 1e-7)
   return(conv_mat)
 }
@@ -108,20 +117,34 @@ test_that("conv_reduce is correct on max cosine similarity", {
   expect_true(all(is.na(sim_mat[3,])))
 })
 
+test_that("conv_reduce_all returns a matrix with index attribute", {
+  # maximum cosine similarity
+  conv_all_mat <- conv_reduce_all(midata_1, 1, cosine_sim, max_nonempty)
+  # value matrix
+  expect_true(is.matrix(conv_all_mat))
+  expect_equal(dim(conv_all_mat), c(5, 5))
+  # index matrix
+  expect_true(is.matrix(attr(conv_all_mat, "index")))
+  expect_equal(dim(attr(conv_all_mat, "index")), c(5, 5))
+})
 
-# compare conv_reduce_all to conv_reduce on the given mi_data
+
+# compare conv_reduce_all elementwise to conv_reduce on the given mi_data
 # with functions f and g
 test_conv_reduce_all <- function(mi_data, f, g)
 {
   # matrix from conv_reduce_all
   conv_all_mat <- conv_reduce_all(mi_data, 1, f, g)
 
-  # check against conv_reduce row by row
+  # check against conv_reduce element by element
   n_peaks <- length(mi_data$peak_ids)
   for(x in 1:n_peaks) {
-    row <- sapply(1:n_peaks,
-                  function(y) conv_reduce(mi_data, x, y, 1, f, g))
-    expect_equal(conv_all_mat[x,], row)
+    for(y in 1:n_peaks) {
+      conv_elem <- conv_reduce(mi_data, x, y, 1, f, g)
+      conv_all_elem <- with_attr(conv_all_mat[x,y], "index",
+                                 attr(conv_all_mat, "index")[x,y])
+    expect_equal(conv_all_elem, conv_elem)
+    }
   }
 }
 
@@ -133,68 +156,17 @@ test_that("conv_reduce_all returns a valid similarity for example-1", {
 
 
 test_that("conv_reduce_all returns a valid distance for example-1", {
-  test_conv_reduce_all(midata_1, cosine_dist, min_nonempty)
-})
-
-
-test_that("conv_reduce_all_select returns a valid middle metabolite matrix for example-1", {
-  # compute similarity and middle metabolite matrices
-  f <- cosine_sim
-  g <- max
-  output <- conv_reduce_all_select(midata_1, 1, f, g, which.max)
-
-  # make sure the output is a list
-  expect_true(is.list(output))
-  # of length 2 (one for similarity and one for the middle metabolite)
-  expect_equal(length(output), 2)
-
-  #print(output[[2]])
-  n_atoms <- midata_1$peak_n_atoms
-  # atom number difference for all pairs of metabolites
-  # this is a matrix of the same size as the output matrices
-  c_diff <- abs(outer(n_atoms, n_atoms, "-"))
-  # get the index of nonzero values and those that we have in our carbon pool
-  index <- which(c_diff != 0 & c_diff %in% n_atoms)
-  # make sure we only made predictions for these metabolites
-  expect_equal(
-    length(setdiff(which(is.na(output[[2]]) == F), index)),
-    0)
-  # TODO: test that selected metabolite is correct
+ test_conv_reduce_all(midata_1, euclidean_dist, min_nonempty)
 })
 
 
 # example-2:  as example 1 but peaks are permuted
 midata_2 <- midata_subset(midata_1, c(4,2,1,5,3))
 
-
 test_that("conv_reduce_all returns a valid distance matrix for example-2", {
   test_conv_reduce_all(midata_2, cosine_dist, min_nonempty)
 })
 
 
-test_that("conv_reduce_all_select returns a valid middle metabolite matrix for example-2", {
-  # compute similarity and middle metabolite matrices
-  output <- conv_reduce_all_select(midata_2, 1, cosine_sim, max, which.max)
-
-  # make sure the output is a list
-  expect_true(is.list(output))
-  # of length 2 (one for similarity and one for the middle metabolite)
-  expect_equal(length(output), 2)
-
-  # C pool: available C groups
-  c_pool <- midata_2$peak_n_atoms
-  # C number difference for all pairs as a matrix of the same size as the output matrices
-  c_diff <- matrix(
-    abs(
-      expand.grid(midata_2$peak_n_atoms, midata_2$peak_n_atoms)[,1]
-      - expand.grid(midata_2$peak_n_atoms, midata_2$peak_n_atoms)[,2]),
-    5, 5)
-  # expect diagonals to be zero
-  expect_equal(unique(diag(c_diff)), 0)
-  # get the index of non non zero values and those that we have in our carbon pool
-  index <- which(c_diff != 0 & c_diff %in% c_pool)
-  # make sure we only made predictions for these metabolites
-  expect_equal(length(setdiff(which(is.na(output[[2]]) == F), index)), 0)
-})
 
 
