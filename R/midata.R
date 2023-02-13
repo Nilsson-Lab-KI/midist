@@ -174,7 +174,7 @@ midata_transform <- function(midata, f) {
 normalize_mids <- function(mids) {
   normalized.mids <- matrix(0, nrow(mids), ncol(mids))
   for (i in 1:ncol(mids)) {
-    if (sum(mids[, i] != 0)) {
+    if (sum(mids[, i]) != 0 & unique(is.na(mids[,i])) == F) {
       normalized.mids[, i] <- mids[, i] / sum(mids[, i])
     }
   }
