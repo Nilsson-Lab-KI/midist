@@ -166,10 +166,19 @@ euclidean_dist_no_m0 <- function(x, y) apply_no_m0(euclidean_dist, x, y)
 
 
 # function adding z_index vector as attribute to f values
-f_attr <- function(mid_y, mids_xz, z_index, f) {
+f_attr <- function(mid_y, mids_xz, z_index, f)
+{
   f_values <- apply(mids_xz, MARGIN = 2, f, mid_y)
   attr(f_values, "index") <- z_index
   return(f_values)
+}
+
+
+# alternative, use a list with $value and $index instead of attribute
+f_list <- function(mid_y, mids_xz, z_index, f)
+{
+  f_values <- apply(mids_xz, MARGIN = 2, f, mid_y)
+  return(list(values = f_values, index = z_index))
 }
 
 
@@ -250,7 +259,7 @@ conv_reduce_all <- function(mi_data, e, f, g)
 {
   n_met <- length(mi_data$peak_ids)
   # allocate matrices
-  conv_mat <- matrix(as.double(NA), n_met, n_met)
+  conv_values <- matrix(as.double(NA), n_met, n_met)
   conv_index <- matrix(as.integer(NA), n_met, n_met)
 
   # unique metabolite sizes, sorted
@@ -269,29 +278,29 @@ conv_reduce_all <- function(mi_data, e, f, g)
        # compute this block
       if(n_atoms_x == n_atoms_y) {
         block <- conv_reduce_block_equal(mi_data, e, f, g, x_index, y_index)
-        stopifnot(is.matrix(block))
       }
       else {
-        # get all "middle" MIDs, each column one MID
         n_atoms_z = n_atoms_y - n_atoms_x
         z_index <- get_peak_index_n_atoms(mi_data, n_atoms_z)
         block <- conv_reduce_block(mi_data, e, f, g, x_index, y_index, z_index)
-        stopifnot(is.matrix(block))
       }
+      stopifnot(is.matrix(block$values))
+      stopifnot(is.matrix(block$index))
       # copy block to full matrices
-      conv_mat[x_index, y_index] <- without_attr(block)
-      conv_mat[y_index, x_index] <- t(without_attr(block))
-      conv_index[x_index, y_index] <- attr(block, "index")
-      conv_index[y_index, x_index] <- t(attr(block, "index"))
+      conv_values[x_index, y_index] <- block$values
+      conv_values[y_index, x_index] <- t(block$values)
+      conv_index[x_index, y_index] <- block$index
+      conv_index[y_index, x_index] <- block$index
     }
   }
-  return(with_attr(conv_mat, "index", conv_index))
+  return(with_attr(conv_values, "index", conv_index))
 }
 
 
-# compute vector of g values and add z index vector as attribute
-# using apply() for this seems to strip away the attributes ...
-g_attr <- function(mids_y, mids_xz, z_index, f, g)
+
+# apply a selection function g and return a list of
+# g values and corresponding indices
+g_list <- function(mids_y, mids_xz, z_index, f, g)
 {
   n_y <- dim(mids_y)[2]
   g_values <- rep(as.double(NA), n_y)
@@ -303,8 +312,9 @@ g_attr <- function(mids_y, mids_xz, z_index, f, g)
     g_index[i] <- attr(g_result, "index")
   }
   # add index vector as attribute
-  return(with_attr(g_values, "index", g_index))
+  return(list(values = g_values, index = g_index))
 }
+
 
 
 #' compute conv_reduce for one matrix block where all x are the same size
@@ -319,9 +329,8 @@ conv_reduce_block <- function(mi_data, e, f, g, x_index, y_index, z_index)
   n_x <- length(x_index)
   n_y <- length(y_index)
   ## allocate matrices
-  block <- matrix(as.double(NA), n_x, n_y)
-  block_index <- matrix(as.integer(NA), n_x, n_y)
-
+  block = list(values = matrix(as.double(NA), n_x, n_y),
+               index = matrix(as.integer(NA), n_x, n_y))
   if(length(z_index) > 0) {
     # get MID matrices
     mids_x <- sapply(x_index, function(i) get_avg_mid(mi_data, i, e))
@@ -336,16 +345,15 @@ conv_reduce_block <- function(mi_data, e, f, g, x_index, y_index, z_index)
       mids_xz <- convolute_cols(mids_x[, i], mids_z)
       stopifnot(is.matrix(mids_xz))
       # calculate g(f(x*z, y) ...) for all y (rows) and all convolutions x*z
-      g_values <- g_attr(mids_y, mids_xz, z_index, f, g)
+      g_result <- g_list(mids_y, mids_xz, z_index, f, g)
       # NOTE: is.vector(x) is FALSE when x is a vector but has attributes!
-      # stopifnot(is.vector(g_values))
+      stopifnot(is.vector(g_result$values))
       # store value and attributes separately
-      block[i, ] <- without_attr(g_values)
-      block_index[i, ] <- attr(g_values, "index")
+      block$values[i, ] <- g_result$values
+      block$index[i, ] <- g_result$index
     }
   }
   # else no metabolites z to convolute x with
-  attr(block, "index") <- block_index
   return(block)
 }
 
@@ -357,8 +365,8 @@ conv_reduce_block_equal <- function(mi_data, e, f, g, x_index, y_index)
   n_x <- length(x_index)
   n_y <- length(y_index)
   # allocate matrices
-  block <- matrix(as.double(NA), n_x, n_y)
-  block_index <- matrix(as.integer(NA), n_x, n_y)
+  block = list(values = matrix(as.double(NA), n_x, n_y),
+               index = matrix(as.integer(NA), n_x, n_y))
 
   mids_x <- sapply(x_index, function(i) get_avg_mid(mi_data, i, e))
   stopifnot(is.matrix(mids_x))
@@ -367,13 +375,12 @@ conv_reduce_block_equal <- function(mi_data, e, f, g, x_index, y_index)
 
   # calculate g(f(x,y)) for each x,y (no attributes in this case)
   for(i in 1:n_x) {
-    block[i, ] <- apply(mids_y, MARGIN = 2,
-                        function(mid_y) g(c(f(mids_x[, i], mid_y))))
+    block$values[i, ] <- apply(mids_y, MARGIN = 2,
+                               function(mid_y) g(c(f(mids_x[, i], mid_y))))
   }
-  # all indices are NA
-  attr(block, "index") <- matrix(as.integer(NA), n_x, n_y)
   return(block)
 }
+
 
 #' Calculate similarity matrix, based on parameters specified in an InputData object
 #'
@@ -497,7 +504,8 @@ filter_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01)
 
 
 #' @export
-filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01) {
+filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01)
+{
 
   # create an empty matrix to be filled in only by those who pass the filtering criteria
   filtered_pm <- matrix(NA, nrow(pairwise_matrix), ncol(pairwise_matrix))
@@ -594,12 +602,18 @@ combine <- function(pairwise_matrices, middle_met_matrices, fun)
 
   index <- as.vector(unlist(apply(pairwise_vec, 2, get_fun_index, fun)))
 
-  pm <- matrix(unlist(lapply(1:length(index), function(x, pairwise_vec, index) pairwise_vec[[x]][index[[x]][1]], pairwise_vec, index)),
+  pm <- matrix(
+    unlist(lapply(1:length(index),
+                  function(x, pairwise_vec, index) pairwise_vec[[x]][index[[x]][1]],
+                  pairwise_vec, index)),
     ncol = ncol(pairwise_matrices[[1]]),
     byrow = F
   )
 
-  mmm <- matrix(unlist(lapply(1:length(index), function(x, pairwise_vec, index) middle_met_vec[[x]][index[[x]][1]], vector, index)),
+  mmm <- matrix(
+    unlist(lapply(1:length(index),
+                  function(x, pairwise_vec, index) middle_met_vec[[x]][index[[x]][1]],
+                  vector, index)),
     ncol = ncol(pairwise_matrices[[1]]),
     byrow = F
   )
