@@ -4,16 +4,25 @@
 
 #' Construct an MIData (mass isotopomer data) object
 #'
-#' @param peak_areas a peak_area data.frame. The first column of peak_areas must be peak identifiers,
-#' repeated for each MI of the same peak, and MIs must be increasing 0,1,...,n for each peak
+#' @param peak_areas a peak_area data.frame. The first column of peak_areas
+#' must be peak identifiers, repeated for each MI of the same peak.
+#' The second column holds formulas (but )
 #' @param exp_names a optional list of experiment names matching columns 2,3... in peak_areas
 #' @export
-MIData <- function(peak_areas, exp_names) {
-  # # verify dimensions
-  # stopifnot(ncol(peak_areas) == length(exp_names) + 1)
+MIData <- function(peak_areas, exp_names = NULL)
+{
+  # verify first two column names
+  stopifnot(colnames(peak_areas)[1:2] == c("Metabolite", "Formula"))
 
-  # verify first three column names
-  stopifnot(colnames(peak_areas)[1:2] %in% c("Metabolite", "Formula"))
+  # check for experiment names
+  if(!is.null(exp_names)) {
+    # verify length matches
+    stopifnot(ncol(peak_areas) - 2 == length(exp_names))
+  }
+  else {
+    # use data frame column names as experiment names
+    exp_names <- colnames(peak_areas)[-(1:2)]
+  }
 
   # create object
   mi_data <- list()
@@ -41,7 +50,7 @@ MIData <- function(peak_areas, exp_names) {
   mi_data$exp_n_rep <-
     as.numeric(table(factor(exp_names, levels = mi_data$experiments)))
 
-  # remove first three columns (peak_ids / metabolite names, formulas, and mass isotopomers)
+  # remove first two columns (peak_ids / metabolite names, formulas)
   peak_areas <- as.matrix(peak_areas[3:ncol(peak_areas)])
 
   # MIDs
