@@ -59,6 +59,7 @@ MIData <- function(peak_areas, exp_names) {
   }
   # averaged MIDs
   mi_data$avg_mids <- calc_avg_mids(mi_data)
+  
   return(mi_data)
 }
 
@@ -208,6 +209,7 @@ collapse_replicates <- function(mid_matrix) {
 #
 # get MIDs, as above
 #
+#' @export
 get_mids <- function(mi_data, p, e) {
   return(
     mi_data$mids[get_mi_indices(mi_data, p), e, drop = FALSE]

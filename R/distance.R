@@ -292,6 +292,136 @@ conv_reduce_all <- function(mi_data, e, f, g, get_middle_met_matrix = F, g_selec
   }
 }
 
+#' @export
+conv_reduce_all_test <- function(mi_data, e, f, g, get_middle_met_matrix = F, g_select, z_threshold = 0.0107) {
+  # allocate square matrix
+  n_met <- length(mi_data$peak_ids)
+  result <- matrix(0, nrow = n_met, ncol = n_met)
+  if (get_middle_met_matrix == T) {
+    middle_met_matrix <- matrix(NA, nrow = n_met, ncol = n_met)
+  }
+  
+  # unique metabolite sizes
+  n_atoms <- unique(mi_data$peak_n_atoms)
+  n_atoms <- n_atoms[order(n_atoms)]
+  # loop over x
+  for (i in 1:length(n_atoms)) {
+    n_atoms_x <- n_atoms[[i]]
+    for (j in i:length(n_atoms)) {
+      n_atoms_y <- n_atoms[[j]]
+      # get all MIDs y
+      y_index <- get_peak_index_n_atoms(mi_data, n_atoms_y)
+      mids_y <- sapply(y_index, function(i) get_avg_mid(mi_data, i, e))
+      
+      # metabolites z to convolute with x
+      n_atoms_z <- n_atoms_y - n_atoms_x
+      mids_z <- as.matrix(get_avg_mids_by_size(mi_data, n_atoms_z, e))
+      
+      
+      for (x in get_peak_index_n_atoms(mi_data, n_atoms_x)) {
+        # MIDs of metabolite with index x
+        mid_x <- get_avg_mid(mi_data, x, e)
+        
+        if (n_atoms_x == n_atoms_y) {
+          # for metabolites y of same size as x, just calculate f(x,y)
+          result[x, y_index] <- result[y_index, x] <- apply(mids_y,
+                                                            MARGIN = 2,
+                                                            function(y) g(c(f(mid_x, y)))
+          )
+        } else {
+          if (length(mids_z) > 0){
+            # compute isotopic enrichment          
+            z_enrichment <- unlist(apply(mids_z, 2, isotopic_enrichment))
+            
+            if (length(which(z_enrichment > z_threshold)) > 0) {
+              # compute all convolutions x*z for each z
+              convolutions <- convolute_cols(mid_x, as.matrix(mids_z[, which(z_enrichment > z_threshold)]))
+              # get indices of all 13-C enriched z
+              z_ind <- get_peak_index_n_atoms(mi_data, n_atoms_z)[which(z_enrichment > z_threshold)]  
+              
+              # for each y, calculate g(f(x*z, y)) over all convolutions x*z
+              # get pairwise measures for each convolution
+              pm_conv <- apply(mids_y, 2, function(y) apply(convolutions, MARGIN = 2, f, y))
+              
+              if (length(z_ind) == 1) {
+                result[x, y_index] <- result[y_index, x] <- pm_conv
+                if (get_middle_met_matrix == T) {
+                  middle_met_matrix[x, y_index] <- middle_met_matrix[y_index, x] <- z_ind
+                }
+              } else {
+                result[x, y_index] <- result[y_index, x] <- apply(pm_conv, 2, g)
+                if (get_middle_met_matrix == T) {
+                  middle_met_matrix[x, y_index] <- middle_met_matrix[y_index, x] <- z_ind[apply(pm_conv, 2, g_select)]
+                }
+              }
+            }
+          }
+          else {
+            # no metabolites z to convolute x with
+            result[x, y_index] <- result[y_index, x] <- rep(suppressWarnings(g(c())), n = length(y_index))
+            if (get_middle_met_matrix == T) {
+              middle_met_matrix[x, y_index] <- middle_met_matrix[y_index, x] <- NA
+            }
+          }
+        }
+      }
+    }
+  }
+  if (get_middle_met_matrix == T) {
+    return(list(result, middle_met_matrix))
+  } else {
+    return(result)
+  }
+}
+
+
+#' @export
+conv_reduce_all_baseline <- function(mi_data, e, f, binom_prob = 0.0107) {
+  # allocate square matrix
+  n_met <- length(mi_data$peak_ids)
+  result <- matrix(0, nrow = n_met, ncol = n_met)
+  
+  # unique metabolite sizes
+  n_atoms <- unique(mi_data$peak_n_atoms)
+  n_atoms <- n_atoms[order(n_atoms)]
+  
+  # loop over x
+  for (i in 1:length(n_atoms)) {
+    n_atoms_x <- n_atoms[[i]]
+    for (j in i:length(n_atoms)) {
+      n_atoms_y <- n_atoms[[j]]
+      # get all MIDs y
+      y_index <- get_peak_index_n_atoms(mi_data, n_atoms_y)
+      mids_y <- sapply(y_index, function(i) get_avg_mid(mi_data, i, e))
+      
+      # metabolites z to convolute with x
+      n_atoms_z <- n_atoms_y - n_atoms_x
+      
+      for (x in get_peak_index_n_atoms(mi_data, n_atoms_x)) {
+        # MIDs of metabolite with index x
+        mid_x <- get_avg_mid(mi_data, x, e)
+        
+        if (n_atoms_x == n_atoms_y) {
+          # for metabolites y of same size as x, just calculate f(x,y)
+          result[x, y_index] <- result[y_index, x] <- apply(mids_y,
+                                                            MARGIN = 2,
+                                                            function(y) f(mid_x, y)
+          )
+        } else {
+          # binomial distribution
+          bino <- binomvals(0:n_atoms_z, n_atoms_z, binom_prob)
+          # convolute with unlabelled mid
+          convolution <- convolute(mid_x, bino)
+          # for each y, calculate g(f(x*z, y))
+          result[x, y_index] <- result[y_index, x] <- apply(mids_y, 2, f, convolution)
+        }
+      }
+    }
+  }
+  return(result)
+}
+
+
 
 #' Calculate similarity matrix, based on parameters specified in an InputData object
 #'
@@ -344,6 +474,80 @@ pairwise_matrix_all_ds <- function(e, input_data) {
   return(pairwise_matrix)
 }
 
+#' @export
+pairwise_matrix_all_ds_test <- function(e, input_data) {
+  experiment <- input_data$midata$experiments[e]
+  
+  # print progress
+  cat("Computing ", input_data$measure, " matrix for experiment: ", experiment, "\n")
+  if (input_data$reaction_restriction == F) {
+    cat("for all possible convolutions in data", "\n")
+  } else if (input_data$reaction_restriction == "mass") {
+    cat("for a restriction on mass difference", "\n")
+  } else {
+    cat("for a restriction on formula difference", "\n")
+  }
+  
+  
+  # data dimensions
+  n_metabolites <- length(input_data$midata$peak_ids)
+  # met names
+  met_names <- input_data$midata$peak_ids
+  
+  # compute the pairwise matrix
+  pairwise_matrix <- conv_reduce_all_test(
+    input_data$midata, e,
+    input_data$fun,
+    input_data$perfection,
+    eval(parse(text = input_data$get_middle_met_matrix)),
+    input_data$g_select
+  )
+  
+  # assigning column names
+  if (input_data$get_middle_met_matrix == T) {
+    colnames(pairwise_matrix[[1]]) <- rownames(pairwise_matrix[[1]]) <-
+      colnames(pairwise_matrix[[2]]) <- rownames(pairwise_matrix[[2]]) <-
+      input_data$midata$peak_ids
+  } else {
+    colnames(pairwise_matrix) <- rownames(pairwise_matrix) <- input_data$midata$peak_ids
+  }
+  
+  # return the final matrix (or matrices)
+  return(pairwise_matrix)
+}
+
+#' @export
+pairwise_matrix_all_ds_baseline <- function(e, input_data) {
+  experiment <- input_data$midata$experiments[e]
+  
+  # print progress
+  cat("Computing ", input_data$measure, " matrix for experiment: ", experiment, "\n")
+  if (input_data$reaction_restriction == F) {
+    cat("for all possible convolutions in data", "\n")
+  } else if (input_data$reaction_restriction == "mass") {
+    cat("for a restriction on mass difference", "\n")
+  } else {
+    cat("for a restriction on formula difference", "\n")
+  }
+  
+  
+  # data dimensions
+  n_metabolites <- length(input_data$midata$peak_ids)
+  # met names
+  met_names <- input_data$midata$peak_ids
+  
+  # compute the pairwise matrix
+  pairwise_matrix <- conv_reduce_all_baseline(
+    input_data$midata, e,
+    input_data$fun
+  )
+  
+  # assigning column names
+  colnames(pairwise_matrix) <- rownames(pairwise_matrix) <- input_data$midata$peak_ids
+  
+  # return the final matrix (or matrices)
+  return(pairwise_matrix)
+}
 
 
 #' Weighs the pairwise measure by the enrichment scores of metabolites involved.
@@ -416,6 +620,8 @@ filter_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01) {
 
 #' @export
 filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01) {
+  # remove diagonals
+  diag(pairwise_matrix) <- NA
   
   # create an empty matrix to be filled in only by those who pass the filtering criteria
   filtered_pm <- matrix(NA, nrow(pairwise_matrix), ncol(pairwise_matrix))
@@ -519,3 +725,91 @@ combine <- function(pairwise_matrices, middle_met_matrices, fun) {
   )
   return(list(pm, mmm, ei))
 }
+
+
+#' @export
+combine_test <- function(pairwise_matrices, middle_met_matrices, fun, input) {
+  
+  pairwise_vec <- do.call(rbind.data.frame, lapply(pairwise_matrices, as.vector))
+  middle_met_vec <- do.call(rbind.data.frame, lapply(middle_met_matrices, as.vector))
+  
+  index <- as.vector(unlist(apply(pairwise_vec, 2, get_fun_index, fun)))
+  
+  pm <- matrix(unlist(lapply(1:length(index), function(x, pairwise_vec, index) pairwise_vec[[x]][index[[x]][1]], pairwise_vec, index)),
+               ncol = ncol(pairwise_matrices[[1]]),
+               byrow = F
+  )
+  
+  mmm <- matrix(unlist(lapply(1:length(index), function(x, pairwise_vec, index) middle_met_vec[[x]][index[[x]][1]], vector, index)),
+                ncol = ncol(pairwise_matrices[[1]]),
+                byrow = F
+  )
+  
+  ei <- matrix(index,
+               ncol = ncol(pairwise_matrices[[1]]),
+               byrow = F
+  )
+  return(list(pm, mmm, ei))
+}
+
+#' @export
+convert_to_edge_list <- function(pairwise_matrix, middle_met_matrix, input, percentile){
+
+# filter pairwise matrix for the given percentile
+pairwise_matrix <- filter_pairwise_matrix_global(pairwise_matrix, percentile*0.01)
+
+edge_list <- data.frame(metabolite_1 = NA, metabolite_2 = NA, distance = NA, attribute = NA)
+for (r2 in 1:nrow(pairwise_matrix)){
+  for (d2 in r2:nrow(pairwise_matrix)){
+    
+    if (is.na(pairwise_matrix[r2, d2]) == F)
+    {
+      peak_1 <- input$midata$peak_ids[r2]
+      nr_carbon_1 <- input$midata$peak_n_atoms[r2]
+      peak_2 <- input$midata$peak_ids[d2]
+      nr_carbon_2 <- input$midata$peak_n_atoms[d2]
+      
+      # in case of equal carbons
+      if (nr_carbon_1 == nr_carbon_2)
+      {
+        edge_list <- rbind(edge_list, 
+                           data.frame(metabolite_1 = peak_1, 
+                                      metabolite_2 = peak_2, 
+                                      distance = pairwise_matrix[r2, d2], 
+                                      attribute = "equal_carbon"))
+      }
+      
+      # if metabolite 1 has less carbons than metabolite 2
+      # peak_1 <- peak_convolution & peak_middle <- peak_convolution & peak_convolution <- peak_2
+      else if (nr_carbon_1 < nr_carbon_2)
+      {
+        peak_middle <- input$midata$peak_ids[middle_met_matrix[r2,d2]]
+        peak_convolution <- paste(peak_1, peak_middle, sep = " & ")
+        edge_list <- rbind(edge_list, 
+                           data.frame(metabolite_1 = c(peak_1, peak_middle, peak_convolution), 
+                                      metabolite_2 = c(peak_convolution, peak_convolution, peak_2), 
+                                      distance = pairwise_matrix[r2, d2], attribute = "convolution"))
+      }
+      
+      # if metabolite 1 has more carbons than metabolite 2
+      # peak_2 <- peak_convolution & peak_middle <- peak_convolution & peak_convolution <- peak_1
+      else
+      {
+        peak_middle <- input$midata$peak_ids[middle_met_matrix[r2,d2]]
+        peak_convolution <- paste(peak_2, peak_middle, sep = " & ")
+        edge_list <- rbind(edge_list, 
+                           data.frame(metabolite_1 = c(peak_2, peak_middle, peak_convolution), 
+                                      metabolite_2 = c(peak_convolution, peak_convolution, peak_1), 
+                                      distance = pairwise_matrix[r2, d2], attribute = "convolution"))
+      }
+    }
+    
+    
+  }
+}
+# remove the first NA row
+edge_list <- edge_list[-1,]
+
+return(edge_list)
+}
+
