@@ -74,10 +74,20 @@ test_that("13C correction is correct", {
 })
 
 
-# TODO
-# test_that("atom index is created correctly", {
-#  expect_equal(
-#    create_atom_index(c(1,1,3,3,3,5,6)),
-#
-#  )
-# })
+test_that("solution() is correct", {
+  # find y minimizing  || x * y - z ||
+  x <- c(0.5, 0.5)
+  y <- c(0.2, 0, 0.8)
+  z <- c(0.1, 0.1, 0.4, 0.4)
+  expect_equal(solution(z, x), y)
+})
+
+
+test_that("find_convolution() is correct", {
+  # find y minimizing  || x * y - z ||
+  x <- c(0.5, 0.5)
+  #y <- c(0.2, 0, 0.8)
+  z <- c(0.1, 0.1, 0.4, 0.4)
+  expect_equal(find_convolution(z, x), z)
+})
+

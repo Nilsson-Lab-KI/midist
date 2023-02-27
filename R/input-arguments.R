@@ -65,11 +65,8 @@ parse_input_args <- function(input_args) {
     input_data$reaction_restriction <- input_args$reaction_restriction
     input_data$reaction_data <- as.vector(read.delim(input_args$reactions_file_path, header = FALSE, sep = "\t"))
   }
-
-
   # tolerance
   input_data$tolerance <- eval(parse(text = input_args$tolerance_ppm)) * 10^-6
-
   return(input_data)
 }
 
