@@ -27,7 +27,7 @@ parse_input_args <- function(input_args) {
 
   # read peak areas from file if the input is a file path (character)
   # if (is.character(peak_areas))
-  peak_areas <- as.data.frame(read.delim(input_args$peak_areas_file_path, header = T, sep = "\t"))
+  peak_areas <- as.data.frame(na.omit(read.delim(input_args$peak_areas_file_path, header = T, sep = "\t", check.names = F)))
 
   if ("MassIsotopomer" %in% colnames(peak_areas)) {
     peak_areas <- peak_areas[, -which(colnames(peak_areas) == "MassIsotopomer")]

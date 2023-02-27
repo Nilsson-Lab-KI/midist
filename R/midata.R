@@ -70,6 +70,7 @@ MIData <- function(peak_areas, exp_names = NULL)
   }
   # averaged MIDs
   mi_data$avg_mids <- calc_avg_mids(mi_data)
+
   return(mi_data)
 }
 
@@ -196,7 +197,7 @@ midata_transform <- function(midata, f) {
 normalize_mids <- function(mids) {
   normalized.mids <- matrix(0, nrow(mids), ncol(mids))
   for (i in 1:ncol(mids)) {
-    if (sum(mids[, i] != 0)) {
+    if (sum(mids[, i]) != 0 & unique(is.na(mids[,i])) == F) {
       normalized.mids[, i] <- mids[, i] / sum(mids[, i])
     }
   }
@@ -218,14 +219,25 @@ collapse_replicates <- function(mid_matrix) {
 }
 
 
+# #
+# # get MIDs, as above
+# #
+# get_mids <- function(mi_data, p, e) {
+#   return(
+#     mi_data$mids[get_mi_indices(mi_data, p), get_exp_indices(mi_data, e), drop = FALSE]
+#   )
+# }
+
 #
 # Get MID vectors for peak p, for all replicates in experiment e
 #
+#' @export
 get_mids <- function(mi_data, p, e) {
   return(
-    mi_data$mids[get_mi_indices(mi_data, p), get_exp_indices(mi_data, e), drop = FALSE]
+    mi_data$mids[get_mi_indices(mi_data, p), e, drop = FALSE]
   )
 }
+
 
 #' Get an averaged MID vector
 #'

@@ -10,7 +10,9 @@ add_gamma_noise(mid, stdev)
 \item{mid}{An MID vector}
 
 \item{stdev}{standard deviation for the gamma distribution
-Returns a noisy MID}
+Computes the gamma distribution parameters theta and k from the mean of the MID and input standard deviation.
+Multiplies the gamma values by the MID itself (multiplicative)
+Adds this noise to the MID and returns the noisy MID}
 }
 \description{
 Add multiplicative gamma noise to a given MID from a given standard deviation
