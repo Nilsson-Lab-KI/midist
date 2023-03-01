@@ -25,6 +25,7 @@ max_nonempty <- function(x)
 
 
 #' Similar to max_nonempty, but takes the minimum
+#' @export
 min_nonempty <- function(x)
 {
   best_nonempty(x, function(x) order(x, decreasing = FALSE)[1])

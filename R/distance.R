@@ -275,7 +275,7 @@ conv_reduce_all <- function(mi_data, e, f, g)
       n_atoms_y <- n_atoms[[j]]
       # get all MIDs y of this size
       y_index <- get_peak_index_n_atoms(mi_data, n_atoms_y)
-       # compute this block
+      # compute this block
       if(n_atoms_x == n_atoms_y) {
         block <- conv_reduce_block_equal(mi_data, e, f, g, x_index, y_index)
       }
@@ -290,7 +290,7 @@ conv_reduce_all <- function(mi_data, e, f, g)
       conv_values[x_index, y_index] <- block$values
       conv_values[y_index, x_index] <- t(block$values)
       conv_index[x_index, y_index] <- block$index
-      conv_index[y_index, x_index] <- block$index
+      conv_index[y_index, x_index] <- t(block$index)
     }
   }
   return(with_attr(conv_values, "index", conv_index))
@@ -379,6 +379,44 @@ conv_reduce_block_equal <- function(mi_data, e, f, g, x_index, y_index)
                                function(mid_y) g(c(f(mids_x[, i], mid_y))))
   }
   return(block)
+}
+
+conv_reduce_block_equal_all_experiments <- function(mi_data, f, g, x_index, y_index)
+{
+  n_x <- length(x_index)
+  n_y <- length(y_index)
+  # allocate matrices
+  block = list(values = matrix(as.double(NA), n_x, n_y),
+               index = matrix(as.integer(NA), n_x, n_y))
+  
+  mids_x <- lapply(1:length(mi_data$experiments), 
+                   function(e) sapply(x_index, function(i) get_avg_mid(mi_data, i, e)))
+  stopifnot(is.matrix(mids_x[[1]]))
+  mids_y <- lapply(1:length(mi_data$experiments), 
+                   function(e) sapply(y_index, function(i) get_avg_mid(mi_data, i, e)))
+  stopifnot(is.matrix(mids_y[[1]]))
+  
+  # calculate g(f(x,y)) for each x,y (no attributes in this case)
+  for(i in 1:n_x) {
+    block$values[i, ] <- apply(mids_y, MARGIN = 2,
+                               function(mid_y) g(c(f(mids_x[, i], mid_y))))
+  }
+  return(block)
+}
+
+euclidean_dist_sq_from_list <- function(x, y)
+{
+  # ensure equal number of experiments
+  stopifnot(length(x) == length(y))
+  
+  for (i in 1:length(x)){
+    
+  }
+  stopifnot(is.vector(x))
+  stopifnot(is.vector(y))
+  stopifnot(length(x) == length(y))
+  diff <- x - y
+  return(sum(diff * diff))
 }
 
 #' @export
@@ -860,61 +898,127 @@ combine_test <- function(pairwise_matrices, middle_met_matrices, fun, input) {
 #' @export
 convert_to_edge_list <- function(pairwise_matrix, middle_met_matrix, input, percentile){
 
-# filter pairwise matrix for the given percentile
-pairwise_matrix <- filter_pairwise_matrix_global(pairwise_matrix, percentile*0.01)
-
-edge_list <- data.frame(metabolite_1 = NA, metabolite_2 = NA, distance = NA, attribute = NA)
-for (r2 in 1:nrow(pairwise_matrix)){
-  for (d2 in r2:nrow(pairwise_matrix)){
-
-    if (is.na(pairwise_matrix[r2, d2]) == F)
-    {
-      peak_1 <- input$midata$peak_ids[r2]
-      nr_carbon_1 <- input$midata$peak_n_atoms[r2]
-      peak_2 <- input$midata$peak_ids[d2]
-      nr_carbon_2 <- input$midata$peak_n_atoms[d2]
-
-      # in case of equal carbons
-      if (nr_carbon_1 == nr_carbon_2)
+  # filter pairwise matrix for the given percentile
+  pairwise_matrix <- filter_pairwise_matrix_global(pairwise_matrix, percentile*0.01)
+  
+  edge_list <- data.frame(metabolite_1 = NA, met_1_attribute = NA,
+                          metabolite_2 = NA, met_2_attribute = NA,
+                          distance = NA, distance_attribute = NA)
+  for (r2 in 1:nrow(pairwise_matrix)){
+    for (d2 in r2:nrow(pairwise_matrix)){
+  
+      if (is.na(pairwise_matrix[r2, d2]) == F)
       {
-        edge_list <- rbind(edge_list,
-                           data.frame(metabolite_1 = peak_1,
-                                      metabolite_2 = peak_2,
-                                      distance = pairwise_matrix[r2, d2],
-                                      attribute = "equal_carbon"))
+        peak_1 <- input$midata$peak_ids[r2]
+        nr_carbon_1 <- input$midata$peak_n_atoms[r2]
+        peak_2 <- input$midata$peak_ids[d2]
+        nr_carbon_2 <- input$midata$peak_n_atoms[d2]
+  
+        # in case of equal carbons
+        if (nr_carbon_1 == nr_carbon_2)
+        {
+          edge_list <- rbind(edge_list,
+                             data.frame(metabolite_1 = peak_1, met_1_attribute = "metabolite",
+                                        metabolite_2 = peak_2, met_2_attribute = "metabolite",
+                                        distance = pairwise_matrix[r2, d2],
+                                        distance_attribute = "equal_carbon"))
+        }
+  
+        # if metabolite 1 has less carbons than metabolite 2
+        # peak_1 <- peak_convolution & peak_middle <- peak_convolution & peak_convolution <- peak_2
+        else if (nr_carbon_1 < nr_carbon_2)
+        {
+          peak_middle <- input$midata$peak_ids[middle_met_matrix[r2,d2]]
+          peak_convolution <- paste(r2, d2, sep = "_")
+          edge_list <- rbind(edge_list,
+                             data.frame(metabolite_1 = c(peak_1, peak_middle, peak_convolution),
+                                        met_1_attribute = c("metabolite", "metabolite", "convolution"),
+                                        metabolite_2 = c(peak_convolution, peak_convolution, peak_2),
+                                        met_2_attribute = c("convolution", "convolution", "metabolite"),
+                                        distance = pairwise_matrix[r2, d2], distance_attribute = "convolution"))
+        }
+  
+        # if metabolite 1 has more carbons than metabolite 2
+        # peak_2 <- peak_convolution & peak_middle <- peak_convolution & peak_convolution <- peak_1
+        else
+        {
+          peak_middle <- input$midata$peak_ids[middle_met_matrix[r2,d2]]
+          peak_convolution <- paste(r2, d2, sep = "_")
+          edge_list <- rbind(edge_list,
+                             data.frame(metabolite_1 = c(peak_2, peak_middle, peak_convolution),
+                                        met_1_attribute = c("metabolite", "metabolite", "convolution"),
+                                        metabolite_2 = c(peak_convolution, peak_convolution, peak_1),
+                                        met_2_attribute = c("convolution", "convolution", "metabolite"),
+                                        distance = pairwise_matrix[r2, d2], distance_attribute = "convolution"))
+        }
       }
-
-      # if metabolite 1 has less carbons than metabolite 2
-      # peak_1 <- peak_convolution & peak_middle <- peak_convolution & peak_convolution <- peak_2
-      else if (nr_carbon_1 < nr_carbon_2)
-      {
-        peak_middle <- input$midata$peak_ids[middle_met_matrix[r2,d2]]
-        peak_convolution <- paste(peak_1, peak_middle, sep = " & ")
-        edge_list <- rbind(edge_list,
-                           data.frame(metabolite_1 = c(peak_1, peak_middle, peak_convolution),
-                                      metabolite_2 = c(peak_convolution, peak_convolution, peak_2),
-                                      distance = pairwise_matrix[r2, d2], attribute = "convolution"))
-      }
-
-      # if metabolite 1 has more carbons than metabolite 2
-      # peak_2 <- peak_convolution & peak_middle <- peak_convolution & peak_convolution <- peak_1
-      else
-      {
-        peak_middle <- input$midata$peak_ids[middle_met_matrix[r2,d2]]
-        peak_convolution <- paste(peak_2, peak_middle, sep = " & ")
-        edge_list <- rbind(edge_list,
-                           data.frame(metabolite_1 = c(peak_2, peak_middle, peak_convolution),
-                                      metabolite_2 = c(peak_convolution, peak_convolution, peak_1),
-                                      distance = pairwise_matrix[r2, d2], attribute = "convolution"))
-      }
+  
+  
     }
-
-
   }
+  # remove the first NA row
+  edge_list <- edge_list[-1,]
+  
+  return(edge_list)
 }
-# remove the first NA row
-edge_list <- edge_list[-1,]
 
-return(edge_list)
+# computes distances
+# directly, in case of equal carbon numbers;
+# or by first computing convolutions, in case of unequal carbon numbers.
+# the output is either a vector of distance(s), or NA
+#' @export
+conv <- function(peak_ind, mi_data, e, f){
+  
+  n_atoms_x <- mi_data$peak_n_atoms[peak_ind[1]]
+  x_mid <- get_avg_mid(mi_data, peak_ind[1], e)
+  
+  n_atoms_y <- mi_data$peak_n_atoms[peak_ind[2]]
+  y_mid <- get_avg_mid(mi_data, peak_ind[2], e)
+  
+  # if carbon numbers are equal, just compute the distance between the two MIDs
+  if (n_atoms_x == n_atoms_y){
+    return(f(get_avg_mid(mi_data, peak_ind[1], e), get_avg_mid(mi_data, peak_ind[2], e)))
+  } 
+  
+  # if carbon numbers are different, convolutions are computed
+  else {
+    # C atom difference between x and y
+    n_atoms_z <- abs(n_atoms_x - n_atoms_y)
+    # find the index of all metabolites with n_atoms_z carbons
+    z_index <- get_peak_index_n_atoms(mi_data, n_atoms_z)
+    
+    # if we have metabolites with this carbon difference, compute convolutions and distances for each
+    if (length(z_index) > 0){
+      # bring MIDs of all z
+      z_mids <- sapply(z_index, function(z, mi_data, e) get_avg_mid(mi_data, z, e), mi_data, e)
+      
+      # now convolutions and distance calculations      
+      if (n_atoms_x < n_atoms_y)
+        return(apply(apply(z_mids, 2, convolute, x_mid), 2, f, y_mid)) else
+          return(apply(apply(z_mids, 2, convolute, y_mid), 2, f, x_mid))
+    }
+    
+    # otherwise just return NA
+    else return(NA)
+    
+  }
+  
 }
-
+#
+# # how to run is below:
+# # generate unique metabolite pairs
+# pairs <- combn((1:length(mi_data$peak_ids)), 2)
+# # result is a list of distances for each unique pair. They can either be used that way to find candidates,
+# # or be converted into a distance matrix for other purposes
+# result <- apply(pairs, 2, conv_reduce_all_new, mi_data, f = euclidean_dist_sq, g = median)
+# 
+#' @export
+conv_reduce_all_new <- function(pair, mi_data, f, g)
+{
+  print(pair)
+  time_spent <- system.time(result <- lapply(1:length(mi_data$experiments), 
+                                             function(e, mi_data, f) conv(pair, mi_data, e, f), mi_data, f))
+  print(time_spent)
+  
+  return(g(unlist(lapply(1:length(result[[1]]), function(x) sqrt(sum(unlist(lapply(result, function(e) e[[x]]))))))))
+}

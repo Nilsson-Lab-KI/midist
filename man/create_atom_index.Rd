@@ -7,8 +7,9 @@
 create_atom_index(peak_n_atoms)
 }
 \arguments{
-\item{peak_n_atoms}{number of C atoms per peak}
+\item{peak_n_atoms}{number of atoms per peak}
 }
 \description{
-Create an index list mapping each number of atoms n to the indices of the peaks having n atoms
+NOTE: this is a more generic function, applicable to any list,
+could be moved to util.R
 }
