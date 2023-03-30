@@ -962,12 +962,17 @@ convert_to_edge_list <- function(pairwise_matrix, middle_met_matrix, input, perc
   return(edge_list)
 }
 
+
+#
+# Added the following part for the alternative experiment combination
+
+
 # computes distances
 # directly, in case of equal carbon numbers;
 # or by first computing convolutions, in case of unequal carbon numbers.
 # the output is either a vector of distance(s), or NA
 #' @export
-conv <- function(peak_ind, mi_data, e, f){
+conv_v2 <- function(peak_ind, mi_data, e, f){
   
   n_atoms_x <- mi_data$peak_n_atoms[peak_ind[1]]
   x_mid <- get_avg_mid(mi_data, peak_ind[1], e)
@@ -1004,6 +1009,7 @@ conv <- function(peak_ind, mi_data, e, f){
   }
   
 }
+
 #
 # # how to run is below:
 # # generate unique metabolite pairs
@@ -1013,12 +1019,44 @@ conv <- function(peak_ind, mi_data, e, f){
 # result <- apply(pairs, 2, conv_reduce_all_new, mi_data, f = euclidean_dist_sq, g = median)
 # 
 #' @export
-conv_reduce_all_new <- function(pair, mi_data, f, g)
+conv_reduce_v2 <- function(pair, mi_data, f, g)
 {
   print(pair)
-  time_spent <- system.time(result <- lapply(1:length(mi_data$experiments), 
-                                             function(e, mi_data, f) conv(pair, mi_data, e, f), mi_data, f))
-  print(time_spent)
   
-  return(g(unlist(lapply(1:length(result[[1]]), function(x) sqrt(sum(unlist(lapply(result, function(e) e[[x]]))))))))
+  result <- lapply(1:length(mi_data$experiments), 
+                   function(e, mi_data, f) conv_v2(pair, mi_data, e, f), mi_data, f)
+  
+  distances <- unlist(lapply(1:length(result[[1]]), function(x) sqrt(sum(unlist(lapply(result, function(e) e[[x]]))))))
+  
+  # atom numbers
+  n_atoms_x <- mi_data$peak_n_atoms[pair[1]]
+  n_atoms_y <- mi_data$peak_n_atoms[pair[2]]
+  if (n_atoms_x != n_atoms_y){
+    n_atoms_z <- abs(n_atoms_x - n_atoms_y)
+    z_index <- get_peak_index_n_atoms(mi_data, n_atoms_z)
+    return(c(g(distances), z_index[which(g(distances) == min(g(distances)))[1]]))
+  } else return(c(g(distances), NA))
+  
+}
+
+
+#' @export
+pairwise_matrix_v2 <- function(input){
+  # all unique pairs:
+  pairs <- combn((1:length(input$midata$peak_ids)), 2)
+  
+  # compute distances for all unique pairs
+  aa <- apply(pairs, 2, conv_reduce_v2, input$midata, input$measure_fun, input$g_select)
+  
+  # now convert this pair list into a distance matrix and a middle metabolite matrix
+  pm <- matrix(NA, length(input$midata$peak_ids), length(input$midata$peak_ids))
+  mmm <- matrix(NA, length(input$midata$peak_ids), length(input$midata$peak_ids))
+  for (i in 1:ncol(pairs)){
+    r2 <- pairs[,i][1]
+    d2 <- pairs[,i][2]
+    pm[r2, d2] <- pm[d2, r2] <- aa[[i]][1]
+    mmm[r2, d2] <- mmm[d2, r2] <- aa[[i]][2]
+  }
+  
+  return(list(pm, mmm))
 }

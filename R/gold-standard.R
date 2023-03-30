@@ -43,7 +43,7 @@ calc_accuracy <- function(true_matrix, predicted_matrix){
   fp <- length(which(true_matrix == 0 & predicted_matrix == 1))
   tn <- length(which(true_matrix == 0 & predicted_matrix == 0))
   fn <- length(which(true_matrix == 1 & predicted_matrix == 0))
-  stopifnot(tp+fp+tn+fn == length(true_matrix))
+  stopifnot(tp+fp+tn+fn == nrow(true_matrix)*ncol(true_matrix))
   #
   # accuracy measures
   #

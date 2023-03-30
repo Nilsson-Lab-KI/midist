@@ -188,6 +188,52 @@ midata_transform <- function(midata, f) {
   return(new_midata)
 }
 
+#' @export
+remove_false_isotopes_from_midata <- function(mi_data, threshold = 0.03) {
+  # copy MIData object
+  new_midata <- mi_data
+  
+  for (p in 1:length(mi_data$peak_ids)) {
+    
+    # get mids for this peak (including all samples it has)
+    mids <- get_mids(mi_data, p)
+    
+    # correct these mids for the naturally occurring 13-C
+    c13_corrected_mids <- apply(mids, 2, c13correct)
+    
+    # find number of isotopes that are above the allowed threshold
+    if (nrow(c13_corrected_mids) == 2)
+      isotopes_above_threshold <- as.vector(sapply(c13_corrected_mids[-1, ], check_isotopes, threshold)) else
+        isotopes_above_threshold <- as.vector(apply(c13_corrected_mids[-1, ], 1, check_isotopes, threshold))
+    
+    # find indices of "false" isotopes and add 1 to account for M+0
+    if (length(isotopes_above_threshold) != 0){
+      false_ind <- which(isotopes_above_threshold == ncol(c13_corrected_mids)) + 1
+      
+      # rows of this peak
+      rows <- get_mi_indices(mi_data, p)
+      
+      # replace false isotopes by zero
+      new_midata$mids[rows, ][false_ind,] <- 0
+    }
+    
+  }
+  
+  # updata the averaged MIDs
+  new_midata$avg_mids <- calc_avg_mids(new_midata)
+  return(new_midata)
+}
+
+check_isotopes <- function(isotopes, threshold){
+  ans <- which(isotopes > threshold)
+  if (length(ans) != 0)
+    return(length(ans)) else
+      return(0)
+}
+
+
+
+
 #
 # normalize each column in a matrix of positive values
 # so that each column sums to 1

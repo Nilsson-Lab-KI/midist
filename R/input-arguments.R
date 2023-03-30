@@ -27,7 +27,7 @@ parse_input_args <- function(input_args) {
 
   # read peak areas from file if the input is a file path (character)
   # if (is.character(peak_areas))
-  peak_areas <- as.data.frame(na.omit(read.delim(input_args$peak_areas_file_path, header = T, sep = "\t", check.names = F)))
+  peak_areas <- as.data.frame(na.omit(read.delim(input_args$peak_areas_fname, header = T, sep = "\t", check.names = F)))
 
   if ("MassIsotopomer" %in% colnames(peak_areas)) {
     peak_areas <- peak_areas[, -which(colnames(peak_areas) == "MassIsotopomer")]
@@ -44,29 +44,34 @@ parse_input_args <- function(input_args) {
     input_data$c13_correction <- "F"
   }
 
+  # remove false isotopes if isotope_correction is "do"
+  if (input_args$isotope_correction == "do") {
+    midata <- remove_false_isotopes_from_midata(midata)
+    input_data$isotope_correction <- "T"
+  } else {
+    input_data$isotope_correction <- "F"
+  }
+
   #
   input_data$midata <- midata
   #
 
   # similarity or distance function to apply to MIDs
   input_data$measure <- input_args$measure
-  input_data$fun <- eval(parse(text = input_args$fun))
-  input_data$type <- input_args$type
-  input_data$perfection <- eval(parse(text = input_args$perfection))
+  input_data$measure_fun <- eval(parse(text = input_args$measure_fun))
+  input_data$measure_type <- input_args$measure_type
+  
+  # which pairwise matrix function to use:
+  input_data$pairwise <- input_args$pairwise
+  input_data$pairwise_fun <- eval(parse(text = input_args$pairwise_fun))
+  
+  # how to combine experiments:
   input_data$g_select <- eval(parse(text = input_args$g_select))
-  input_data$get_middle_met_matrix <- eval(parse(text = input_args$get_middle_met_matrix))
-  input_data$what_to_assign_to_na <- eval(parse(text = input_args$what_to_assign_to_na))
-  #
-
-  # add reaction restriction to input data
-  if (input_args$reaction_restriction == "F" | input_args$reaction_restriction == F) {
-    input_data$reaction_restriction <- eval(parse(text = input_args$reaction_restriction))
-  } else {
-    input_data$reaction_restriction <- input_args$reaction_restriction
-    input_data$reaction_data <- as.vector(read.delim(input_args$reactions_file_path, header = FALSE, sep = "\t"))
-  }
-  # tolerance
-  input_data$tolerance <- eval(parse(text = input_args$tolerance_ppm)) * 10^-6
+  
+  # noise and size
+  input_data$noise = input_args$noise
+  input_data$sample_size = input_args$sample_size
+  
   return(input_data)
 }
 
