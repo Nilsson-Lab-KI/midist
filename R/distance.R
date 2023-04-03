@@ -1034,7 +1034,7 @@ conv_reduce_v2 <- function(pair, mi_data, f, g)
   if (n_atoms_x != n_atoms_y){
     n_atoms_z <- abs(n_atoms_x - n_atoms_y)
     z_index <- get_peak_index_n_atoms(mi_data, n_atoms_z)
-    return(c(g(distances), z_index[which(g(distances) == min(g(distances)))[1]]))
+    return(c(g(distances), z_index[which(distances == g(distances))[1]]))
   } else return(c(g(distances), NA))
   
 }
@@ -1060,3 +1060,4 @@ pairwise_matrix_v2 <- function(input){
   
   return(list(pm, mmm))
 }
+
