@@ -16,11 +16,11 @@ get_convoluted_gs <- function(mmm, gs_raw, input, symmetrize_by = max){
   # convolute the gold standard for UNWEIGHTED
   gs <- gs_raw
   for (r2 in 1:nrow(gs_raw)){
-    for (d2 in r2:nrow(gs_raw)){
+    for (d2 in 1:nrow(gs_raw)){
       if (mmm[r2,d2] %in% unique_z){
         if (length(get_avg_mid(input$midata, r2, 1)) < length(get_avg_mid(input$midata, d2, 1))) 
-          gs[r2,d2] <- gs[d2,r2] <- convolute_gs(mmm[r2,d2], r2, d2, gs_raw) else
-            gs[r2,d2] <- gs[d2,r2] <- convolute_gs(mmm[r2,d2], d2, r2, gs_raw)
+          gs[r2,d2] <- convolute_gs(mmm[r2,d2], r2, d2, gs_raw) else
+            gs[r2,d2] <- convolute_gs(mmm[r2,d2], d2, r2, gs_raw)
       }
     }
   }
