@@ -188,17 +188,24 @@ jensen_shannon <- function(x, y) {
 
 #' @export
 manhattan_distance <- function(x, y) {
-  sum(abs(x - y))
+  return(sum(abs(x - y)))
 }
 
 #' @export
 canberra_distance <- function(x, y) {
-  sum(abs(x - y) / (abs(x) + abs(y)))
+  return(sum(abs(x - y) / (abs(x) + abs(y))))
 }
 
 #' @export
 bray_curtis_distance <- function(x, y) {
-  sum(abs(x - y)) / sum(abs(x + y))
+  return(sum(abs(x - y)) / sum(abs(x + y)))
+}
+
+
+#' @export
+mi_weighted_distance <- function(x, y, p = 1) {
+  n <- length(x) - 1
+  return((sum(abs(x - y)^p * c(0:n)))^(1/p))
 }
 
 
