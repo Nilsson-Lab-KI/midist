@@ -188,6 +188,28 @@ midata_transform <- function(midata, f) {
   return(new_midata)
 }
 
+
+#' @export
+midata_randomize <- function(midata){
+  for (i in 1:length(midata$n_atoms_index)){
+    print(i)
+    if (length(midata$n_atoms_index[[i]]) != 1){
+      # Shuffle the vector while ensuring none of the elements are in their original spot
+      # Note that this is not a complete randomization, but rather misplacing every element
+      new_ind <- midata$n_atoms_index[[i]]
+      while (any(new_ind == midata$n_atoms_index[[i]])) {
+        new_ind <- sample(midata$n_atoms_index[[i]])
+      }
+      # update the order of peak IDs without changing MIDs
+      midata$peak_ids[midata$n_atoms_index[[i]]] <- midata$peak_ids[new_ind]
+      rm(new_ind)
+    } else midata$peak_ids[midata$n_atoms_index[[i]]] <- midata$peak_ids[midata$n_atoms_index[[i]]]
+    
+  }
+  return(midata)
+}
+
+
 #' @export
 remove_false_isotopes_from_midata <- function(mi_data, threshold = 0.03) {
   # copy MIData object
