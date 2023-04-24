@@ -1165,3 +1165,16 @@ is_distance_matrix <- function(mat) {
     return(failures)
   }
 }
+
+#' @export
+# compute distance matrix from isotopic enrichment only
+# choose the method from c("euclidean", "manhattan", "canberra")
+enrichment_dist <- function(midata, method = "euclidean"){
+  enrichments <- as.matrix(dist(do.call(rbind.data.frame, lapply(1:length(midata$peak_ids), function(p) apply(get_avg_mid(midata, p), 2, isotopic_enrichment))),
+                                method = method))
+  rownames(enrichments) <- colnames(enrichments) <- midata$peak_ids
+  return(enrichments)
+}
+
+
+
