@@ -209,6 +209,13 @@ mi_weighted_distance <- function(x, y, p = 1) {
 }
 
 
+#' @export
+mi_weighted_dist_normalized <- function(x, y, p = 1) {
+  n <- length(x) - 1
+  return(((1/n)*sum(abs(x - y)^p * c(0:n)))^(1/p))
+}
+
+
 # function adding z_index vector as attribute to f values
 f_attr <- function(mid_y, mids_xz, z_index, f)
 {
