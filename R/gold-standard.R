@@ -131,6 +131,55 @@ get_global_percentile_accuracy <- function(pairwise_matrix, gold_standard, measu
   return(accuracy_df)
   
 }
+
+
+
+#' @export
+get_continuous_accuracy <- function(pairwise_matrix, gold_standard, measure, noise, experiment, subset_size){
+  # create an empty data frame to store the accuracy results
+  accuracy_df <- data.frame(measure = NA, noise = NA,
+                            tpr = NA, fpr = NA, precision = NA, fdr = NA, f1_score = NA,
+                            experiment = NA, subset_size = NA)
+  
+  # make sure the diagonal is NA
+  diag(pairwise_matrix) <- NA
+  
+  # now we go from full to empty
+  tpr <- c(); fpr <- c(); precision <- c(); fdr <- c(); f1_score <- c()
+  
+  thresholds <- unique(as.vector(pairwise_matrix))[-which(is.na(unique(as.vector(pairwise_matrix))))]
+  thresholds <- thresholds[order(thresholds, decreasing = T)]
+  
+  for (p in 1:length(thresholds)){
+    # assign NAs to all values above a given threshold
+    filtered_pm <- pairwise_matrix
+    filtered_pm[which(pairwise_matrix > thresholds[p])] <- NA
+    # binarize
+    filtered_pm[which(is.na(filtered_pm))] <- 0
+    filtered_pm[which(filtered_pm != 0)] <- 1
+    
+    # now we have to binary matrices to compare to each other: from gs-fraction and MID-distance
+    accuracy <- calc_accuracy(gold_standard, filtered_pm)
+    tpr[p] <- accuracy$tpr
+    fpr[p] <- accuracy$fpr
+    precision[p] <- accuracy$precision
+    fdr[p] <- accuracy$fdr
+    f1_score[p] <- accuracy$f1_score
+  }
+  
+  accuracy_df <- rbind(accuracy_df, data.frame(measure = measure, noise = noise,
+                                               tpr = tpr, fpr = fpr, precision = precision, fdr = fdr, f1_score = f1_score,
+                                               experiment = experiment, subset_size = subset_size))
+  
+  # remove the NA line
+  accuracy_df <- accuracy_df[-1,]
+  
+  return(accuracy_df)
+  
+}
+
+
+
 #' @export
 get_threshold_accuracy <- function(pairwise_matrix, gold_standard, measure, noise, experiment, thresholds){
   # create an empty data frame to store the accuracy results
