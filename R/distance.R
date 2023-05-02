@@ -1090,6 +1090,56 @@ calc_pair_distance <- function(pair, midata, f, g_select){
   
 }
 
+
+#' @export
+# compute distance for each unique pair
+calc_pair_distance_single_experiment <- function(pair, midata, f, g_select){
+  print(pair)
+  
+  n_atoms_x <- midata$peak_n_atoms[pair[1]]
+  mid_x <- get_avg_mid(midata, pair[1])
+  n_atoms_y <- midata$peak_n_atoms[pair[2]]
+  mid_y <- get_avg_mid(midata, pair[2])
+  
+  if (n_atoms_x == n_atoms_y){
+    distance <- f(mid_x, mid_y)
+    result <- data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2], 
+                         middle_metabolite = NA, distance = distance)
+    return(result)
+  } 
+  
+  else {
+    
+    # number of carbons for the middle metabolite
+    n_atoms_z <- abs(n_atoms_x - n_atoms_y)
+    # indices of metabolites with n_atoms_z carbons
+    z_index <- get_peak_index_n_atoms(midata, n_atoms_z)
+    
+    # make sure at least one metabolite with n_atoms_z carbons exists in the data
+    if (is.null(z_index) == F) {
+      # bring MIDs of these metabolites across all experiments
+      mid_z <- lapply(z_index, function(p) get_avg_mid(midata, p))
+      # compute the actual distances for each z, and select the one 
+      
+      distances <- lapply(1:length(mid_z), function(z, mid_x, mid_y, mid_z, f) convolute_and_distance(mid_x, mid_y, mid_z[[z]], f), 
+                          mid_x, mid_y, mid_z, f)
+      
+      
+      distance <- g_select(distances)
+      mmm <- which(distances == distance)
+      result <- data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2], 
+                           middle_metabolite = mmm, distance = distance)
+      return(result)
+    } 
+    # if not just return NA for this pair
+    else return(data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2], 
+                           middle_metabolite = NA, distance = NA))
+  }
+  
+}
+
+
+
 #' @export
 pairwise_matrix_v2 <- function(midata, f, g_select){
   
@@ -1119,6 +1169,25 @@ pairwise_matrix_v2 <- function(midata, f, g_select){
   names(result) <- c("distance_matrix", "middle_metabolite_matrix")
   
   return(result)
+}
+
+#' @export
+remn_v2 <- function(midata, f, g_select, rdata_fname, return = T){
+  
+  remn_output <- pairwise_matrix_v2(midata, f, g_select)
+  
+  if (return == T)
+    return(remn_output) else {
+      distance_matrix <- remn_output$distance_matrix
+      middle_metabolite_matrix <- remn_output$middle_metabolite_matrix
+      
+      save(midata,
+           distance_matrix, 
+           middle_metabolite_matrix,
+           f,
+           g_select,
+           file = rdata_fname)
+    }
 }
 
 #' @export
@@ -1176,8 +1245,9 @@ is_distance_matrix <- function(mat) {
 #' @export
 # compute distance matrix from isotopic enrichment only
 # choose the method from c("euclidean", "manhattan", "canberra")
-enrichment_dist <- function(midata, method = "euclidean"){
-  enrichments <- as.matrix(dist(do.call(rbind.data.frame, lapply(1:length(midata$peak_ids), function(p) apply(get_avg_mid(midata, p), 2, isotopic_enrichment))),
+enrichment_dist <- function(midata, experiments, method = "euclidean"){
+  isotopic_enrichments <- do.call(rbind.data.frame, lapply(1:length(midata$peak_ids), function(p) apply(get_avg_mid(midata, p), 2, isotopic_enrichment)))
+  enrichments <- as.matrix(dist(isotopic_enrichments[, midata$experiments %in% experiments],
                                 method = method))
   rownames(enrichments) <- colnames(enrichments) <- midata$peak_ids
   return(enrichments)

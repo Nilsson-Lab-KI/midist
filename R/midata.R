@@ -74,6 +74,21 @@ MIData <- function(peak_areas, exp_names = NULL)
   return(mi_data)
 }
 
+#' @export
+get_midata <- function(peak_areas_fname){
+  
+  peak_areas <- as.data.frame(na.omit(read.delim(peak_areas_fname, header = T, sep = "\t", check.names = F)))
+  
+  if ("MassIsotopomer" %in% colnames(peak_areas)) {
+    peak_areas <- peak_areas[, -which(colnames(peak_areas) == "MassIsotopomer")]
+  }
+  
+  # make an MIData object from peak_areas, fetching experiments from column names of the matrix
+  midata <- MIData(peak_areas, colnames(peak_areas)[-which(colnames(peak_areas) %in% c("Metabolite", "Formula", "MassIsotopomer"))])
+  
+  return(midata)
+}
+
 #' Compute index vector into the MI data table
 #' for a given list of atom sizes
 find_mi_index <- function(peak_n_atoms)

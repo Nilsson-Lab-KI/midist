@@ -1,6 +1,28 @@
 # 
 # gold standard functions
 #
+#' @export
+read_gold_standard <- function(gs_fname, symmetric = T, binary = T, sparsity_cutoff = 0.5){
+  
+  gs <- as.matrix(read.delim(gs_fname, header = T, sep = "\t", check.names = F))
+  
+  if (symmetric == T){
+    # symmetrize gs
+    for (r2 in 1:nrow(gs)){
+      for (d2 in r2:ncol(gs)){
+        gs[r2,d2] <- gs[d2,r2] <- max(gs[r2,d2], gs[d2,r2])
+      }
+    }
+  }
+  
+  # threshold gs based on the sparsity cutoff
+  gs[which(gs < sparsity_cutoff)] <- 0
+  
+  if (binary == T)
+    gs[which(gs != 0)] <- 1
+  
+  return(gs)
+}
 
 #' @export
 # function to convolute: x + z -> y
