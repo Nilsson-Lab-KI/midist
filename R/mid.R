@@ -87,6 +87,30 @@ add_gamma_noise <- function(mid, stdev){
   return(noisy_mid)
 }
 
+# Draw n samples from a Dirichlet distribution with a given mean vector
+# and precision. Each component i of the resulting random vector has
+# marginal variance mean[i]*(1-mean[i]) / (1 + precision)
+
+random_dirichlet <- function(mean, precision, n)
+{
+  gamma_obs <- sapply(
+    mean*precision,
+    function(shape) rgamma(n, shape = shape, scale = 1))
+  return(t(gamma_obs / rowSums(gamma_obs)))
+}
+
+# Sample n MIDs with given mean vector and precision such that
+# the standard deviation at MI fraction 0.5 equals stddev
+random_mid <- function(mean, stdev, n)
+{
+  # stdev^2 = 0.5 * (1 - 0.5) / (1 + p)
+  return(
+    random_dirichlet(
+      mean = mean,
+      precision = 0.25 / (stdev^2),
+      n))
+}
+
 
 #' Generate a convolution matrix for an MID
 #'
