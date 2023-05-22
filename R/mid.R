@@ -77,7 +77,7 @@ add_gamma_noise <- function(mid, stdev){
   # determine theta from stdev^2 = m * theta --> theta = stdev^2 / m
   theta <- (stdev^2) / m
   # determine k from stdev^2 = k * theta --> k = stdev^2 / theta
-  k <- (stdev^2) / theta
+  k <- (stdev^2) / (theta^2)
   # generate a gamma distribution from these parameters
   gamma_vals <- rgamma(length(mid), k, scale = theta)
   # multiply the gamma values by the MID to make the noise multiplicative

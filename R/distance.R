@@ -1146,8 +1146,17 @@ pairwise_matrix_v2 <- function(midata, f, g_select){
   # all unique pairs
   pairs <- combn(length(midata$peak_ids), 2)
   
+  pb <- progress_bar$new(total = ncol(df))
+  
   # compute distances and keep track of the convolutions
-  results <- apply(pairs, 2, calc_pair_distance, midata, f, g_select)
+  results <- apply(pairs, 2, calc_pair_distance {
+    # Update progress bar
+    pb$tick()
+  }, midata, f, g_select)
+  
+  # Close progress bar
+  pb$close()
+  
   
   # convert dataframes into proper distance matrices
   distances <- sapply(results, function(x) return(x[4]))
@@ -1245,14 +1254,38 @@ is_distance_matrix <- function(mat) {
 #' @export
 # compute distance matrix from isotopic enrichment only
 # choose the method from c("euclidean", "manhattan", "canberra")
-enrichment_dist <- function(midata, experiments, method = "euclidean"){
-  isotopic_enrichments <- do.call(rbind.data.frame, lapply(1:length(midata$peak_ids), function(p) apply(get_avg_mid(midata, p), 2, isotopic_enrichment)))
+enrichment_dist_matrix <- function(midata, experiments, method = "euclidean"){
+  isotopic_enrichments <- do.call(rbind.data.frame, lapply(1:length(midata$peak_ids), function(p) apply(as.matrix(get_avg_mid(midata, p)), 2, isotopic_enrichment)))
   enrichments <- as.matrix(dist(isotopic_enrichments[, midata$experiments %in% experiments],
                                 method = method))
   rownames(enrichments) <- colnames(enrichments) <- midata$peak_ids
   return(enrichments)
 }
 
+#' @export
+remn_v1 <- function(midata, f, g_select, rdata_fname, return = T) {
+  
+  pairwise_matrix <- list()
+  for (e in 1:length(midata$experiments)){
+    experiment <- midata$experiments[e]
+    
+    # data dimensions
+    n_metabolites <- length(midata$peak_ids)
+    # met names
+    met_names <- midata$peak_ids
+    
+    # compute the pairwise matrix
+    pairwise_matrix[[e]] <- conv_reduce_all(
+      midata, e,
+      f, 
+      g_select
+    )
+
+  }
+
+  # return the final matrix (or matrices)
+  return(pairwise_matrix)
+}
 
 
 
