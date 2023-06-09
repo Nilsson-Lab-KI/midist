@@ -205,6 +205,54 @@ midata_transform <- function(midata, f) {
 
 
 #' @export
+#'
+add_noisy_replicates <- function(midata, stdev, nr_replicate) {
+  # copy MIData object
+  new_midata <- midata
+  exp_names <- rep(midata$experiments, each = nr_replicate)
+  
+  # apply function to each peak
+  new_midata$mids <- do.call(rbind.data.frame, 
+                             lapply(1:length(new_midata$peak_ids), 
+         function(p) do.call(cbind.data.frame, lapply(1:length(new_midata$experiments), 
+                                                      function(e) random_mid(get_avg_mid(new_midata, p, e),
+                                                                             stdev, nr_replicate)))) )
+
+  # need to replicate experiment names
+  new_midata$exp_index <- match(new_midata$experiments, exp_names)
+  # number of replicates per experiment
+  new_midata$exp_n_rep <-
+    as.numeric(table(factor(exp_names, levels = new_midata$experiments)))
+  
+  # updata the averaged MIDs
+  new_midata$avg_mids <- calc_avg_mids(new_midata)
+  return(new_midata)
+}
+
+
+#' @export
+misplace_peak_ids <- function(midata){
+  for (i in 1:length(midata$n_atoms_index)){
+    print(i)
+    if (length(midata$n_atoms_index[[i]]) != 1){
+      # Shuffle the vector while ensuring none of the elements are in their original spot
+      # Note that this is not a complete randomization, but rather misplacing every element
+      new_ind <- midata$n_atoms_index[[i]]
+      while (any(new_ind == midata$n_atoms_index[[i]])) {
+        new_ind <- sample(midata$n_atoms_index[[i]])
+      }
+      # update the order of peak IDs without changing MIDs
+      midata$peak_ids[midata$n_atoms_index[[i]]] <- midata$peak_ids[new_ind]
+      rm(new_ind)
+    } else midata$peak_ids[midata$n_atoms_index[[i]]] <- midata$peak_ids[midata$n_atoms_index[[i]]]
+    
+  }
+  return(midata$peak_ids)
+}
+
+
+
+#' @export
 midata_randomize <- function(midata){
   for (i in 1:length(midata$n_atoms_index)){
     print(i)
@@ -233,7 +281,7 @@ remove_false_isotopes_from_midata <- function(mi_data, threshold = 0.03) {
   for (p in 1:length(mi_data$peak_ids)) {
     
     # get mids for this peak (including all samples it has)
-    mids <- get_mids(mi_data, p)
+    mids <- get_avg_mid(mi_data, p)
     
     # correct these mids for the naturally occurring 13-C
     c13_corrected_mids <- apply(mids, 2, c13correct)
@@ -251,13 +299,16 @@ remove_false_isotopes_from_midata <- function(mi_data, threshold = 0.03) {
       rows <- get_mi_indices(mi_data, p)
       
       # replace false isotopes by zero
-      new_midata$mids[rows, ][false_ind,] <- 0
+      new_mids <- mids
+      new_mids[false_ind,] <- 0
+      new_mids <- apply(new_mids, 2, function(mid) mid / sum(mid))
+      new_midata$avg_mids[rows, ] <- new_mids
+      
     }
     
   }
-  
-  # updata the averaged MIDs
-  new_midata$avg_mids <- calc_avg_mids(new_midata)
+  # # updata the averaged MIDs
+  # new_midata$avg_mids <- calc_avg_mids(new_midata)
   return(new_midata)
 }
 
@@ -267,7 +318,6 @@ check_isotopes <- function(isotopes, threshold){
     return(length(ans)) else
       return(0)
 }
-
 
 
 
@@ -302,24 +352,25 @@ collapse_replicates <- function(mid_matrix) {
 }
 
 
-# #
-# # get MIDs, as above
-# #
-# get_mids <- function(mi_data, p, e) {
-#   return(
-#     mi_data$mids[get_mi_indices(mi_data, p), get_exp_indices(mi_data, e), drop = FALSE]
-#   )
-# }
-
 #
-# Get MID vectors for peak p, for all replicates in experiment e
+# get MIDs, as above
 #
 #' @export
 get_mids <- function(mi_data, p, e) {
   return(
-    mi_data$mids[get_mi_indices(mi_data, p), e, drop = FALSE]
+    mi_data$mids[get_mi_indices(mi_data, p), get_exp_indices(mi_data, e), drop = FALSE]
   )
 }
+
+#' #
+#' # Get MID vectors for peak p, for all replicates in experiment e
+#' #
+#' #' @export
+#' get_mids <- function(mi_data, p, e) {
+#'   return(
+#'     mi_data$mids[get_mi_indices(mi_data, p), e, drop = FALSE]
+#'   )
+#' }
 
 
 #' Get an averaged MID vector
@@ -367,7 +418,7 @@ get_avg_mids_by_size <- function(mi_data, n_atoms, e) {
 get_mi_indices <- function(mi_data, p) {
   return(mi_data$peak_index[[p]] + 0:mi_data$peak_n_atoms[[p]])
 }
-
+#' @export
 get_exp_indices <- function(mi_data, e) {
   return(mi_data$exp_index[[e]] + 0:(mi_data$exp_n_rep[[e]] - 1))
 }

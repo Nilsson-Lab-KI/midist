@@ -1146,17 +1146,8 @@ pairwise_matrix_v2 <- function(midata, f, g_select){
   # all unique pairs
   pairs <- combn(length(midata$peak_ids), 2)
   
-  pb <- progress_bar$new(total = ncol(df))
-  
   # compute distances and keep track of the convolutions
-  results <- apply(pairs, 2, calc_pair_distance {
-    # Update progress bar
-    pb$tick()
-  }, midata, f, g_select)
-  
-  # Close progress bar
-  pb$close()
-  
+  results <- apply(pairs, 2, calc_pair_distance, midata, f, g_select)
   
   # convert dataframes into proper distance matrices
   distances <- sapply(results, function(x) return(x[4]))

@@ -101,6 +101,7 @@ random_dirichlet <- function(mean, precision, n)
 
 # Sample n MIDs with given mean vector and precision such that
 # the standard deviation at MI fraction 0.5 equals stddev
+#' @export
 random_mid <- function(mean, stdev, n)
 {
   # stdev^2 = 0.5 * (1 - 0.5) / (1 + p)

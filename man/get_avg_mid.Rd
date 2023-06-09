@@ -2,7 +2,15 @@
 % Please edit documentation in R/midata.R
 \name{get_avg_mid}
 \alias{get_avg_mid}
-\title{Get an averaged MID vector}
+\title{Get MID vectors for peak p, for all replicates in experiment e
+
+#' @export
+get_mids <- function(mi_data, p, e) {
+return(
+mi_data$mids\link{get_mi_indices(mi_data, p), e, drop = FALSE}
+)
+}
+Get an averaged MID vector}
 \usage{
 get_avg_mid(mi_data, p, e)
 }
