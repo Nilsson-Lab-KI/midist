@@ -77,14 +77,14 @@ MIData <- function(peak_areas, exp_names = NULL)
 #' @export
 get_midata <- function(peak_areas_fname){
   
-  peak_areas <- as.data.frame(na.omit(read.delim(peak_areas_fname, header = T, sep = "\t", check.names = F)))
+  peak_areas <- as.data.frame(read.delim(peak_areas_fname, header = T, sep = "\t", check.names = F))
   
   if ("MassIsotopomer" %in% colnames(peak_areas)) {
     peak_areas <- peak_areas[, -which(colnames(peak_areas) == "MassIsotopomer")]
   }
   
   # make an MIData object from peak_areas, fetching experiments from column names of the matrix
-  midata <- MIData(peak_areas, colnames(peak_areas)[-which(colnames(peak_areas) %in% c("Metabolite", "Formula", "MassIsotopomer"))])
+  midata <- MIData(peak_areas)
   
   return(midata)
 }
@@ -250,8 +250,6 @@ misplace_peak_ids <- function(midata){
   return(midata$peak_ids)
 }
 
-
-
 #' @export
 midata_randomize <- function(midata){
   for (i in 1:length(midata$n_atoms_index)){
@@ -361,16 +359,6 @@ get_mids <- function(mi_data, p, e) {
     mi_data$mids[get_mi_indices(mi_data, p), get_exp_indices(mi_data, e), drop = FALSE]
   )
 }
-
-#' #
-#' # Get MID vectors for peak p, for all replicates in experiment e
-#' #
-#' #' @export
-#' get_mids <- function(mi_data, p, e) {
-#'   return(
-#'     mi_data$mids[get_mi_indices(mi_data, p), e, drop = FALSE]
-#'   )
-#' }
 
 
 #' Get an averaged MID vector
