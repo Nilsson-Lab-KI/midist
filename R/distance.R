@@ -1022,7 +1022,7 @@ calc_distance_equal_c <- function(mid_x, mid_y, f){
     cd <- c(cd, f(mid_x[[e]], mid_y[[e]]))
   }
   # returns 2 elements: (1) the final distance, (2) the middle metabolite which was chosen by g_select
-  return(list(sum(cd), NA))
+  return(list(sum(cd, na.rm = T), NA))
 }
 
 #' @export

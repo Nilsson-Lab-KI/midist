@@ -291,7 +291,8 @@ remove_false_isotopes_from_midata <- function(mi_data, threshold = 0.03) {
     
     # find indices of "false" isotopes and add 1 to account for M+0
     if (length(isotopes_above_threshold) != 0){
-      false_ind <- which(isotopes_above_threshold == ncol(c13_corrected_mids)) + 1
+      # false_ind <- which(isotopes_above_threshold == ncol(c13_corrected_mids)) + 1
+      false_ind <- which(isotopes_above_threshold > ncol(c13_corrected_mids)/2) + 1
       
       # rows of this peak
       rows <- get_mi_indices(mi_data, p)
