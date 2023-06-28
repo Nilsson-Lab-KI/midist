@@ -76,16 +76,16 @@ MIData <- function(peak_areas, exp_names = NULL)
 
 #' @export
 get_midata <- function(peak_areas_fname){
-  
+
   peak_areas <- as.data.frame(read.delim(peak_areas_fname, header = T, sep = "\t", check.names = F))
-  
+
   if ("MassIsotopomer" %in% colnames(peak_areas)) {
     peak_areas <- peak_areas[, -which(colnames(peak_areas) == "MassIsotopomer")]
   }
-  
+
   # make an MIData object from peak_areas, fetching experiments from column names of the matrix
   midata <- MIData(peak_areas)
-  
+
   return(midata)
 }
 
@@ -210,11 +210,11 @@ add_noisy_replicates <- function(midata, stdev, nr_replicate) {
   # copy MIData object
   new_midata <- midata
   exp_names <- rep(midata$experiments, each = nr_replicate)
-  
+
   # apply function to each peak
-  new_midata$mids <- do.call(rbind.data.frame, 
-                             lapply(1:length(new_midata$peak_ids), 
-         function(p) do.call(cbind.data.frame, lapply(1:length(new_midata$experiments), 
+  new_midata$mids <- do.call(rbind.data.frame,
+                             lapply(1:length(new_midata$peak_ids),
+         function(p) do.call(cbind.data.frame, lapply(1:length(new_midata$experiments),
                                                       function(e) random_mid(get_avg_mid(new_midata, p, e),
                                                                              stdev, nr_replicate)))) )
 
@@ -223,7 +223,7 @@ add_noisy_replicates <- function(midata, stdev, nr_replicate) {
   # number of replicates per experiment
   new_midata$exp_n_rep <-
     as.numeric(table(factor(exp_names, levels = new_midata$experiments)))
-  
+
   # updata the averaged MIDs
   new_midata$avg_mids <- calc_avg_mids(new_midata)
   return(new_midata)
@@ -245,7 +245,7 @@ misplace_peak_ids <- function(midata){
       midata$peak_ids[midata$n_atoms_index[[i]]] <- midata$peak_ids[new_ind]
       rm(new_ind)
     } else midata$peak_ids[midata$n_atoms_index[[i]]] <- midata$peak_ids[midata$n_atoms_index[[i]]]
-    
+
   }
   return(midata$peak_ids)
 }
@@ -265,7 +265,7 @@ midata_randomize <- function(midata){
       midata$peak_ids[midata$n_atoms_index[[i]]] <- midata$peak_ids[new_ind]
       rm(new_ind)
     } else midata$peak_ids[midata$n_atoms_index[[i]]] <- midata$peak_ids[midata$n_atoms_index[[i]]]
-    
+
   }
   return(midata)
 }
@@ -275,47 +275,45 @@ midata_randomize <- function(midata){
 remove_false_isotopes_from_midata <- function(mi_data, threshold = 0.03) {
   # copy MIData object
   new_midata <- mi_data
-  
+
   for (p in 1:length(mi_data$peak_ids)) {
-    
+
     # get mids for this peak (including all samples it has)
     mids <- get_avg_mid(mi_data, p)
-    
+
     # correct these mids for the naturally occurring 13-C
     c13_corrected_mids <- apply(mids, 2, c13correct)
-    
+
     # find number of isotopes that are above the allowed threshold
-    if (nrow(c13_corrected_mids) == 2)
-      isotopes_above_threshold <- as.vector(sapply(c13_corrected_mids[-1, ], check_isotopes, threshold)) else
-        isotopes_above_threshold <- as.vector(apply(c13_corrected_mids[-1, ], 1, check_isotopes, threshold))
-    
+    if (nrow(c13_corrected_mids) == 2) {
+      isotopes_above_threshold <- as.vector(
+        sapply(c13_corrected_mids[-1, ], function(x) sum(x > threshold)))
+    }
+    else {
+        isotopes_above_threshold <- as.vector(
+          apply(c13_corrected_mids[-1, ], 1, function(x) sum(x > threshold)))
+    }
+
     # find indices of "false" isotopes and add 1 to account for M+0
     if (length(isotopes_above_threshold) != 0){
       # false_ind <- which(isotopes_above_threshold == ncol(c13_corrected_mids)) + 1
       false_ind <- which(isotopes_above_threshold > ncol(c13_corrected_mids)/2) + 1
-      
+
       # rows of this peak
       rows <- get_mi_indices(mi_data, p)
-      
+
       # replace false isotopes by zero
       new_mids <- mids
       new_mids[false_ind,] <- 0
       new_mids <- apply(new_mids, 2, function(mid) mid / sum(mid))
       new_midata$avg_mids[rows, ] <- new_mids
-      
+
     }
-    
+
   }
   # # updata the averaged MIDs
   # new_midata$avg_mids <- calc_avg_mids(new_midata)
   return(new_midata)
-}
-
-check_isotopes <- function(isotopes, threshold){
-  ans <- which(isotopes > threshold)
-  if (length(ans) != 0)
-    return(length(ans)) else
-      return(0)
 }
 
 
