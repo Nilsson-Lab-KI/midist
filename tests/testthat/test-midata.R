@@ -139,3 +139,57 @@ test_that("normalizing zero vector gives zero vector", {
 })
 
 
+test_that("check_isotopes works correctly", {
+  expect_equal(
+    check_isotopes(c(0.1, 0.2, 0.02, 0.0, 0.03), 0.03),
+    2)
+
+  test_data <- matrix(
+    c(
+      0.90, 0.80, 0.85,
+      0.01, 0.02, 0.15,
+      0.09, 0.18, 0.00
+    ),
+    nrow = 3, byrow = TRUE
+  )
+  expect_equal(
+    apply(test_data, 1, check_isotopes, 0.03),
+    c(3, 1, 2)
+  )
+})
+
+
+test_that("false isotope removal works correctly", {
+  mi_data <- MIData(peak_areas_1, exp_names_1)
+  #print(mi_data$avg_mids)
+  #print(get_avg_mid(mi_data, 1))
+
+  mi_data_censored <- remove_false_isotopes_from_midata(mi_data)
+  expect_equal(
+    get_avg_mid(mi_data_censored, 1),
+    matrix(
+      c(
+        0.636, 1.000,
+        0.364, 0.000,
+        0.000, 0.000
+      ),
+      nrow = 3, byrow = TRUE
+    ),
+    tolerance = 0.001
+  )
+
+  expect_equal(
+    get_avg_mid(mi_data_censored, 2),
+    matrix(
+      c(
+        1.000, 0.167,
+        0.000, 0.000,
+        0.000, 0.417,
+        0.000, 0.417
+      ),
+      nrow = 4, byrow = TRUE
+    ),
+    tolerance = 0.001
+  )
+})
+
