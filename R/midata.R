@@ -270,50 +270,53 @@ midata_randomize <- function(midata){
   return(midata)
 }
 
-
+#' Censor false mass isotopomers
+#'
+#' Find mass isotopomers whose fraction is above the given threshold
+#' after correction for natural 13C in at least the given number of
+#' experiments (inclusive), set them to zero, and renormalize
+#' @param mi_data An MIData object
+#' @param threshold MI fraction threshold (after 13C correction)
+#' @param min_experiment Minimum number of experiments where an MI is observed
+#' to be considered false
+#' @returns A new MIData object with false MIs censored
 #' @export
-remove_false_isotopes_from_midata <- function(mi_data, threshold = 0.03) {
+censor_false_mi <- function(mi_data, threshold = 0.03, min_experiments = 1)
+{
   # copy MIData object
   new_midata <- mi_data
 
   for (p in 1:length(mi_data$peak_ids)) {
+    # get averaged mids for this peak, for all experiments
+    avg_mids <- get_avg_mid(mi_data, p)
 
-    # get mids for this peak (including all samples it has)
-    mids <- get_avg_mid(mi_data, p)
+    # correct these mids for naturally occurring 13-C
+    corrected_mids <- apply(avg_mids, 2, c13correct)
 
-    # correct these mids for the naturally occurring 13-C
-    c13_corrected_mids <- apply(mids, 2, c13correct)
+    # find index of false MIs
+    false_index <- find_false_mi(corrected_mids, threshold, min_experiments)
 
-    # find number of isotopes that are above the allowed threshold
-    if (nrow(c13_corrected_mids) == 2) {
-      isotopes_above_threshold <- as.vector(
-        sapply(c13_corrected_mids[-1, ], function(x) sum(x > threshold)))
-    }
-    else {
-        isotopes_above_threshold <- as.vector(
-          apply(c13_corrected_mids[-1, ], 1, function(x) sum(x > threshold)))
-    }
-
-    # find indices of "false" isotopes and add 1 to account for M+0
-    if (length(isotopes_above_threshold) != 0){
-      # false_ind <- which(isotopes_above_threshold == ncol(c13_corrected_mids)) + 1
-      false_ind <- which(isotopes_above_threshold > ncol(c13_corrected_mids)/2) + 1
-
-      # rows of this peak
-      rows <- get_mi_indices(mi_data, p)
-
-      # replace false isotopes by zero
-      new_mids <- mids
-      new_mids[false_ind,] <- 0
-      new_mids <- apply(new_mids, 2, function(mid) mid / sum(mid))
-      new_midata$avg_mids[rows, ] <- new_mids
-
-    }
-
+    # rows of this peak
+    rows <- get_mi_indices(mi_data, p)
+    # replace false isotopes by zero
+    new_mids <- new_midata$mids[rows, ]
+    new_mids[false_index,] <- 0
+    # renormalize
+    new_midata$mids[rows, ] <- t(t(new_mids) / colSums(new_mids))
   }
-  # # updata the averaged MIDs
-  # new_midata$avg_mids <- calc_avg_mids(new_midata)
+  # update the averaged MIDs
+  new_midata$avg_mids <- calc_avg_mids(new_midata)
   return(new_midata)
+}
+
+find_false_mi <- function(corrected_mids, threshold, min_experiments)
+{
+  # count number of experiments with an MI above threshold
+  n_above_threshold <- as.vector(
+    apply(corrected_mids[-1, , drop = FALSE], 1, function(x) sum(x > threshold)))
+
+  # find indices of "false" isotopes and add 1 to account for M+0
+  return(which(n_above_threshold >= min_experiments) + 1)
 }
 
 
