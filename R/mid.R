@@ -108,7 +108,8 @@ random_mid <- function(mean, stdev, n)
   return(
     random_dirichlet(
       mean = mean,
-      precision = 0.25 / (stdev^2),
+      # precision = 0.25 / (stdev^2),
+      precision = 0.25 / (stdev^2) - 1,
       n))
 }
 
