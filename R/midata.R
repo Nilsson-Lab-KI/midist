@@ -203,6 +203,19 @@ midata_transform <- function(midata, f) {
   return(new_midata)
 }
 
+#'
+#' Add replicates with some noise to an midata object where experiments are not repeated (and probably noise free also)
+#' Returns a new midata object where the mids per peak per experiment are repeated with a defined level of noise
+#' Updates all related fields in midata such as avg_mids, exp_index, etc.
+#'
+#' This is useful when the midata object contains simulated MIDs without replicates and noise,
+#' and to add replicates we introduce a level of noise defined by the stdev parameter.
+#' 
+#' @param midata An MIData object
+#' @param stdev The desired standard deviation to generate dirichlet distribution 
+#' (see the random_mid() function for more details on the dirichlet distribution)
+#' and return a valid MID vector of the same size.
+#' @param nr_replicate Number of noisy replicates to generate
 
 #' @export
 #'
@@ -233,7 +246,6 @@ add_noisy_replicates <- function(midata, stdev, nr_replicate) {
 #' @export
 misplace_peak_ids <- function(midata){
   for (i in 1:length(midata$n_atoms_index)){
-    print(i)
     if (length(midata$n_atoms_index[[i]]) != 1){
       # Shuffle the vector while ensuring none of the elements are in their original spot
       # Note that this is not a complete randomization, but rather misplacing every element
@@ -249,6 +261,7 @@ misplace_peak_ids <- function(midata){
   }
   return(midata$peak_ids)
 }
+
 
 #' @export
 midata_randomize <- function(midata){
@@ -270,6 +283,7 @@ midata_randomize <- function(midata){
   return(midata)
 }
 
+                                                      
 #' Censor false mass isotopomers
 #'
 #' Find mass isotopomers whose fraction is above the given threshold
