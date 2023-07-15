@@ -163,20 +163,31 @@ test_that("normalizing zero vector gives zero vector", {
 
 test_that("false isotope removal works correctly", {
   mi_data <- MIData(peak_areas_1, exp_names_1)
-
-  mi_data_censored <- remove_false_isotopes_from_midata(mi_data)
+  mi_data_censored <- censor_false_mi(mi_data, threshold = 0.03, min_experiments = 2)
   # for peak 1 this removes M+2
+  expect_equal(
+    get_mids(mi_data_censored, 1, 1),
+    matrix(
+      c(
+        0.6, 0.666667,
+        0.4, 0.333333,
+        0.0, 0.0
+      ),
+      nrow = 3, byrow = TRUE
+    ),
+    tolerance = 1e-6
+  )
   expect_equal(
     get_avg_mid(mi_data_censored, 1),
     matrix(
       c(
-        0.636, 1.000,
-        0.364, 0.000,
-        0.000, 0.000
+        0.633333, 1.0,
+        0.366667, 0.0,
+        0.0, 0.0
       ),
       nrow = 3, byrow = TRUE
     ),
-    tolerance = 0.001
+    tolerance = 1e-6
   )
 
   # for peak 2 this removes M+1
@@ -184,14 +195,14 @@ test_that("false isotope removal works correctly", {
     get_avg_mid(mi_data_censored, 2),
     matrix(
       c(
-        1.000, 0.167,
+        1.000, 0.166667,
         0.000, 0.000,
-        0.000, 0.417,
-        0.000, 0.417
+        0.000, 0.416667,
+        0.000, 0.416667
       ),
       nrow = 4, byrow = TRUE
     ),
-    tolerance = 0.001
+    tolerance = 1e-6
   )
 })
 
