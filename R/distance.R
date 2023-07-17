@@ -455,21 +455,6 @@ conv_reduce_block_equal_all_experiments <- function(mi_data, f, g, x_index, y_in
   return(block)
 }
 
-euclidean_dist_sq_from_list <- function(x, y)
-{
-  # ensure equal number of experiments
-  stopifnot(length(x) == length(y))
-  
-  for (i in 1:length(x)){
-    
-  }
-  stopifnot(is.vector(x))
-  stopifnot(is.vector(y))
-  stopifnot(length(x) == length(y))
-  diff <- x - y
-  return(sum(diff * diff))
-}
-
 #' @export
 conv_reduce_all_test <- function(mi_data, e, f, g, get_middle_met_matrix = F, g_select, z_threshold = 0.0107) {
   # allocate square matrix
