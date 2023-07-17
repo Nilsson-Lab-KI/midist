@@ -1,6 +1,28 @@
 # 
 # gold standard functions
 #
+#' @export
+read_gold_standard <- function(gs_fname, symmetric = T, binary = T, sparsity_cutoff = 0.5){
+  
+  gs <- as.matrix(read.delim(gs_fname, header = T, sep = "\t", check.names = F))
+  
+  if (symmetric == T){
+    # symmetrize gs
+    for (r2 in 1:nrow(gs)){
+      for (d2 in r2:ncol(gs)){
+        gs[r2,d2] <- gs[d2,r2] <- max(gs[r2,d2], gs[d2,r2])
+      }
+    }
+  }
+  
+  # threshold gs based on the sparsity cutoff
+  gs[which(gs < sparsity_cutoff)] <- 0
+  
+  if (binary == T)
+    gs[which(gs != 0)] <- 1
+  
+  return(gs)
+}
 
 #' @export
 # function to convolute: x + z -> y
@@ -16,11 +38,11 @@ get_convoluted_gs <- function(mmm, gs_raw, input, symmetrize_by = max){
   # convolute the gold standard for UNWEIGHTED
   gs <- gs_raw
   for (r2 in 1:nrow(gs_raw)){
-    for (d2 in r2:nrow(gs_raw)){
+    for (d2 in 1:nrow(gs_raw)){
       if (mmm[r2,d2] %in% unique_z){
         if (length(get_avg_mid(input$midata, r2, 1)) < length(get_avg_mid(input$midata, d2, 1))) 
-          gs[r2,d2] <- gs[d2,r2] <- convolute_gs(mmm[r2,d2], r2, d2, gs_raw) else
-            gs[r2,d2] <- gs[d2,r2] <- convolute_gs(mmm[r2,d2], d2, r2, gs_raw)
+          gs[r2,d2] <- convolute_gs(mmm[r2,d2], r2, d2, gs_raw) else
+            gs[r2,d2] <- convolute_gs(mmm[r2,d2], d2, r2, gs_raw)
       }
     }
   }
@@ -43,7 +65,7 @@ calc_accuracy <- function(true_matrix, predicted_matrix){
   fp <- length(which(true_matrix == 0 & predicted_matrix == 1))
   tn <- length(which(true_matrix == 0 & predicted_matrix == 0))
   fn <- length(which(true_matrix == 1 & predicted_matrix == 0))
-  stopifnot(tp+fp+tn+fn == length(true_matrix))
+  stopifnot(tp+fp+tn+fn == nrow(true_matrix)*ncol(true_matrix))
   #
   # accuracy measures
   #
@@ -131,6 +153,59 @@ get_global_percentile_accuracy <- function(pairwise_matrix, gold_standard, measu
   return(accuracy_df)
   
 }
+
+
+
+#' @export
+get_continuous_accuracy <- function(pairwise_matrix, gold_standard, measure, subset_size, subset_sample_no,
+                                    noise, noise_sample_no, experiment){
+
+  # make sure the diagonal is NA
+  diag(pairwise_matrix) <- NA
+  diag(gold_standard) <- NA
+  
+  # put both matrices in a vector
+  gs_vector <- as.vector(gold_standard)
+  pm_vector <- as.vector(pairwise_matrix)
+  
+  # diagonals in gold standard are NAs - remove them from both vectors
+  gs_na_ind <- which(is.na(gs_vector))
+  pm <- pm_vector[-gs_na_ind]
+  gs <- gs_vector[-gs_na_ind]
+  
+  # now assign a maximal distance to all remaining NAs of pm
+  pm[which(is.na(pm))] <- max(pm, na.rm = T)
+  
+  # sort matrices
+  order_ind <- order(pm)
+  pm <- pm[order_ind]
+  gs <- gs[order_ind]
+  
+  
+  tp <- cumsum(gs)
+  fp <- cumsum(abs(1-gs))
+  # tn <- c(0:(length(gs)-1))*fp
+  # fn <- c(0:(length(gs)-1))*tp
+  
+  # Compute precision and recall for a single decision threshold
+  threshold <- 1:length(gs)
+  precision <- tp[threshold] / (tp[threshold] + fp[threshold])
+  recall <- tp[threshold] / max(tp)
+  # precision <-  sapply(1:length(gs), function(x, tp, fp) tp[x] / (tp[x] + fp[x]), tp, fp) 
+  # recall <-  sapply(1:length(gs), function(x, tp) tp[x] / max(tp), tp) 
+
+  
+  return(data.frame(measure = measure,
+                    subset_size = subset_size, subset_sample_no = subset_sample_no,
+                    noise = noise, noise_sample_no = noise_sample_no,
+                    tpr = recall, precision = precision,
+                    experiment = experiment)
+  )
+  
+}
+
+
+
 #' @export
 get_threshold_accuracy <- function(pairwise_matrix, gold_standard, measure, noise, experiment, thresholds){
   # create an empty data frame to store the accuracy results

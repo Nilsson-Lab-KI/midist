@@ -46,6 +46,28 @@ test_that("find_mi_index works correctly", {
 })
 
 
+test_that("get_avg_mid works correctly", {
+  mi_data <- MIData(peak_areas_1, exp_names_1)
+  expect_equal(
+    get_avg_mid(mi_data, 1, 1),
+    c(0.2916667, 0.1666667, 0.5416667),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    get_avg_mid(mi_data, 1),
+    matrix(
+      c(
+        0.2916667, 0.8333333,
+        0.1666667, 0.0000000,
+        0.5416667, 0.1666667
+      ),
+      nrow = 3, byrow = TRUE
+    ),
+    tolerance = 1e-6
+  )
+})
+
+
 test_that("midata_transform works correctly", {
   midata <- MIData(peak_areas_1, exp_names_1)
   # apply identity function
@@ -138,4 +160,49 @@ test_that("normalizing zero vector gives zero vector", {
   expect_equal(colSums(mids), c(0))
 })
 
+
+test_that("false isotope removal works correctly", {
+  mi_data <- MIData(peak_areas_1, exp_names_1)
+  mi_data_censored <- censor_false_mi(mi_data, threshold = 0.03, min_experiments = 2)
+  # for peak 1 this removes M+2
+  expect_equal(
+    get_mids(mi_data_censored, 1, 1),
+    matrix(
+      c(
+        0.6, 0.666667,
+        0.4, 0.333333,
+        0.0, 0.0
+      ),
+      nrow = 3, byrow = TRUE
+    ),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    get_avg_mid(mi_data_censored, 1),
+    matrix(
+      c(
+        0.633333, 1.0,
+        0.366667, 0.0,
+        0.0, 0.0
+      ),
+      nrow = 3, byrow = TRUE
+    ),
+    tolerance = 1e-6
+  )
+
+  # for peak 2 this removes M+1
+  expect_equal(
+    get_avg_mid(mi_data_censored, 2),
+    matrix(
+      c(
+        1.000, 0.166667,
+        0.000, 0.000,
+        0.000, 0.416667,
+        0.000, 0.416667
+      ),
+      nrow = 4, byrow = TRUE
+    ),
+    tolerance = 1e-6
+  )
+})
 

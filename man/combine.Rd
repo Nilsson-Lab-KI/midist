@@ -3,16 +3,20 @@
 \name{combine}
 \alias{combine}
 \title{Combines pairwise matrices across multiple experiments based on the fun function.
-Suitable for cases where the middle metabolite matrix is known and experiment index matrix is to be tracked.}
+Suitable for cases where the middle metabolite matrix is known and experiment index
+matrix is to be tracked.}
 \usage{
 combine(pairwise_matrices, middle_met_matrices, fun)
 }
 \arguments{
 \item{pairwise_matrices}{a list of pairwise matrices across different experiments}
 
-\item{middle_met_matrices}{a list of middle metabolite matrices across different experiments, where a middle metabolite denotes the metabolite that was chosen as the best convolution for a given metabolite pair of unequal carbon number}
+\item{middle_met_matrices}{a list of middle metabolite matrices across different
+experiments, where a middle metabolite denotes the metabolite that was chosen
+as the best convolution for a given metabolite pair of unequal carbon number}
 }
 \description{
 Combines pairwise matrices across multiple experiments based on the fun function.
-Suitable for cases where the middle metabolite matrix is known and experiment index matrix is to be tracked.
+Suitable for cases where the middle metabolite matrix is known and experiment index
+matrix is to be tracked.
 }

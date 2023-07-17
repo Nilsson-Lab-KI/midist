@@ -2,7 +2,8 @@
 % Please edit documentation in R/distance.R
 \name{get_fun_index}
 \alias{get_fun_index}
-\title{Returns the metabolite index which was chosen by fun. It is supposed to be used in the combine() function.}
+\title{Returns the metabolite index which was chosen by fun.
+It is supposed to be used in the combine() function.}
 \usage{
 get_fun_index(vector, fun)
 }
@@ -12,5 +13,6 @@ get_fun_index(vector, fun)
 \item{fun}{a function like max() or min()}
 }
 \description{
-Returns the metabolite index which was chosen by fun. It is supposed to be used in the combine() function.
+Returns the metabolite index which was chosen by fun.
+It is supposed to be used in the combine() function.
 }

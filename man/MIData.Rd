@@ -4,11 +4,12 @@
 \alias{MIData}
 \title{Construct an MIData (mass isotopomer data) object}
 \usage{
-MIData(peak_areas, exp_names)
+MIData(peak_areas, exp_names = NULL)
 }
 \arguments{
-\item{peak_areas}{a peak_area data.frame. The first column of peak_areas must be peak identifiers,
-repeated for each MI of the same peak, and MIs must be increasing 0,1,...,n for each peak}
+\item{peak_areas}{a peak_area data.frame. The first column of peak_areas
+must be peak identifiers, repeated for each MI of the same peak.
+The second column holds formulas (but )}
 
 \item{exp_names}{a optional list of experiment names matching columns 2,3... in peak_areas}
 }

@@ -77,7 +77,7 @@ add_gamma_noise <- function(mid, stdev){
   # determine theta from stdev^2 = m * theta --> theta = stdev^2 / m
   theta <- (stdev^2) / m
   # determine k from stdev^2 = k * theta --> k = stdev^2 / theta
-  k <- (stdev^2) / theta
+  k <- (stdev^2) / (theta^2)
   # generate a gamma distribution from these parameters
   gamma_vals <- rgamma(length(mid), k, scale = theta)
   # multiply the gamma values by the MID to make the noise multiplicative
@@ -85,6 +85,32 @@ add_gamma_noise <- function(mid, stdev){
   noisy_mid <- (mid + gamma_noise) / sum(mid + gamma_noise)
   # stopifnot(sum(noisy_mid) == 1)
   return(noisy_mid)
+}
+
+# Draw n samples from a Dirichlet distribution with a given mean vector
+# and precision. Each component i of the resulting random vector has
+# marginal variance mean[i]*(1-mean[i]) / (1 + precision)
+
+random_dirichlet <- function(mean, precision, n)
+{
+  gamma_obs <- sapply(
+    mean*precision,
+    function(shape) rgamma(n, shape = shape, scale = 1))
+  return(t(gamma_obs / rowSums(gamma_obs)))
+}
+
+# Sample n MIDs with given mean vector and precision such that
+# the standard deviation at MI fraction 0.5 equals stddev
+#' @export
+random_mid <- function(mean, stdev, n)
+{
+  # stdev^2 = 0.5 * (1 - 0.5) / (1 + p)
+  return(
+    random_dirichlet(
+      mean = mean,
+      # precision = 0.25 / (stdev^2),
+      precision = 0.25 / (stdev^2) - 1,
+      n))
 }
 
 

@@ -2,12 +2,8 @@
 % Please edit documentation in R/distance.R
 \name{conv_reduce}
 \alias{conv_reduce}
-\title{Calculates f(x, y) between MIDs for peak x and y for
-experiment e from an MIData object (mi_data)
-If x,y have unequal atom numbers, computes f(x*z, y) for all atoms of the same
-size as y (if y is the longer vector) and returns g( ... ) of the list of
-value of f. For example f = max gives the maximum value. The function g
-must handle empty lists g(c()) in case there are no possible convolutions.}
+\title{Calculates a convolution-based measure between MIDs for peak x and y for
+experiment e from an MIData object (mi_data).}
 \usage{
 conv_reduce(mi_data, x, y, e, f, g)
 }
@@ -28,10 +24,15 @@ conv_reduce(mi_data, x, y, e, f, g)
 the resulting value g(f1, f2, ...)
 }
 \description{
-Calculates f(x, y) between MIDs for peak x and y for
-experiment e from an MIData object (mi_data)
-If x,y have unequal atom numbers, computes f(x*z, y) for all atoms of the same
-size as y (if y is the longer vector) and returns g( ... ) of the list of
-value of f. For example f = max gives the maximum value. The function g
-must handle empty lists g(c()) in case there are no possible convolutions.
+The function f(x, y) must be symmetric in x, y and return a real value
+or NA for any x, y with the same number of atoms.
+If x, y have the same number of atoms, f(x,y) is returned.
+}
+\details{
+If x is smaller than y, this function computes f(x\emph{z, y) for all
+peaks z such that x}z is the same size as y (and vice versa), and calls g()
+on the resulting vector of values from f.
+For example, setting f = max gives the maximum value.
+The function g must accept an empty lists g(c()) in case there are no
+possible convolutions, and handle all values produced by f.
 }

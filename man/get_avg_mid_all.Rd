@@ -15,5 +15,5 @@ get_avg_mid_all(mi_data, index)
 a matrix where each column is the MID from an experiment
 }
 \description{
-for a given peak, for all experiments
+for a given peak index, for all experiments
 }
