@@ -70,6 +70,31 @@ test_that("squared euclidean distance is correct", {
 })
 
 
+test_that("dot product similarity is correct", {
+  # for identical vectors, similarity is sum of squares
+  x <- rnorm(n = 4)
+  expect_equal(dot_sim(x, x), sum(x*x))
+  # similarity between unit vectors is zero
+  expect_equal(dot_sim(c(1, 0), c(0, 1)), 0)
+  # with a zero vector, similarity is zero
+  x <- rnorm(n = 4)
+  y <- rep(0, 4)
+  expect_equal(dot_sim(x, y), 0)
+})
+
+test_that("dot product distance is correct", {
+  # for identical vectors, distance is 0
+  x <- rnorm(n = 4)
+  expect_equal(dot_dist(x, x), 0)
+  # similarity between unit vectors is 1
+  expect_equal(dot_dist(c(1, 0), c(0, 1)), 1)
+  # with a zero vector, distance is zero
+  x <- rnorm(n = 4)
+  y <- rep(0, 4)
+  expect_equal(dot_dist(x, y), 0)
+})
+
+
 # example peak area data for testing conv_reduce_all, one experiment
 
 # individual MIDs
