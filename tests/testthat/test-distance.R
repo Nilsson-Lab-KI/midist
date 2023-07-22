@@ -2,39 +2,71 @@
 # Tests for function in distance.R
 #
 
+
+test_that("apply_no_m0 is correct", {
+  x <- rnorm(n = 4)
+  y <- rnorm(n = 4)
+  f <- function(x, y) rlang::hash(c(x, y))
+  expect_equal(
+    apply_no_m0(f, x, y),
+    f(x[-1], y[-1])
+  )
+})
+
+
 test_that("cosine_sim is correct", {
   # identical vectors have similarity 1
-  expect_equal(cosine_sim(c(2, 3), c(2, 3)), 1)
-  # orthogonal vectors have zero similarity
+  x <- rnorm(n = 4)
+  expect_equal(cosine_sim(x, x), 1)
+  # orthogonal vectors have similarity 0
   expect_equal(cosine_sim(c(1, 0), c(0, 1)), 0)
   # with a zero vector similarity is NA
-  expect_true(is.na(cosine_sim(c(1, 0), c(0, 0))))
+  x <- rnorm(n = 4)
+  y <- rep(0, 4)
+  expect_true(is.na(cosine_sim(x, y)))
 })
 
 
 test_that("cosine_dist is correct", {
-  # identical vectors have similarity 0
-  expect_equal(cosine_dist(c(2, 3), c(2, 3)), 0)
+  # identical vectors have distance 0
+  x <- rnorm(n = 4)
+  expect_equal(cosine_dist(x, x), 0)
   # orthogonal vectors have distance 1
   expect_equal(cosine_dist(c(1, 0), c(0, 1)), 1)
   # with a zero vector distance is NA
-  expect_true(is.na(cosine_dist(c(1, 0), c(0, 0))))
+  x <- rnorm(n = 4)
+  y <- rep(0, 4)
+  expect_true(is.na(cosine_dist(x, y)))
+  # for any non-zero vectors, cosine_dist = 1 - cosine_sim
+  x <- rnorm(n = 4)
+  y <- rnorm(n = 4)
+  expect_equal(cosine_dist(x, y), 1 - cosine_sim(x, y))
 })
 
 
 test_that("euclidean distance is correct", {
-  # identical vectors have similarity 0
-  expect_equal(euclidean_dist(c(2, 3), c(2, 3)), 0)
-  # squared distance between unit vectors is 2
+  # identical vectors have distance 0
+  x <- rnorm(n = 4)
+  expect_equal(euclidean_dist(x, x), 0)
+  # distance between 2D unit vectors
   expect_equal(euclidean_dist(c(1, 0), c(0, 1)), sqrt(2))
+  # with a zero vector, distance is equal to norm
+  x <- rnorm(n = 4)
+  y <- rep(0, 4)
+  expect_equal(euclidean_dist(x, y), norm(x, type="2"))
 })
 
 
 test_that("squared euclidean distance is correct", {
   # identical vectors have similarity 0
-  expect_equal(euclidean_dist_sq(c(2, 3), c(2, 3)), 0)
-  # squared distance between unit vectors is 2
+  x <- rnorm(n = 4)
+  expect_equal(euclidean_dist_sq(x, x), 0)
+  # distance between 2D unit vectors
   expect_equal(euclidean_dist_sq(c(1, 0), c(0, 1)), 2)
+  # with a zero vector, distance is equal to sum of squares
+  x <- rnorm(n = 4)
+  y <- rep(0, 4)
+  expect_equal(euclidean_dist_sq(x, y), sum(x*x))
 })
 
 
