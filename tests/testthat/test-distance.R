@@ -82,6 +82,7 @@ test_that("dot product similarity is correct", {
   expect_equal(dot_sim(x, y), 0)
 })
 
+
 test_that("dot product distance is correct", {
   # for identical vectors, distance is 0
   x <- rnorm(n = 4)
@@ -92,6 +93,29 @@ test_that("dot product distance is correct", {
   x <- rnorm(n = 4)
   y <- rep(0, 4)
   expect_equal(dot_dist(x, y), 0)
+})
+
+
+random_prob_vector <- function(n)
+{
+  x <- runif(n = 4)
+  return(x / sum(x))
+}
+
+
+test_that("Jensen-Shannon distance is correct", {
+  # two random probability vectors
+  x <- random_prob_vector(n = 4)
+  y <- random_prob_vector(n = 4)
+  # distance is < 1 with probability 1
+  expect_true(jensen_shannon(x, y) < 1)
+  # if any vector component is zero, the result is NA
+  x_zero <- x
+  x_zero[1] <- 0
+  x_zero <- x_zero / sum(x_zero)
+  expect_true(is.na(jensen_shannon(x_zero, y)))
+  # for identical vectors, distance is 0
+  expect_equal(jensen_shannon(x, x), 0)
 })
 
 
