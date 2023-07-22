@@ -166,6 +166,31 @@ test_that("Bray-Curtis distance is correct", {
 })
 
 
+test_that("mi_weighted_distance is correct", {
+  # identical vectors have distance 0
+  x <- rnorm(n = 4)
+  expect_equal(mi_weighted_distance(x, x), 0)
+  # distance between unit vectors depends on dimension
+  for(n in 1:5) {
+    x <- c(1, rep(0, n))
+    y <- c(rep(0, n), 1)
+    expect_equal(mi_weighted_distance(x, y), n)
+  }
+})
+
+
+test_that("mi_weighted_dist_normalized is correct", {
+  # identical vectors have distance 0
+  x <- rnorm(n = 4)
+  expect_equal(mi_weighted_dist_normalized(x, x), 0)
+  # distance between unit vectors is always 1
+  for(n in 1:5) {
+    x <- c(1, rep(0, n))
+    y <- c(rep(0, n), 1)
+    expect_equal(mi_weighted_dist_normalized(x, y), 1)
+  }
+})
+
 
 # example peak area data for testing conv_reduce_all, one experiment
 
