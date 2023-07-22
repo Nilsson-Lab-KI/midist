@@ -142,13 +142,29 @@ test_that("Canberra distance is correct", {
   x <- rnorm(n = 4)
   y <- rep(0, 4)
   expect_equal(canberra_distance(x, y), 4)
-  # if any element is zero in both x and y the distance is undefined
+  # if any element is zero in both x and y the distance is NA
   x <- rnorm(n = 4)
   x[1] <- 0
   y <- rnorm(n = 4)
   y[1] <- 0
   expect_true(is.na(canberra_distance(x, y)))
 })
+
+
+test_that("Bray-Curtis distance is correct", {
+  # identical vectors have distance 0
+  x <- rnorm(n = 4)
+  expect_equal(bray_curtis_distance(x, x), 0)
+  # distance between unit vectors is 1
+  expect_equal(bray_curtis_distance(c(1, 0), c(0, 1)), 1)
+  # with one zero vector, distance is 1
+  x <- rnorm(n = 4)
+  y <- rep(0, 4)
+  expect_equal(bray_curtis_distance(x, y), 1)
+  # with two zero vectors, distance is NA
+  expect_true(is.na(bray_curtis_distance(y, y)))
+})
+
 
 
 # example peak area data for testing conv_reduce_all, one experiment
