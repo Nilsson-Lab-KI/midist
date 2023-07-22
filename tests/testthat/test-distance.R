@@ -119,6 +119,38 @@ test_that("Jensen-Shannon distance is correct", {
 })
 
 
+test_that("Manhattan distance is correct", {
+  # identical vectors have distance 0
+  x <- rnorm(n = 4)
+  expect_equal(manhattan_distance(x, x), 0)
+  # distance between unit vectors is 2
+  expect_equal(manhattan_distance(c(1, 0), c(0, 1)), 2)
+  # with a zero vector, distance is equal to sum
+  x <- rnorm(n = 4)
+  y <- rep(0, 4)
+  expect_equal(manhattan_distance(x, y), sum(abs(x)))
+})
+
+
+test_that("Canberra distance is correct", {
+  # identical vectors have distance 0
+  x <- rnorm(n = 4)
+  expect_equal(canberra_distance(x, x), 0)
+  # distance between 2D unit vectors is 1/1 + 1/1 = 2
+  expect_equal(canberra_distance(c(1, 0), c(0, 1)), 2)
+  # with a zero vector, distance is equal to n
+  x <- rnorm(n = 4)
+  y <- rep(0, 4)
+  expect_equal(canberra_distance(x, y), 4)
+  # if any element is zero in both x and y the distance is undefined
+  x <- rnorm(n = 4)
+  x[1] <- 0
+  y <- rnorm(n = 4)
+  y[1] <- 0
+  expect_true(is.na(canberra_distance(x, y)))
+})
+
+
 # example peak area data for testing conv_reduce_all, one experiment
 
 # individual MIDs
