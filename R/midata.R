@@ -216,8 +216,6 @@ midata_transform <- function(midata, f) {
 #' (see the random_mid() function for more details on the dirichlet distribution)
 #' and return a valid MID vector of the same size.
 #' @param nr_replicate Number of noisy replicates to generate
-
-#' @export
 #'
 add_noisy_replicates <- function(midata, stdev, nr_replicate) {
   # copy MIData object
@@ -263,7 +261,6 @@ misplace_peak_ids <- function(midata){
 }
 
 
-#' @export
 midata_randomize <- function(midata){
   for (i in 1:length(midata$n_atoms_index)){
     print(i)
@@ -396,7 +393,6 @@ get_avg_mid <- function(mi_data, p, e) {
 #' @param mi_data an MIData object
 #' @param index the peak index
 #' @returns a matrix where each column is the MID from an experiment
-#' @export
 get_avg_mid_all <- function(mi_data, index) {
   return(mi_data$avg_mids[get_mi_indices(mi_data, index), ])
 }
@@ -404,8 +400,6 @@ get_avg_mid_all <- function(mi_data, index) {
 
 #' Get averaged MIDs for all metabolites of the given size
 #' If no metabolites exists returns an empty list
-#'
-#' @export
 #'
 get_avg_mids_by_size <- function(mi_data, n_atoms, e) {
   index <- get_peak_index_n_atoms(mi_data, n_atoms)
@@ -418,7 +412,6 @@ get_avg_mids_by_size <- function(mi_data, n_atoms, e) {
 #' @param mi_data an MIData object
 #' @param p the peak index
 #' @returns a vector of MI indices
-#' @export
 get_mi_indices <- function(mi_data, p) {
   return(mi_data$peak_index[[p]] + 0:mi_data$peak_n_atoms[[p]])
 }
@@ -440,7 +433,6 @@ get_peak_index <- function(mi_data, peak_ids) {
 #' Get the index of peaks with a specific number of atoms
 #' @param mi_data an MIData object
 #' @param n_atoms number of atoms in peaks of interest
-#' @export
 get_peak_index_n_atoms <- function(mi_data, n_atoms) {
   return(mi_data$n_atoms_index[[as.character(n_atoms)]])
 }
@@ -453,14 +445,14 @@ get_peak_n_atoms <- function(mi_data, p) {
   return(mi_data$peak_n_atoms[[p]])
 }
 
-#' @export
+
 get_formula <- function(mi_data, p) {
   return(
     mi_data$peak_formulas[p]
   )
 }
 
-#' @export
+
 get_mass <- function(midata, p) {
   return(
     midata$peak_masses[p]
