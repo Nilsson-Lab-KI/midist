@@ -210,9 +210,9 @@ midata_transform <- function(midata, f) {
 #'
 #' This is useful when the midata object contains simulated MIDs without replicates and noise,
 #' and to add replicates we introduce a level of noise defined by the stdev parameter.
-#' 
+#'
 #' @param midata An MIData object
-#' @param stdev The desired standard deviation to generate dirichlet distribution 
+#' @param stdev The desired standard deviation to generate dirichlet distribution
 #' (see the random_mid() function for more details on the dirichlet distribution)
 #' and return a valid MID vector of the same size.
 #' @param nr_replicate Number of noisy replicates to generate
@@ -283,7 +283,7 @@ midata_randomize <- function(midata){
   return(midata)
 }
 
-                                                      
+
 #' Censor false mass isotopomers
 #'
 #' Find mass isotopomers whose fraction is above the given threshold
@@ -422,6 +422,8 @@ get_avg_mids_by_size <- function(mi_data, n_atoms, e) {
 get_mi_indices <- function(mi_data, p) {
   return(mi_data$peak_index[[p]] + 0:mi_data$peak_n_atoms[[p]])
 }
+
+
 #' @export
 get_exp_indices <- function(mi_data, e) {
   return(mi_data$exp_index[[e]] + 0:(mi_data$exp_n_rep[[e]] - 1))

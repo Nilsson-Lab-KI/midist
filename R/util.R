@@ -64,3 +64,17 @@ with_attr <- function(x, attr_name, attr_value)
   attr(x_attr, attr_name) <- attr_value
   return(x_attr)
 }
+
+
+#' Apply a function on MIDs x,y after removing M+0
+#'
+#' This simply removes the first component of each vector before applying f
+#' @param f function to apply
+#' @param x a vector
+#' @param y a vector
+#' @returns the result of calling f
+#' @export
+#'
+apply_no_m0 <- function(f, x, y) {
+  return(f(x[-1], y[-1]))
+}
