@@ -13,7 +13,7 @@ dot_dist(x, y)
 }
 \value{
 a distance based on the dot (scalar) product x.y
-This is always nonnegative if both vectors are MIDs, and zero if x = y
+This is always nonnegative, and zero if x = y
 }
 \description{
 Dot product distance (not really a distance)

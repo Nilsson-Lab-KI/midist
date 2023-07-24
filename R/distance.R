@@ -94,7 +94,7 @@ dot_sim_no_m0 <- function(x, y) apply_no_m0(dot_sim, x, y)
 #' @param x a vector
 #' @param y a vector
 #' @returns a distance based on the dot (scalar) product x.y
-#' This is always nonnegative if both vectors are MIDs, and zero if x = y
+#' This is always nonnegative, and zero if x = y
 #' @export
 #'
 dot_dist <- function(x, y)
@@ -110,7 +110,7 @@ dot_dist <- function(x, y)
 #' @param x a vector
 #' @param y a vector
 #' @returns a distance based on the dot (scalar) product x.y
-#' This is always nonnegative if both vectors are MIDs, and zero if x = y
+#' This is always nonnegative, and zero if x = y
 #' @export
 #'
 dot_dist_no_m0 <- function(x, y) apply_no_m0(dot_dist, x, y)
@@ -175,14 +175,14 @@ euclidean_dist_no_m0 <- function(x, y) apply_no_m0(euclidean_dist, x, y)
 jensen_shannon <- function(x, y) {
   # Compute the average of the input vectors
   m <- (x + y) / 2
-  
+
   # Compute the Kullback-Leibler divergences
   kl_x <- sum(x * log2(x / m))
   kl_y <- sum(y * log2(y / m))
-  
+
   # Compute the Jensen-Shannon distance
   jsd <- sqrt((kl_x + kl_y) / 2)
-  
+
   return(jsd)
 }
 
@@ -439,14 +439,14 @@ conv_reduce_block_equal_all_experiments <- function(mi_data, f, g, x_index, y_in
   # allocate matrices
   block = list(values = matrix(as.double(NA), n_x, n_y),
                index = matrix(as.integer(NA), n_x, n_y))
-  
-  mids_x <- lapply(1:length(mi_data$experiments), 
+
+  mids_x <- lapply(1:length(mi_data$experiments),
                    function(e) sapply(x_index, function(i) get_avg_mid(mi_data, i, e)))
   stopifnot(is.matrix(mids_x[[1]]))
-  mids_y <- lapply(1:length(mi_data$experiments), 
+  mids_y <- lapply(1:length(mi_data$experiments),
                    function(e) sapply(y_index, function(i) get_avg_mid(mi_data, i, e)))
   stopifnot(is.matrix(mids_y[[1]]))
-  
+
   # calculate g(f(x,y)) for each x,y (no attributes in this case)
   for(i in 1:n_x) {
     block$values[i, ] <- apply(mids_y, MARGIN = 2,
@@ -936,20 +936,20 @@ convert_to_edge_list <- function(pairwise_matrix, middle_met_matrix, input, perc
 
   # filter pairwise matrix for the given percentile
   pairwise_matrix <- filter_pairwise_matrix_global(pairwise_matrix, percentile*0.01)
-  
+
   edge_list <- data.frame(metabolite_1 = NA, met_1_attribute = NA,
                           metabolite_2 = NA, met_2_attribute = NA,
                           distance = NA, distance_attribute = NA)
   for (r2 in 1:nrow(pairwise_matrix)){
     for (d2 in r2:nrow(pairwise_matrix)){
-  
+
       if (is.na(pairwise_matrix[r2, d2]) == F)
       {
         peak_1 <- input$midata$peak_ids[r2]
         nr_carbon_1 <- input$midata$peak_n_atoms[r2]
         peak_2 <- input$midata$peak_ids[d2]
         nr_carbon_2 <- input$midata$peak_n_atoms[d2]
-  
+
         # in case of equal carbons
         if (nr_carbon_1 == nr_carbon_2)
         {
@@ -959,7 +959,7 @@ convert_to_edge_list <- function(pairwise_matrix, middle_met_matrix, input, perc
                                         distance = pairwise_matrix[r2, d2],
                                         distance_attribute = "equal_carbon"))
         }
-  
+
         # if metabolite 1 has less carbons than metabolite 2
         # peak_1 <- peak_convolution & peak_middle <- peak_convolution & peak_convolution <- peak_2
         else if (nr_carbon_1 < nr_carbon_2)
@@ -973,7 +973,7 @@ convert_to_edge_list <- function(pairwise_matrix, middle_met_matrix, input, perc
                                         met_2_attribute = c("convolution", "convolution", "metabolite"),
                                         distance = pairwise_matrix[r2, d2], distance_attribute = "convolution"))
         }
-  
+
         # if metabolite 1 has more carbons than metabolite 2
         # peak_2 <- peak_convolution & peak_middle <- peak_convolution & peak_convolution <- peak_1
         else
@@ -988,20 +988,20 @@ convert_to_edge_list <- function(pairwise_matrix, middle_met_matrix, input, perc
                                         distance = pairwise_matrix[r2, d2], distance_attribute = "convolution"))
         }
       }
-  
-  
+
+
     }
   }
   # remove the first NA row
   edge_list <- edge_list[-1,]
-  
+
   return(edge_list)
 }
 
 #' @export
 # compute distances for equal carbon metabolites, and make a selection based on g_select
 calc_distance_equal_c <- function(mid_x, mid_y, f){
-  
+
   cd <- c()
   for (e in 1:length(mid_x)){
     cd <- c(cd, f(mid_x[[e]], mid_y[[e]]))
@@ -1021,14 +1021,14 @@ calc_distance_unequal_c <- function(mid_x, mid_y, mid_z, z_index, f, g_select){
     }
     sums_cd <- c(sums_cd, sum(cd, na.rm = T))
   }
-  
+
   return(list(g_select(sums_cd), z_index[which(sums_cd == g_select(sums_cd))[1]]))
 }
 
 #' @export
 # convolutes two small MIDs and computes the distance (by f) between the convolution and the largest MID
 convolute_and_distance <- function(mid_x, mid_y, mid_z, f){
-  if (length(mid_x) < length(mid_y)) 
+  if (length(mid_x) < length(mid_y))
     return(f(convolute(mid_z, mid_x), mid_y)) else
       return(f(convolute(mid_z, mid_y), mid_x))
 }
@@ -1037,42 +1037,42 @@ convolute_and_distance <- function(mid_x, mid_y, mid_z, f){
 # compute distance for each unique pair
 calc_pair_distance <- function(pair, midata, f, g_select){
   print(pair)
-  
+
   n_atoms_x <- midata$peak_n_atoms[pair[1]]
   mid_x <- lapply(1:length(midata$experiments), function(e) get_avg_mid(midata, pair[1], e))
   n_atoms_y <- midata$peak_n_atoms[pair[2]]
   mid_y <- lapply(1:length(midata$experiments), function(e) get_avg_mid(midata, pair[2], e))
-  
+
   if (n_atoms_x == n_atoms_y){
     # compute distances for all experiments
     distance <- calc_distance_equal_c(mid_x, mid_y, f)
-    result <- data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2], 
+    result <- data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2],
                          middle_metabolite = distance[[2]], distance = distance[[1]])
     return(result)
-  } 
-  
+  }
+
   else {
-    
+
     # number of carbons for the middle metabolite
     n_atoms_z <- abs(n_atoms_x - n_atoms_y)
     # indices of metabolites with n_atoms_z carbons
     z_index <- get_peak_index_n_atoms(midata, n_atoms_z)
-    
+
     # make sure at least one metabolite with n_atoms_z carbons exists in the data
     if (is.null(z_index) == F) {
       # bring MIDs of these metabolites across all experiments
       mid_z <- lapply(z_index, function(p) lapply(1:length(midata$experiments), function(e) get_avg_mid(midata, p, e)))
-      # compute the actual distances for each z, and select the one 
+      # compute the actual distances for each z, and select the one
       distance <- calc_distance_unequal_c(mid_x, mid_y, mid_z, z_index, f, g_select)
-      result <- data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2], 
+      result <- data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2],
                            middle_metabolite = distance[[2]], distance = distance[[1]])
       return(result)
-    } 
+    }
     # if not just return NA for this pair
-    else return(data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2], 
+    else return(data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2],
                            middle_metabolite = NA, distance = NA))
   }
-  
+
 }
 
 
@@ -1080,66 +1080,66 @@ calc_pair_distance <- function(pair, midata, f, g_select){
 # compute distance for each unique pair
 calc_pair_distance_single_experiment <- function(pair, midata, f, g_select){
   print(pair)
-  
+
   n_atoms_x <- midata$peak_n_atoms[pair[1]]
   mid_x <- get_avg_mid(midata, pair[1])
   n_atoms_y <- midata$peak_n_atoms[pair[2]]
   mid_y <- get_avg_mid(midata, pair[2])
-  
+
   if (n_atoms_x == n_atoms_y){
     distance <- f(mid_x, mid_y)
-    result <- data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2], 
+    result <- data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2],
                          middle_metabolite = NA, distance = distance)
     return(result)
-  } 
-  
+  }
+
   else {
-    
+
     # number of carbons for the middle metabolite
     n_atoms_z <- abs(n_atoms_x - n_atoms_y)
     # indices of metabolites with n_atoms_z carbons
     z_index <- get_peak_index_n_atoms(midata, n_atoms_z)
-    
+
     # make sure at least one metabolite with n_atoms_z carbons exists in the data
     if (is.null(z_index) == F) {
       # bring MIDs of these metabolites across all experiments
       mid_z <- lapply(z_index, function(p) get_avg_mid(midata, p))
-      # compute the actual distances for each z, and select the one 
-      
-      distances <- lapply(1:length(mid_z), function(z, mid_x, mid_y, mid_z, f) convolute_and_distance(mid_x, mid_y, mid_z[[z]], f), 
+      # compute the actual distances for each z, and select the one
+
+      distances <- lapply(1:length(mid_z), function(z, mid_x, mid_y, mid_z, f) convolute_and_distance(mid_x, mid_y, mid_z[[z]], f),
                           mid_x, mid_y, mid_z, f)
-      
-      
+
+
       distance <- g_select(distances)
       mmm <- which(distances == distance)
-      result <- data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2], 
+      result <- data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2],
                            middle_metabolite = mmm, distance = distance)
       return(result)
-    } 
+    }
     # if not just return NA for this pair
-    else return(data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2], 
+    else return(data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2],
                            middle_metabolite = NA, distance = NA))
   }
-  
+
 }
 
 
 
 #' @export
 pairwise_matrix_v2 <- function(midata, f, g_select){
-  
+
   # all unique pairs
   pairs <- combn(length(midata$peak_ids), 2)
-  
+
   # compute distances and keep track of the convolutions
   results <- apply(pairs, 2, calc_pair_distance, midata, f, g_select)
-  
+
   # convert dataframes into proper distance matrices
   distances <- sapply(results, function(x) return(x[4]))
   stopifnot(length(distances) == dim(pairs)[2])
   middle_mets <- sapply(results, function(x) return(x[3]))
   stopifnot(length(middle_mets) == dim(pairs)[2])
-  
+
   dm <- matrix(NA, length(midata$peak_ids), length(midata$peak_ids))
   mmm <- matrix(NA, length(midata$peak_ids), length(midata$peak_ids))
   colnames(dm) <- rownames(dm) <- colnames(mmm) <- rownames(mmm) <- midata$peak_ids
@@ -1149,25 +1149,25 @@ pairwise_matrix_v2 <- function(midata, f, g_select){
     mmm[pairs[1,i], pairs[2,i]] <- as.numeric(middle_mets[i])
     mmm[pairs[2,i], pairs[1,i]] <- as.numeric(middle_mets[i])
   }
-  
+
   result <- list(dm, mmm)
   names(result) <- c("distance_matrix", "middle_metabolite_matrix")
-  
+
   return(result)
 }
 
 #' @export
 remn_v2 <- function(midata, f, g_select, rdata_fname, return = T){
-  
+
   remn_output <- pairwise_matrix_v2(midata, f, g_select)
-  
+
   if (return == T)
     return(remn_output) else {
       distance_matrix <- remn_output$distance_matrix
       middle_metabolite_matrix <- remn_output$middle_metabolite_matrix
-      
+
       save(midata,
-           distance_matrix, 
+           distance_matrix,
            middle_metabolite_matrix,
            f,
            g_select,
@@ -1182,32 +1182,32 @@ is_distance_matrix <- function(mat) {
   mat <- as.matrix(nearPD(mat)$mat)
   # Initialize a character vector to store failure reasons
   failures <- character(0)
-  
+
   # Check if the input is a matrix
   if (!is.matrix(mat)) {
     failures <- append(failures, "Input is not a matrix")
   }
-  
+
   # Check if the matrix is square
   if (nrow(mat) != ncol(mat)) {
     failures <- append(failures, "Matrix is not square")
   }
-  
+
   # Check if the matrix is symmetric
   if (!isSymmetric(mat)) {
     failures <- append(failures, "Matrix is not symmetric")
   }
-  
+
   # Check if the diagonal entries are zero
   if (!all(diag(mat) == 0)) {
     failures <- append(failures, "Diagonal entries are not zero")
   }
-  
+
   # Check if the matrix is non-negative
   if (!all(mat >= 0)) {
     failures <- append(failures, "Matrix contains negative values")
   }
-  
+
   # Check the triangle inequality
   for (i in 1:nrow(mat)) {
     for (j in 1:nrow(mat)) {
@@ -1218,7 +1218,7 @@ is_distance_matrix <- function(mat) {
       }
     }
   }
-  
+
   # If no failures, return NULL, else return the failure reasons
   if (length(failures) == 0) {
     return(NULL)
@@ -1240,20 +1240,20 @@ enrichment_dist_matrix <- function(midata, experiments, method = "euclidean"){
 
 #' @export
 remn_v1 <- function(midata, f, g_select, rdata_fname, return = T) {
-  
+
   pairwise_matrix <- list()
   for (e in 1:length(midata$experiments)){
     experiment <- midata$experiments[e]
-    
+
     # data dimensions
     n_metabolites <- length(midata$peak_ids)
     # met names
     met_names <- midata$peak_ids
-    
+
     # compute the pairwise matrix
     pairwise_matrix[[e]] <- conv_reduce_all(
       midata, e,
-      f, 
+      f,
       g_select
     )
 
