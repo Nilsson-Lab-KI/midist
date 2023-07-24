@@ -58,7 +58,6 @@ c13correct <- function(mid, p = 0.0107, constraint = TRUE)
 
 #' Correct an MID vector for naturally occurring isotopes and remove M+0
 #' @param mid An MID vector to correct
-#' @export
 correct_and_remove <- function(mid) {
   return(c13correct(mid)[-1])
 }
@@ -146,7 +145,6 @@ convolute <- function(x, y) {
 #' @param x an MID vector
 #' @param y_mat a matrix whose columns are MID vectors
 #' @returns the matrix of convolution vectors x*y for each column y in y_mat
-#' @export
 convolute_cols <- function(x, y_mat) {
   return(convolution_matrix(x, nrow(y_mat) - 1) %*% y_mat)
 }
