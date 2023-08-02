@@ -76,6 +76,12 @@ test_that("get_exp_indices works correctly", {
 })
 
 
+test_that("get_peak_index works correctly", {
+  expect_equal(get_peak_index(mi_data_1, "x"), 1)
+  expect_equal(get_peak_index(mi_data_1, "y"), 2)
+})
+
+
 test_that("get_mids works correctly", {
   expect_equal(
     get_mids(mi_data_1, 1, 1),
