@@ -2,7 +2,7 @@
 # test MID handling functions
 #
 
-test_that("enrichment values are correct", {
+test_that("isotopic_enrichment is correct", {
   # unit vector has enrichment zero
   expect_equal(isotopic_enrichment(c(1, 0, 0)), 0)
   # fully labeled vector has enrichment 1
@@ -31,13 +31,13 @@ test_that("add_gamma_noise works correctly", {
   expect_equal(add_gamma_noise(c(1,0,0,0), stdev = 5), c(1,0,0,0))
 })
 
-test_that("convolution matrix has right dimensions", {
+test_that("convolution_matrix gives correct dimensions", {
   # convolution 2-carbon x with 3-carbon y
   A <- convolution_matrix(x = c(0.1, 0.3, 0.6), y_carbons = 3)
   expect_equal(dim(A), c(2 + 3 + 1, 3 + 1))
 })
 
-test_that("MID convolution is correct", {
+test_that("convolute is correct", {
   # two 1-carbon unit vectors
   expect_equal(convolute(c(1, 0), c(1, 0)), c(1, 0, 0))
   # short * long vector
@@ -49,7 +49,7 @@ test_that("MID convolution is correct", {
   expect_equal(convolute(c(0, 0), c(1, 0)), c(0, 0, 0))
 })
 
-test_that("matrix MID convolution equals vector MID convolution", {
+test_that("convolute_cols agrees with convolute", {
   x <- c(0.8, 0.2)
   # random MID matrix, each column is one MID
   y_mat <- matrix(runif(3 * 4), nrow = 3, ncol = 4)
@@ -62,7 +62,7 @@ test_that("matrix MID convolution equals vector MID convolution", {
 })
 
 
-test_that("13C correction is correct", {
+test_that("c13correct is correct", {
   # case where simplex constraints must be enforced
   expect_equal(c13correct(c(1, 0, 0)), c(1, 0, 0))
   # case from simplex interior to corner
@@ -74,7 +74,7 @@ test_that("13C correction is correct", {
 })
 
 
-test_that("solution() is correct", {
+test_that("solution is correct", {
   # find y minimizing  || x * y - z ||
   x <- c(0.5, 0.5)
   y <- c(0.2, 0, 0.8)
@@ -83,7 +83,7 @@ test_that("solution() is correct", {
 })
 
 
-test_that("find_convolution() is correct", {
+test_that("find_convolution is correct", {
   # find y minimizing  || x * y - z ||
   x <- c(0.5, 0.5)
   #y <- c(0.2, 0, 0.8)
