@@ -15,20 +15,20 @@ peak_areas_1 <- data.frame(
 )
 # unique experiment names
 exp_names_1 <- c('exp1', 'exp1', 'exp2')
+# create MIData object
+mi_data_1 <- MIData(peak_areas_1, exp_names_1)
 
 
 test_that("MIData objects are created correctly", {
-  # create MIData object
-  midata <- MIData(peak_areas_1, exp_names_1)
   # check object properties
-  expect_equal(midata$peak_ids, c("x", "y"))
-  expect_equal(length(midata$peak_index), 2)
-  expect_equal(midata$peak_n_atoms, c(2, 3))
-  expect_equal(midata$experiments, c("exp1", "exp2"))
-  expect_equal(midata$exp_index, c(1, 3))
-  expect_equal(midata$exp_n_rep, c(2, 1))
-  expect_equal(midata$n_atoms_index[["2"]], c(1))
-  expect_equal(midata$n_atoms_index[["3"]], c(2))
+  expect_equal(mi_data_1$peak_ids, c("x", "y"))
+  expect_equal(length(mi_data_1$peak_index), 2)
+  expect_equal(mi_data_1$peak_n_atoms, c(2, 3))
+  expect_equal(mi_data_1$experiments, c("exp1", "exp2"))
+  expect_equal(mi_data_1$exp_index, c(1, 3))
+  expect_equal(mi_data_1$exp_n_rep, c(2, 1))
+  expect_equal(mi_data_1$n_atoms_index[["2"]], c(1))
+  expect_equal(mi_data_1$n_atoms_index[["3"]], c(2))
 })
 
 
@@ -77,14 +77,13 @@ test_that("get_exp_indices works correctly", {
 
 
 test_that("get_avg_mid works correctly", {
-  mi_data <- MIData(peak_areas_1, exp_names_1)
   expect_equal(
-    get_avg_mid(mi_data, 1, 1),
+    get_avg_mid(mi_data_1, 1, 1),
     c(0.2916667, 0.1666667, 0.5416667),
     tolerance = 1e-6
   )
   expect_equal(
-    get_avg_mid(mi_data, 1),
+    get_avg_mid(mi_data_1, 1),
     matrix(
       c(
         0.2916667, 0.8333333,
@@ -99,21 +98,20 @@ test_that("get_avg_mid works correctly", {
 
 
 test_that("midata_transform works correctly", {
-  midata <- MIData(peak_areas_1, exp_names_1)
   # apply identity function
-  new_midata <- midata_transform(midata, identity)
-  expect_equal(new_midata, midata)
+  new_midata <- midata_transform(mi_data_1, identity)
+  expect_equal(new_midata, mi_data_1)
   # apply 13C correction
-  new_midata <- midata_transform(midata, c13correct)
+  new_midata <- midata_transform(mi_data_1, c13correct)
   # check corrected MID
   expect_equal(
     get_mids(new_midata, 1, 1)[,1],
-    c13correct(get_mids(midata, 1, 1)[,1])
+    c13correct(get_mids(mi_data_1, 1, 1)[,1])
   )
   # check averaged corrected MID
   expect_equal(
     get_avg_mid(new_midata, 1, 1),
-    c13correct(get_avg_mid(midata, 1, 1))
+    c13correct(get_avg_mid(mi_data_1, 1, 1))
   )
 })
 
@@ -130,31 +128,30 @@ peak_areas_2 <- data.frame(
     0.0, 0.0, 0.0)
 )
 exp_names_2 = c("exp1")
+mi_data_2 <- MIData(peak_areas_2, exp_names_2)
 
 
 test_that("midata_subset works correctly", {
-  mi_data <- MIData(peak_areas_2, exp_names_2)
-
   # take a subset
   sub_index <- c(1,3,2)
-  mi_data_sub <- midata_subset(mi_data, sub_index)
-  expect_equal(mi_data_sub$peak_ids, mi_data$peak_ids[sub_index])
-  expect_equal(mi_data_sub$peak_n_atoms, mi_data$peak_n_atoms[sub_index])
+  mi_data_sub <- midata_subset(mi_data_2, sub_index)
+  expect_equal(mi_data_sub$peak_ids, mi_data_2$peak_ids[sub_index])
+  expect_equal(mi_data_sub$peak_n_atoms, mi_data_2$peak_n_atoms[sub_index])
   expect_equal(
     get_avg_mid(mi_data_sub, 3, 1),
-    get_avg_mid(mi_data, 2, 1))
+    get_avg_mid(mi_data_2, 2, 1))
 
   # permutation (all peaks, but in different order)
   sub_index <- c(4,2,1,5,3)
-  mi_data_sub <- midata_subset(mi_data, sub_index)
-  expect_equal(mi_data_sub$peak_ids, mi_data$peak_ids[sub_index])
-  expect_equal(mi_data_sub$peak_n_atoms, mi_data$peak_n_atoms[sub_index])
+  mi_data_sub <- midata_subset(mi_data_2, sub_index)
+  expect_equal(mi_data_sub$peak_ids, mi_data_2$peak_ids[sub_index])
+  expect_equal(mi_data_sub$peak_n_atoms, mi_data_2$peak_n_atoms[sub_index])
   expect_equal(
     get_avg_mid(mi_data_sub, 4, 1),
-    get_avg_mid(mi_data, 5, 1))
+    get_avg_mid(mi_data_2, 5, 1))
 
   # subset to entire range should give identical object
-  expect_equal(midata_subset(mi_data, 1:5), mi_data)
+  expect_equal(midata_subset(mi_data_2, 1:5), mi_data_2)
 
 })
 
@@ -192,8 +189,7 @@ test_that("normalizing zero vector gives zero vector", {
 
 
 test_that("false isotope removal works correctly", {
-  mi_data <- MIData(peak_areas_1, exp_names_1)
-  mi_data_censored <- censor_false_mi(mi_data, threshold = 0.03, min_experiments = 2)
+  mi_data_censored <- censor_false_mi(mi_data_1, threshold = 0.03, min_experiments = 2)
   # for peak 1 this removes M+2
   expect_equal(
     get_mids(mi_data_censored, 1, 1),
