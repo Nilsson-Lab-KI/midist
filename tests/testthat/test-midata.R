@@ -76,6 +76,47 @@ test_that("get_exp_indices works correctly", {
 })
 
 
+test_that("get_mids works correctly", {
+  expect_equal(
+    get_mids(mi_data_1, 1, 1),
+    matrix(
+      c(
+        0.2500000, 0.3333333,
+        0.1666667, 0.1666667,
+        0.5833333, 0.5000000
+      ),
+      nrow = 3, byrow = TRUE
+    ),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    get_mids(mi_data_1, 1, 2),
+    matrix(
+      c(
+        0.8333333,
+        0.0000000,
+        0.1666667
+      ),
+      nrow = 3, byrow = TRUE
+    ),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    get_mids(mi_data_1, 2, 1),
+    matrix(
+      c(
+        0.75, 0.7272727,
+        0.25, 0.2727273,
+        0.00, 0.0000000,
+        0.00, 0.0000000
+      ),
+      nrow = 4, byrow = TRUE
+    ),
+    tolerance = 1e-6
+  )
+})
+
+
 test_that("get_avg_mid works correctly", {
   expect_equal(
     get_avg_mid(mi_data_1, 1, 1),

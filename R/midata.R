@@ -7,7 +7,8 @@
 #' @param peak_areas a peak_area data.frame. The first column of peak_areas
 #' must be peak identifiers, repeated for each MI of the same peak.
 #' The second column holds formulas (but )
-#' @param exp_names a optional list of experiment names matching columns 2,3... in peak_areas
+#' @param exp_names a optional list of experiment names for columns 2,3... in peak_areas.
+#' These names will replace the column names for those columns.
 #' @export
 MIData <- function(peak_areas, exp_names = NULL)
 {
@@ -74,6 +75,10 @@ MIData <- function(peak_areas, exp_names = NULL)
   return(mi_data)
 }
 
+
+#' Read peak areas from file and create an MIData object
+#'
+#' @param peak_areas_fname Name of a a tab-separated file containing peak areas
 #' @export
 get_midata <- function(peak_areas_fname){
 
