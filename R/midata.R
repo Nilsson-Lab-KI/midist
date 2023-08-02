@@ -66,6 +66,13 @@ MIData <- function(peak_areas, exp_names = NULL)
       pa <- peak_areas[rows, cols, drop = FALSE]
       # normalize nonzero mids
       mi_data$mids[rows, cols] <- normalize_mids(pa)
+      
+      # detecting zero peaks
+      zero_peaks <- which(colSums(mi_data$mids[rows, cols]) == 0)
+      if (length(zero_peaks) != 0){
+        mi_data$mids[rows, cols[zero_peaks]] <- dbinom(c(0:(length(rows) - 1)), length(rows) - 1, 0.0107)
+      }
+      
     }
   }
   # averaged MIDs
