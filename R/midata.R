@@ -317,6 +317,13 @@ censor_false_mi <- function(mi_data, threshold = 0.03, min_experiments = 1)
     new_mids[false_index,] <- 0
     # renormalize
     new_midata$mids[rows, ] <- t(t(new_mids) / colSums(new_mids))
+    
+    # NaN filtering here
+    nan <- all(is.na(colSums(new_midata$mids[rows, ])))
+    if (nan == F){
+      nan_index <- which(is.na(colSums(new_midata$mids[rows, ])))
+      new_midata$mids[rows, nan_index] <- dbinom(c(0:(length(rows) - 1)), length(rows) - 1, 0.0107)
+    }
   }
   # update the averaged MIDs
   new_midata$avg_mids <- calc_avg_mids(new_midata)
