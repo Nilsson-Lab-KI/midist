@@ -349,13 +349,13 @@ find_false_mi <- function(corrected_mids, threshold, min_experiments)
 # TODO: move this to mid.R ?
 #
 normalize_mids <- function(mids) {
-  normalized.mids <- matrix(0, nrow(mids), ncol(mids))
+  normalized_mids <- matrix(0, nrow(mids), ncol(mids))
   for (i in 1:ncol(mids)) {
-    if (sum(mids[, i]) != 0 & unique(is.na(mids[,i])) == F) {
-      normalized.mids[, i] <- mids[, i] / sum(mids[, i])
+    if (sum(mids[, i]) != 0) {
+      normalized_mids[, i] <- mids[, i] / sum(mids[, i])
     }
   }
-  return(normalized.mids)
+  return(normalized_mids)
 }
 
 #
