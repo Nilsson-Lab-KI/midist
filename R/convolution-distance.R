@@ -1001,13 +1001,27 @@ is_distance_matrix <- function(mat) {
   }
 }
 
-#' @export
 # compute distance matrix from isotopic enrichment only
 # choose the method from c("euclidean", "manhattan", "canberra")
-enrichment_dist_matrix <- function(midata, experiments, method = "euclidean"){
-  isotopic_enrichments <- do.call(rbind.data.frame, lapply(1:length(midata$peak_ids), function(p) apply(as.matrix(get_avg_mid(midata, p)), 2, isotopic_enrichment)))
-  enrichments <- as.matrix(dist(isotopic_enrichments[, midata$experiments %in% experiments],
-                                method = method))
+#' @param midata An MIData object
+#' @param experiments A list of experiments (names) to use
+#' @param method distance metric, as in stats::dist
+#' @export
+enrichment_dist_matrix <- function(midata, experiments, method = "euclidean")
+{
+  isotopic_enrichments <- do.call(
+    rbind.data.frame,
+    lapply(1:length(midata$peak_ids),
+           function(p) apply(as.matrix(get_avg_mid(midata, p)), 2, isotopic_enrichment)
+    )
+  )
+  # compute distance matrix
+  enrichments <- as.matrix(
+    stats::dist(
+      isotopic_enrichments[, midata$experiments %in% experiments],
+      method = method
+    )
+  )
   rownames(enrichments) <- colnames(enrichments) <- midata$peak_ids
   return(enrichments)
 }
