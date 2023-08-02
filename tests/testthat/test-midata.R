@@ -46,6 +46,36 @@ test_that("find_mi_index works correctly", {
 })
 
 
+test_that("get_exp_indices works correctly", {
+  # create an MIData with multiple experiments
+  mi_data <- MIData(
+    data.frame(
+      Metabolite = rep("a", 2),
+      Formula = rep("a", 2),
+      exp1 = c(0.80, 0.20),
+      exp1 = c(0.10, 0.90),
+      exp2 = c(0.15, 0.85),
+      exp2 = c(0.50, 0.50),
+      exp2 = c(0.40, 0.60),
+      exp3 = c(0.10, 0.90),
+      check.names = FALSE
+    )
+  )
+  expect_equal(
+    get_exp_indices(mi_data, 1),
+    c(1, 2)
+  )
+  expect_equal(
+    get_exp_indices(mi_data, 2),
+    c(3, 4, 5)
+  )
+  expect_equal(
+    get_exp_indices(mi_data, 3),
+    c(6)
+  )
+})
+
+
 test_that("get_avg_mid works correctly", {
   mi_data <- MIData(peak_areas_1, exp_names_1)
   expect_equal(

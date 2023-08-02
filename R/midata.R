@@ -416,7 +416,9 @@ get_mi_indices <- function(mi_data, p) {
   return(mi_data$peak_index[[p]] + 0:mi_data$peak_n_atoms[[p]])
 }
 
-
+#' Get indices into the columns of the $mid matrix for experiment e
+#' @param mi_data An MIData object
+#' @param e An experiment index
 #' @export
 get_exp_indices <- function(mi_data, e) {
   return(mi_data$exp_index[[e]] + 0:(mi_data$exp_n_rep[[e]] - 1))
