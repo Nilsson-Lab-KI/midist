@@ -245,11 +245,15 @@ add_noisy_replicates <- function(midata, stdev, nr_replicate) {
   return(new_midata)
 }
 
-
+#' Reorder the peak IDs of an mi_data object
+#'
+#' @param midata An MIData object
+#' @returns A vector of reordered peak IDs
 #' @export
-misplace_peak_ids <- function(midata){
-  for (i in 1:length(midata$n_atoms_index)){
-    if (length(midata$n_atoms_index[[i]]) != 1){
+misplace_peak_ids <- function(midata)
+{
+  for (i in 1:length(midata$n_atoms_index)) {
+    if (length(midata$n_atoms_index[[i]]) != 1) {
       # Shuffle the vector while ensuring none of the elements are in their original spot
       # Note that this is not a complete randomization, but rather misplacing every element
       new_ind <- midata$n_atoms_index[[i]]

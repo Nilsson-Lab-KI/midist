@@ -279,3 +279,41 @@ test_that("false isotope removal works correctly", {
   )
 })
 
+
+test_that("misplace_peak_ids is correct", {
+  # for this MIData object the only possible misplacement
+  # is to exchange e and b
+  expect_equal(
+    misplace_peak_ids(mi_data_2),
+    c("a", "e", "c", "d", "b")
+  )
+  # an MIData object with 20 peaks of atom sizes 1 and 2, 10 peaks of each
+  peak_ids <- c(
+    unlist(lapply(1:10, function(i) rep(paste0("x", i), 2))),
+    unlist(lapply(1:10, function(i) rep(paste0("y", i), 3)))
+  )
+  unique_peak_ids <- unique(peak_ids)
+  mi_data <- MIData(
+    data.frame(
+      Metabolite = peak_ids,
+      Formula = peak_ids,
+      exp1 = runif(2*10 + 3*10, 0, 1)
+    )
+  )
+  misplaced_ids <- misplace_peak_ids(mi_data)
+  # number of IDs must be the same
+  expect_equal(length(misplaced_ids), 20)
+  # misplacement occurs only within each atom size
+  expect_equal(
+    sort(misplaced_ids[1:10]),
+    sort(unique_peak_ids[1:10])
+  )
+  expect_equal(
+    sort(misplaced_ids[11:20]),
+    sort(unique_peak_ids[11:20])
+  )
+  # each peak id differs from the original
+  expect_false(any(misplaced_ids[1:10] == unique_peak_ids[1:10]))
+  expect_false(any(misplaced_ids[11:20] == unique_peak_ids[11:20]))
+})
+
