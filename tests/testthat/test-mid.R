@@ -91,3 +91,25 @@ test_that("find_convolution is correct", {
   expect_equal(find_convolution(z, x), z)
 })
 
+
+test_that("random_mid is correct", {
+  mean_mid <- c(0.1, 0.2, 0.0, 0.7)
+  n <- 10
+  random_mids <- random_mid(mean_mid, 0.1, n)
+  # check dimensions
+  expect_true(is.matrix(random_mids))
+  expect_equal(
+    dim(random_mids),
+    c(4, n)
+  )
+  # all MI fractions must be positive
+  expect_true(all(random_mids >= 0))
+  # zeros in the mean vector gives zeros in all observations
+  expect_true(all(random_mids[3, ] == 0))
+  # MIDs must sum to 1
+  expect_equal(
+    colSums(random_mids),
+    rep(1.0, n)
+  )
+})
+
