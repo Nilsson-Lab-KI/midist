@@ -630,7 +630,7 @@ combine_sum <- function(pairwise_matrices)
 #' Returns the metabolite index which was chosen by fun.
 #' It is supposed to be used in the combine() function.
 #' @param vector a row from a pairwise matrix
-#' @param fun a function like max() or min()
+#' @param fun a function selecting an element of the vector, like max() or min()
 get_fun_index <- function(vector, fun)
 {
   vector <- as.vector(vector)
@@ -649,15 +649,17 @@ get_fun_index <- function(vector, fun)
 #' @param middle_met_matrices a list of middle metabolite matrices across different
 #' experiments, where a middle metabolite denotes the metabolite that was chosen
 #' as the best convolution for a given metabolite pair of unequal carbon number
-#'
+#' @returns a list of 3 matrices: [1] the combined pairwise matrix, [2] the combined
+#' middle metabolite matrix, and [3] the experiment index chosen for each element
 #' @export
 combine <- function(pairwise_matrices, middle_met_matrices, fun)
 {
+  # flatten matrices
   pairwise_vec <- do.call(rbind.data.frame, lapply(pairwise_matrices, as.vector))
   middle_met_vec <- do.call(rbind.data.frame, lapply(middle_met_matrices, as.vector))
-
+  # find the experiment
   index <- as.vector(unlist(apply(pairwise_vec, 2, get_fun_index, fun)))
-
+  # combined pairwise matrix
   pm <- matrix(
     unlist(lapply(1:length(index),
                   function(x, pairwise_vec, index) pairwise_vec[[x]][index[[x]][1]],
@@ -665,7 +667,7 @@ combine <- function(pairwise_matrices, middle_met_matrices, fun)
     ncol = ncol(pairwise_matrices[[1]]),
     byrow = F
   )
-
+  # combined middle metabolite matrix
   mmm <- matrix(
     unlist(lapply(1:length(index),
                   function(x, pairwise_vec, index) middle_met_vec[[x]][index[[x]][1]],
@@ -673,7 +675,7 @@ combine <- function(pairwise_matrices, middle_met_matrices, fun)
     ncol = ncol(pairwise_matrices[[1]]),
     byrow = F
   )
-
+  # matrix of experiment indices chosen by fun
   ei <- matrix(index,
     ncol = ncol(pairwise_matrices[[1]]),
     byrow = F
@@ -999,13 +1001,27 @@ is_distance_matrix <- function(mat) {
   }
 }
 
-#' @export
 # compute distance matrix from isotopic enrichment only
 # choose the method from c("euclidean", "manhattan", "canberra")
-enrichment_dist_matrix <- function(midata, experiments, method = "euclidean"){
-  isotopic_enrichments <- do.call(rbind.data.frame, lapply(1:length(midata$peak_ids), function(p) apply(as.matrix(get_avg_mid(midata, p)), 2, isotopic_enrichment)))
-  enrichments <- as.matrix(dist(isotopic_enrichments[, midata$experiments %in% experiments],
-                                method = method))
+#' @param midata An MIData object
+#' @param experiments A list of experiments (names) to use
+#' @param method distance metric, as in stats::dist
+#' @export
+enrichment_dist_matrix <- function(midata, experiments, method = "euclidean")
+{
+  isotopic_enrichments <- do.call(
+    rbind.data.frame,
+    lapply(1:length(midata$peak_ids),
+           function(p) apply(as.matrix(get_avg_mid(midata, p)), 2, isotopic_enrichment)
+    )
+  )
+  # compute distance matrix
+  enrichments <- as.matrix(
+    stats::dist(
+      isotopic_enrichments[, midata$experiments %in% experiments],
+      method = method
+    )
+  )
   rownames(enrichments) <- colnames(enrichments) <- midata$peak_ids
   return(enrichments)
 }
