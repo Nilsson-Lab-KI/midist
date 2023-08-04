@@ -130,7 +130,7 @@ calc_avg_mids <- function(mi_data) {
       cols <- get_exp_indices(mi_data, e)
       # collapse across replicates
       if (all(is.na(colSums(mi_data$mids[rows, cols, drop = F]))))
-        avg_mids[rows, e] <- NA else {
+        avg_mids[rows, e] <- dbinom(c(0:(length(rows) - 1)), length(rows) - 1, 0.0107) else {
           new_areas <- rowSums(mi_data$mids[rows, cols, drop = F], na.rm = T) / length(which(!is.na(colSums(mi_data$mids[rows, cols, drop = F], na.rm = T))))
           # renormalization needed for some cases
           avg_mids[rows, e] <- new_areas / sum(new_areas)
