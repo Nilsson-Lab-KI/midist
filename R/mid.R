@@ -35,24 +35,27 @@ filter_enrichment <- function(mid, tol = 0.0107) {
 #' @export
 c13correct <- function(mid, p = 0.0107, constraint = TRUE)
 {
-  # dimensions of the correction matrix
-  end <- length(mid)
-  # an empty correction matrix to be filled in by binom values
-  correct <- matrix(0, end, end)
-
-  # column-wise filling in the correction matrix
-  for (j in 1:end) {
-    correct[j:end, j] <- dbinom(c(0:(end-j)), end-j, p)
-  }
-
-  # if we do not have a constraint on the sum of the values
-  if (constraint == FALSE) {
-    return(pnnls(a = correct, b = mid)$x)
-  }
-  # if we have a sum 1 constraint (default)
-  else {
-    return(pnnls(a = correct, b = mid, sum = 1)$x)
-  }
+  if (!all(is.na(mid))){
+    # dimensions of the correction matrix
+    end <- length(mid)
+    # an empty correction matrix to be filled in by binom values
+    correct <- matrix(0, end, end)
+    
+    # column-wise filling in the correction matrix
+    for (j in 1:end) {
+      correct[j:end, j] <- dbinom(c(0:(end-j)), end-j, p)
+    }
+    
+    # if we do not have a constraint on the sum of the values
+    if (constraint == FALSE) {
+      return(pnnls(a = correct, b = mid)$x)
+    }
+    # if we have a sum 1 constraint (default)
+    else {
+      return(pnnls(a = correct, b = mid, sum = 1)$x)
+    } 
+  } else return(mid)
+  
 }
 
 
