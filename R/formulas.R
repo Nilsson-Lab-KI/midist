@@ -3,8 +3,7 @@
 #
 
 
-#' Takes as input a broken formula and merges it back to a character string
-#' @export
+# Takes as input a broken formula and merges it back to a character string
 merge_formula <- function(broken_formula) {
   broken_formula <- broken_formula[which(broken_formula$ElementNumber != 0), ]
   merged_formula <- as.vector(apply(as.data.frame(apply(broken_formula, 1, paste0, collapse = "")), 2, paste0, collapse = ""))
@@ -13,7 +12,6 @@ merge_formula <- function(broken_formula) {
 
 
 #' Compares a formula to a list of formulas, and returns the match if there is any
-#' @export
 compare_formula_diff_to_list <- function(formula_diff, allowed_reactions) {
   ind <- which(is.na(unlist(lapply(formula_diff, match, allowed_reactions))) != T)
   if (length(ind) > 0) {
@@ -23,7 +21,6 @@ compare_formula_diff_to_list <- function(formula_diff, allowed_reactions) {
 
 
 #' Compares a mass to a list of masses, and returns the match if there is any within the given error range
-#' @export
 compare_mass_diff_to_list <- function(mass_diff, allowed_masses, tol = 10) {
   error_l <- mass_diff - mass_diff * tol * 10^-6
   error_u <- mass_diff + mass_diff * tol * 10^-6
@@ -38,7 +35,6 @@ compare_mass_diff_to_list <- function(mass_diff, allowed_masses, tol = 10) {
 
 # formulas is a list of length two, that stores the formulas to be compared to each other
 # the output is a list that represents the reaction in both directions
-#' @export
 get_formula_difference <- function(formulas) {
   broken_formulas <- lapply(formulas, break_formula)
   diff <- list()
@@ -62,7 +58,6 @@ Symbol <- c(
   "Ra", "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Nh", "Fl", "Mc", "Lv",
   "Ts", "Og"
 )
-#' @export
 break_formula <- function(formula) {
   # make a data frame for the input formula
   brokenFormula <- as.data.frame(Symbol)
@@ -110,7 +105,6 @@ break_formula <- function(formula) {
 }
 
 
-#' @export
 get_formula_mass <- function(formula, periodic_table) {
   broken_formula <- break_formula(formula)
   broken_formula$mass <- periodic_table$AtomicMass[match(broken_formula$Symbol, periodic_table$Symbol)] * broken_formula$ElementNumber

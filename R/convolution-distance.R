@@ -241,7 +241,7 @@ conv_reduce_block_equal_all_experiments <- function(mi_data, f, g, x_index, y_in
   return(block)
 }
 
-#' @export
+
 conv_reduce_all_test <- function(mi_data, e, f, g, get_middle_met_matrix = F, g_select, z_threshold = 0.0107) {
   # allocate square matrix
   n_met <- length(mi_data$peak_ids)
@@ -324,7 +324,6 @@ conv_reduce_all_test <- function(mi_data, e, f, g, get_middle_met_matrix = F, g_
 }
 
 
-#' @export
 conv_reduce_all_baseline <- function(mi_data, e, f, binom_prob = 0.0107) {
   # allocate square matrix
   n_met <- length(mi_data$peak_ids)
@@ -381,7 +380,6 @@ conv_reduce_all_baseline <- function(mi_data, e, f, binom_prob = 0.0107) {
 #'
 #' @param e experiment index that corresponds to the same index in MIData
 #' @param input_data InputData object (for more detail see ...)
-#' @export
 
 pairwise_matrix_all_ds <- function(e, input_data) {
   experiment <- input_data$midata$experiments[e]
@@ -424,7 +422,7 @@ pairwise_matrix_all_ds <- function(e, input_data) {
   return(pairwise_matrix)
 }
 
-#' @export
+
 pairwise_matrix_all_ds_test <- function(e, input_data) {
   experiment <- input_data$midata$experiments[e]
 
@@ -466,7 +464,7 @@ pairwise_matrix_all_ds_test <- function(e, input_data) {
   return(pairwise_matrix)
 }
 
-#' @export
+
 pairwise_matrix_all_ds_baseline <- function(e, input_data) {
   experiment <- input_data$midata$experiments[e]
 
@@ -509,7 +507,6 @@ pairwise_matrix_all_ds_baseline <- function(e, input_data) {
 #' @param middle_met_matrix matrix of middle metabolites that were chosen as the best convolutions
 #' @param experiment_matrix matrix of the same size, whose cells denote the experiment that was the output of g_select()
 #' @param mi_data the MIData object
-#' @export
 weight_pm_by_enrichment <- function(pairwise_matrix, middle_met_matrix, experiment_matrix, mi_data) {
   # create an empty matrix to be filled in by weighted pairwise measures
   weighted_pm <- matrix(NA, nrow(pairwise_matrix), ncol(pairwise_matrix))
@@ -542,7 +539,6 @@ weight_pm_by_enrichment <- function(pairwise_matrix, middle_met_matrix, experime
 #'
 #' @param pairwise_matrix a pairwise distance matrix
 #' @param percentile top X percent of the predictions will be kept where X is 1 per default.
-#' @export
 filter_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01)
 {
   # create an empty matrix to be filled in only by those who pass the filtering criteria
@@ -567,7 +563,6 @@ filter_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01)
 }
 
 
-#' @export
 filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01) {
   # remove diagonals
   diag(pairwise_matrix) <- NA
@@ -589,7 +584,6 @@ filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01) {
 }
 
 
-#' @export
 subsample_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01)
 {
   # create an empty matrix
@@ -617,7 +611,6 @@ subsample_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01)
 #' Note that this cannot be used if the middle metabolite matrix and experiment index matrix are to be tracked.
 #'
 #' @param pairwise_matrices a list of pairwise matrices across different experiments
-#' @export
 combine_sqrt_sum <- function(pairwise_matrices)
 {
   return(sqrt(Reduce("+", pairwise_matrices)))
@@ -628,7 +621,6 @@ combine_sqrt_sum <- function(pairwise_matrices)
 #' Note that this cannot be used if the middle metabolite matrix and experiment index matrix are to be tracked.
 #'
 #' @param pairwise_matrices a list of pairwise matrices across different experiments
-#' @export
 combine_sum <- function(pairwise_matrices)
 {
   return(Reduce("+", pairwise_matrices))
@@ -638,8 +630,7 @@ combine_sum <- function(pairwise_matrices)
 #' Returns the metabolite index which was chosen by fun.
 #' It is supposed to be used in the combine() function.
 #' @param vector a row from a pairwise matrix
-#' @param fun a function like max() or min()
-#' @export
+#' @param fun a function selecting an element of the vector, like max() or min()
 get_fun_index <- function(vector, fun)
 {
   vector <- as.vector(vector)
@@ -658,15 +649,17 @@ get_fun_index <- function(vector, fun)
 #' @param middle_met_matrices a list of middle metabolite matrices across different
 #' experiments, where a middle metabolite denotes the metabolite that was chosen
 #' as the best convolution for a given metabolite pair of unequal carbon number
-#'
+#' @returns a list of 3 matrices: [1] the combined pairwise matrix, [2] the combined
+#' middle metabolite matrix, and [3] the experiment index chosen for each element
 #' @export
 combine <- function(pairwise_matrices, middle_met_matrices, fun)
 {
+  # flatten matrices
   pairwise_vec <- do.call(rbind.data.frame, lapply(pairwise_matrices, as.vector))
   middle_met_vec <- do.call(rbind.data.frame, lapply(middle_met_matrices, as.vector))
-
+  # find the experiment
   index <- as.vector(unlist(apply(pairwise_vec, 2, get_fun_index, fun)))
-
+  # combined pairwise matrix
   pm <- matrix(
     unlist(lapply(1:length(index),
                   function(x, pairwise_vec, index) pairwise_vec[[x]][index[[x]][1]],
@@ -674,7 +667,7 @@ combine <- function(pairwise_matrices, middle_met_matrices, fun)
     ncol = ncol(pairwise_matrices[[1]]),
     byrow = F
   )
-
+  # combined middle metabolite matrix
   mmm <- matrix(
     unlist(lapply(1:length(index),
                   function(x, pairwise_vec, index) middle_met_vec[[x]][index[[x]][1]],
@@ -682,7 +675,7 @@ combine <- function(pairwise_matrices, middle_met_matrices, fun)
     ncol = ncol(pairwise_matrices[[1]]),
     byrow = F
   )
-
+  # matrix of experiment indices chosen by fun
   ei <- matrix(index,
     ncol = ncol(pairwise_matrices[[1]]),
     byrow = F
@@ -692,7 +685,6 @@ combine <- function(pairwise_matrices, middle_met_matrices, fun)
 }
 
 
-#' @export
 combine_test <- function(pairwise_matrices, middle_met_matrices, fun, input) {
 
   pairwise_vec <- do.call(rbind.data.frame, lapply(pairwise_matrices, as.vector))
@@ -717,7 +709,7 @@ combine_test <- function(pairwise_matrices, middle_met_matrices, fun, input) {
   return(list(pm, mmm, ei))
 }
 
-#' @export
+
 convert_to_edge_list <- function(pairwise_matrix, middle_met_matrix, input, percentile){
 
   # filter pairwise matrix for the given percentile
@@ -784,7 +776,6 @@ convert_to_edge_list <- function(pairwise_matrix, middle_met_matrix, input, perc
   return(edge_list)
 }
 
-#' @export
 # compute distances for equal carbon metabolites, and make a selection based on g_select
 calc_distance_equal_c <- function(mid_x, mid_y, f){
 
@@ -796,7 +787,7 @@ calc_distance_equal_c <- function(mid_x, mid_y, f){
   return(list(sum(cd, na.rm = T), NA))
 }
 
-#' @export
+
 # compute distances for unequal carbon metabolites, and make a selection based on g_select
 calc_distance_unequal_c <- function(mid_x, mid_y, mid_z, z_index, f, g_select){
   sums_cd <- c()
@@ -811,7 +802,7 @@ calc_distance_unequal_c <- function(mid_x, mid_y, mid_z, z_index, f, g_select){
   return(list(g_select(sums_cd), z_index[which(sums_cd == g_select(sums_cd))[1]]))
 }
 
-#' @export
+
 # convolutes two small MIDs and computes the distance (by f) between the convolution and the largest MID
 convolute_and_distance <- function(mid_x, mid_y, mid_z, f){
   if (length(mid_x) < length(mid_y))
@@ -819,7 +810,7 @@ convolute_and_distance <- function(mid_x, mid_y, mid_z, f){
       return(f(convolute(mid_z, mid_y), mid_x))
 }
 
-#' @export
+
 # compute distance for each unique pair
 calc_pair_distance <- function(pair, midata, f, g_select){
   print(pair)
@@ -862,7 +853,6 @@ calc_pair_distance <- function(pair, midata, f, g_select){
 }
 
 
-#' @export
 # compute distance for each unique pair
 calc_pair_distance_single_experiment <- function(pair, midata, f, g_select){
   print(pair)
@@ -910,8 +900,6 @@ calc_pair_distance_single_experiment <- function(pair, midata, f, g_select){
 }
 
 
-
-#' @export
 pairwise_matrix_v2 <- function(midata, f, g_select){
 
   # all unique pairs
@@ -961,7 +949,7 @@ remn_v2 <- function(midata, f, g_select, rdata_fname, return = T){
     }
 }
 
-#' @export
+
 # Define a function to validate if a matrix is a distance matrix
 is_distance_matrix <- function(mat) {
   # necessary intervention to prevent the floating number error
@@ -1013,13 +1001,27 @@ is_distance_matrix <- function(mat) {
   }
 }
 
-#' @export
 # compute distance matrix from isotopic enrichment only
 # choose the method from c("euclidean", "manhattan", "canberra")
-enrichment_dist_matrix <- function(midata, experiments, method = "euclidean"){
-  isotopic_enrichments <- do.call(rbind.data.frame, lapply(1:length(midata$peak_ids), function(p) apply(as.matrix(get_avg_mid(midata, p)), 2, isotopic_enrichment)))
-  enrichments <- as.matrix(dist(isotopic_enrichments[, midata$experiments %in% experiments],
-                                method = method))
+#' @param midata An MIData object
+#' @param experiments A list of experiments (names) to use
+#' @param method distance metric, as in stats::dist
+#' @export
+enrichment_dist_matrix <- function(midata, experiments, method = "euclidean")
+{
+  isotopic_enrichments <- do.call(
+    rbind.data.frame,
+    lapply(1:length(midata$peak_ids),
+           function(p) apply(as.matrix(get_avg_mid(midata, p)), 2, isotopic_enrichment)
+    )
+  )
+  # compute distance matrix
+  enrichments <- as.matrix(
+    stats::dist(
+      isotopic_enrichments[, midata$experiments %in% experiments],
+      method = method
+    )
+  )
   rownames(enrichments) <- colnames(enrichments) <- midata$peak_ids
   return(enrichments)
 }

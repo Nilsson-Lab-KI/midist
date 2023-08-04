@@ -171,3 +171,118 @@ midata_hmec <- MIData(peak_areas_example_hmec, exp_names = "exp1")
 test_that("conv_reduce_all returns a valid matrix for HMEC example", {
   test_conv_reduce_all(midata_hmec, euclidean_dist_sq, min_nonempty)
 })
+
+
+# combining distance matrices across experiments
+test_that("combine works correcly", {
+  # example distance matrices
+  dm_1 <- matrix(
+    c(
+      0.0,  0.2,  0.9,  0.4,
+      0.2,  0.0,  NA,   0.1,
+      0.9,  NA,   0.0,  0.1,
+      0.4,  0.1,  0.1,  0.0),
+    nrow = 4
+  )
+  dm_2 <- matrix(
+    c(
+      0.0,  0.8,  0.6,  0.5,
+      0.8,  0.0,  NA,   0.2,
+      0.6,  NA,   0.0,  0.1,
+      0.5,  0.2,  0.1,  0.0),
+    nrow = 4
+  )
+  # corresponding middle metabolite matrices
+  mm_1 <- matrix(
+    c(
+      NA,  NA,  1,   1,
+      NA,  NA,  NA,  2,
+      1,   NA,  NA,  4,
+      1,   2,   4,   NA),
+    nrow = 4
+  )
+  mm_2 <- matrix(
+    c(
+      NA,  NA,  2,   1,
+      NA,  NA,  NA,  3,
+      2,   NA,  NA,  4,
+      1,   3,   4,   NA),
+    nrow = 4
+  )
+
+  expect_equal(
+    remn::combine(list(dm_1, dm_2), list(mm_1, mm_2), max),
+    list(
+      matrix(
+        c(
+          0.0,  0.8,  0.9,  0.5,
+          0.8,  0.0,  NA,   0.2,
+          0.9,  NA,   0.0,  0.1,
+          0.5,  0.2,  0.1,  0.0),
+        nrow = 4
+      ),
+      matrix(
+        c(
+          NA,  NA,  1,   1,
+          NA,  NA,  NA,  3,
+          1,   NA,  NA,  4,
+          1,   3,   4,   NA),
+        nrow = 4
+      ),
+      # the experiment index is not unique, we might allow
+      # any index for positions where there are ties ...
+      matrix(
+        c(
+          1,   2 ,  1,   2,
+          2,   1,   NA,  2,
+          1,   NA,  1,   1,
+          2,   2,   1,   1),
+        nrow = 4
+      )
+    )
+  )
+})
+
+
+test_that("enrichment_dist_matrix is correct", {
+
+  peak_areas <- data.frame(
+    Metabolite = c(rep("a",2), rep("b",3), rep("c",3), rep("d",4), rep("e",6)),
+    Formula = c(rep("a",2), rep("b",3), rep("c",3), rep("d",4), rep("e",6)),
+    exp1 = c(
+      0.98, 0.02,
+      0.8, 0.1, 0.1,
+      0.0, 0.8, 0.2,
+      0.8, 0.05, 0.1, 0.05,
+      0.1, 0.0, 0.3, 0.0, 0.2, 0.0
+    ),
+    exp2 = c(
+      0.91, 0.09,
+      0.2, 0.1, 0.7,
+      0.4, 0.6, 0.0,
+      0.1, 0.05, 0.1, 0.75,
+      0.2, 0.0, 0.2, 0.0, 0.0, 0.2
+    )
+  )
+  mi_data <- MIData(peak_areas)
+  ed_matrix <- enrichment_dist_matrix(mi_data, c("exp1", "exp2"), "euclidean")
+  expect_true(is.matrix(ed_matrix))
+  expect_equal(
+    ed_matrix,
+    matrix(
+      c(
+        0.0000000, 0.67268120, 0.6168468, 0.75192346, 0.5842849,
+        0.6726812, 0.00000000, 0.6363961, 0.08498366, 0.4249183,
+        0.6168468, 0.63639610, 0.0000000, 0.70867639, 0.2134375,
+        0.7519235, 0.08498366, 0.7086764, 0.00000000, 0.4955356,
+        0.5842849, 0.42491829, 0.2134375, 0.49553562, 0.0000000
+      ),
+      nrow = 5,
+      dimnames = list(letters[1:5], letters[1:5])
+    ),
+    tolerance = 1e-6
+  )
+})
+
+
+

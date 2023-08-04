@@ -25,7 +25,6 @@ cosine_sim <- function(x, y) {
 #' @param x a vector
 #' @param y a vector
 #' @returns the cosine similarity, or NA if either x or y is a zero vector
-#' @export
 #'
 cosine_sim_no_m0 <- function(x, y) apply_no_m0(cosine_sim, x, y)
 
@@ -53,7 +52,6 @@ cosine_dist <- function(x, y)
 #' @param x a vector
 #' @param y a vector
 #' @returns the cosine similarity, or NA if either x or y is a zero vector
-#' @export
 #'
 cosine_dist_no_m0 <- function(x, y) apply_no_m0(cosine_dist, x, y)
 
@@ -73,7 +71,6 @@ dot_sim <- function(x, y) {
 #' @param x a vector
 #' @param y a vector
 #' @returns the dot (scalar) product x.y
-#' @export
 #'
 dot_sim_no_m0 <- function(x, y) apply_no_m0(dot_sim, x, y)
 
@@ -99,7 +96,6 @@ dot_dist <- function(x, y)
 #' @param y a vector
 #' @returns a distance based on the dot (scalar) product x.y
 #' This is always nonnegative, and zero if x = y
-#' @export
 #'
 dot_dist_no_m0 <- function(x, y) apply_no_m0(dot_dist, x, y)
 
@@ -126,7 +122,6 @@ euclidean_dist_sq <- function(x, y)
 #' @param x a vector
 #' @param y a vector
 #' @returns the square of the Euclidean distance between x and y
-#' @export
 #'
 euclidean_dist_sq_no_m0 <- function(x, y) apply_no_m0(euclidean_dist_sq, x, y)
 
@@ -148,7 +143,6 @@ euclidean_dist <- function(x, y) {
 #' @param x a vector
 #' @param y a vector
 #' @returns the Euclidean distance between x and y without M+0
-#' @export
 #'
 euclidean_dist_no_m0 <- function(x, y) apply_no_m0(euclidean_dist, x, y)
 
