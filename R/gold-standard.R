@@ -156,6 +156,8 @@ get_global_percentile_accuracy <- function(pairwise_matrix, gold_standard, measu
 
 
 
+# Compute precision and recall for all pairs in a pairwise_matrix
+#' @param pairwise_matrix
 #' @export
 get_continuous_accuracy <- function(pairwise_matrix, gold_standard, measure, subset_size, subset_sample_no,
                                     noise, noise_sample_no, experiment){
@@ -176,12 +178,12 @@ get_continuous_accuracy <- function(pairwise_matrix, gold_standard, measure, sub
   # now assign a maximal distance to all remaining NAs of pm
   pm[which(is.na(pm))] <- max(pm, na.rm = T)
 
-  # sort matrices
+  # sort matrices by increasing distance
   order_ind <- order(pm)
   pm <- pm[order_ind]
   gs <- gs[order_ind]
 
-
+  # cumulative sum of true and false pairs from gold standard
   tp <- cumsum(gs)
   fp <- cumsum(abs(1-gs))
   # tn <- c(0:(length(gs)-1))*fp
