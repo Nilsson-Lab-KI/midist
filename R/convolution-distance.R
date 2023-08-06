@@ -812,24 +812,22 @@ convolute_and_distance <- function(mid_x, mid_y, mid_z, f){
 
 
 # compute distance for each unique pair
-calc_pair_distance <- function(pair, midata, f, g_select){
-  print(pair)
-
+calc_pair_distance <- function(pair, midata, f, g_select)
+{
+#  print(pair)
   n_atoms_x <- midata$peak_n_atoms[pair[1]]
   mid_x <- lapply(1:length(midata$experiments), function(e) get_avg_mid(midata, pair[1], e))
   n_atoms_y <- midata$peak_n_atoms[pair[2]]
   mid_y <- lapply(1:length(midata$experiments), function(e) get_avg_mid(midata, pair[2], e))
 
-  if (n_atoms_x == n_atoms_y){
+  if (n_atoms_x == n_atoms_y) {
     # compute distances for all experiments
     distance <- calc_distance_equal_c(mid_x, mid_y, f)
     result <- data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2],
                          middle_metabolite = distance[[2]], distance = distance[[1]])
     return(result)
   }
-
   else {
-
     # number of carbons for the middle metabolite
     n_atoms_z <- abs(n_atoms_x - n_atoms_y)
     # indices of metabolites with n_atoms_z carbons
