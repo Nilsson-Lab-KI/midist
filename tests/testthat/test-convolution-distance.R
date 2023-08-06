@@ -243,29 +243,31 @@ test_that("combine works correcly", {
   )
 })
 
+# An MIData object with two experiments
+peak_areas_3 <- data.frame(
+  Metabolite = c(rep("a",2), rep("b",3), rep("c",3), rep("d",4), rep("e",6)),
+  Formula = c(rep("a",2), rep("b",3), rep("c",3), rep("d",4), rep("e",6)),
+  exp1 = c(
+    0.98, 0.02,
+    0.8, 0.1, 0.1,
+    0.0, 0.8, 0.2,
+    0.8, 0.05, 0.1, 0.05,
+    0.1, 0.0, 0.3, 0.0, 0.2, 0.0
+  ),
+  exp2 = c(
+    0.91, 0.09,
+    0.2, 0.1, 0.7,
+    0.4, 0.6, 0.0,
+    0.1, 0.05, 0.1, 0.75,
+    0.2, 0.0, 0.2, 0.0, 0.0, 0.2
+  )
+)
+mi_data_3 <- MIData(peak_areas_3)
+
 
 test_that("enrichment_dist_matrix is correct", {
 
-  peak_areas <- data.frame(
-    Metabolite = c(rep("a",2), rep("b",3), rep("c",3), rep("d",4), rep("e",6)),
-    Formula = c(rep("a",2), rep("b",3), rep("c",3), rep("d",4), rep("e",6)),
-    exp1 = c(
-      0.98, 0.02,
-      0.8, 0.1, 0.1,
-      0.0, 0.8, 0.2,
-      0.8, 0.05, 0.1, 0.05,
-      0.1, 0.0, 0.3, 0.0, 0.2, 0.0
-    ),
-    exp2 = c(
-      0.91, 0.09,
-      0.2, 0.1, 0.7,
-      0.4, 0.6, 0.0,
-      0.1, 0.05, 0.1, 0.75,
-      0.2, 0.0, 0.2, 0.0, 0.0, 0.2
-    )
-  )
-  mi_data <- MIData(peak_areas)
-  ed_matrix <- enrichment_dist_matrix(mi_data, c("exp1", "exp2"), "euclidean")
+  ed_matrix <- enrichment_dist_matrix(mi_data_3, c("exp1", "exp2"), "euclidean")
   expect_true(is.matrix(ed_matrix))
   expect_equal(
     ed_matrix,
@@ -282,6 +284,71 @@ test_that("enrichment_dist_matrix is correct", {
     ),
     tolerance = 1e-6
   )
+})
+
+
+test_that("remn_v1 is correct", {
+  # list of distance matrices
+  dm_list <- remn_v1(
+      mi_data_3, f = euclidean_dist, g = min_nonempty, rdata_fname = "")
+  expect_true(is.list(dm_list))
+  expect_equal(length(dm_list), 2)
+  # check matrices and attributes
+  expect_equal(
+    dm_list[[1]],
+    with_attr(
+      matrix(
+        c(
+          0.00000000, 0.19835564, 1.2413803, 0.08158431, NA,
+          0.19835564, 0.00000000, 1.0677078, 0.08158431, 0.6745781,
+          1.24138026, 1.06770783, 0.0000000, 1.09243581, 0.7812099,
+          0.08158431, 0.08158431, 1.0924358, 0.00000000, 0.6745781,
+          NA,         0.67457806, 0.7812099, 0.67457806, 0.0000000
+        ),
+        nrow = 5
+      ),
+      "index",
+      matrix(
+        c(
+          NA,  1,   1,   2,  NA,
+          1,   NA, NA,   1,   4,
+          1,   NA, NA,   1,   4,
+          2,   1,   1,  NA,   2,
+          NA,  4,   4,   2,  NA
+        ),
+        nrow = 5
+      )
+    ),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    dm_list[[2]],
+    with_attr(
+      matrix(
+        c(
+          0.0000000, 0.9366460, 0.6112329, 0.8833403, NA,
+          0.9366460, 0.0000000, 0.8831761, 0.8833403, 0.5011653,
+          0.6112329, 0.8831761, 0.0000000, 0.9577766, 0.7778175,
+          0.8833403, 0.8833403, 0.9577766, 0.0000000, 0.5011653,
+          NA,        0.5011653, 0.7778175, 0.5011653, 0.0000000
+        ),
+        nrow = 5
+      ),
+      "index",
+      matrix(
+        c(
+          NA,  1,   1,   2,  NA,
+          1,   NA, NA,   1,   4,
+          1,   NA, NA,   1,   4,
+          2,   1,   1,  NA,   2,
+          NA,  4,   4,   2,  NA
+        ),
+        nrow = 5
+      )
+    ),
+    tolerance = 1e-6
+  )
+
 })
 
 

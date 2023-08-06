@@ -936,17 +936,17 @@ remn_v2 <- function(midata, f, g_select, rdata_fname, return = T){
   remn_output <- pairwise_matrix_v2(midata, f, g_select)
 
   if (return == T)
-    return(remn_output) else {
-      distance_matrix <- remn_output$distance_matrix
-      middle_metabolite_matrix <- remn_output$middle_metabolite_matrix
-
-      save(midata,
-           distance_matrix,
-           middle_metabolite_matrix,
-           f,
-           g_select,
-           file = rdata_fname)
-    }
+    return(remn_output)
+  else {
+    distance_matrix <- remn_output$distance_matrix
+    middle_metabolite_matrix <- remn_output$middle_metabolite_matrix
+    save(midata,
+         distance_matrix,
+         middle_metabolite_matrix,
+         f,
+         g_select,
+         file = rdata_fname)
+  }
 }
 
 
@@ -1026,6 +1026,14 @@ enrichment_dist_matrix <- function(midata, experiments, method = "euclidean")
   return(enrichments)
 }
 
+
+#' Compute pairwise distance matrices for individual experiments
+#' @param midata An MIData object
+#' @param f A distance function, as in conv_reduce
+#' @param g_select A function for selecting best convolutions, as in conv_reduce
+#' @param rdata_fname NOT USED
+#' @param return NOT USED
+#' @returns A list of distance matrices
 #' @export
 remn_v1 <- function(midata, f, g_select, rdata_fname, return = T) {
 
