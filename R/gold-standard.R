@@ -57,7 +57,12 @@ get_convoluted_gs <- function(mmm, gs_raw, input, symmetrize_by = max){
 
 # some functions that I don't know where to put
 
-calc_accuracy <- function(true_matrix, predicted_matrix){
+#' Compute accuracy measures element-wise for two binary matrices
+#' @param true_matrix Binary matrix where 1 indicates true
+#' @param predicted_matrix Binary matrix where 1 indicates a positive prediction
+#' @returns A list with elements $tpr, $fpr, $precision, $fdr, $f1_score
+calc_accuracy <- function(true_matrix, predicted_matrix)
+{
   accuracy <- list()
   # basic counts
   tp <- length(which(true_matrix == 1 & predicted_matrix == 1))
@@ -78,7 +83,9 @@ calc_accuracy <- function(true_matrix, predicted_matrix){
 }
 
 
-get_percentile_accuracy <- function(pairwise_matrix, gold_standard, measure, noise, experiment, subset_size, percentiles){
+get_percentile_accuracy <- function(
+    pairwise_matrix, gold_standard, measure, noise, experiment, subset_size, percentiles)
+{
   # create an empty data frame to store the accuracy results
   accuracy_df <- data.frame(measure = NA, noise = NA, percentile = NA,
                             tpr = NA, fpr = NA, precision = NA, fdr = NA, f1_score = NA,
@@ -115,8 +122,12 @@ get_percentile_accuracy <- function(pairwise_matrix, gold_standard, measure, noi
   return(accuracy_df)
 
 }
+
+
 #' @export
-get_global_percentile_accuracy <- function(pairwise_matrix, gold_standard, measure, noise, experiment, subset_size, percentiles){
+get_global_percentile_accuracy <- function(
+    pairwise_matrix, gold_standard, measure, noise, experiment, subset_size, percentiles)
+{
   # create an empty data frame to store the accuracy results
   accuracy_df <- data.frame(measure = NA, noise = NA, percentile = NA,
                             tpr = NA, fpr = NA, precision = NA, fdr = NA, f1_score = NA,
@@ -134,7 +145,7 @@ get_global_percentile_accuracy <- function(pairwise_matrix, gold_standard, measu
     filtered_pm[which(is.na(filtered_pm))] <- 0
     filtered_pm[which(filtered_pm != 0)] <- 1
 
-    # now we have to binary matrices to compare to each other: from gs-fraction and MID-distance
+    # now we have two binary matrices to compare to each other: from gs-fraction and MID-distance
     accuracy <- calc_accuracy(gold_standard, filtered_pm)
     tpr[p] <- accuracy$tpr
     fpr[p] <- accuracy$fpr
@@ -143,9 +154,11 @@ get_global_percentile_accuracy <- function(pairwise_matrix, gold_standard, measu
     f1_score[p] <- accuracy$f1_score
   }
 
-  accuracy_df <- rbind(accuracy_df, data.frame(measure = measure, noise = noise, percentile = percentiles,
-                                               tpr = tpr, fpr = fpr, precision = precision, fdr = fdr, f1_score = f1_score,
-                                               experiment = experiment, subset_size = subset_size))
+  accuracy_df <- rbind(accuracy_df,
+                       data.frame(
+                         measure = measure, noise = noise, percentile = percentiles,
+                         tpr = tpr, fpr = fpr, precision = precision, fdr = fdr, f1_score = f1_score,
+                         experiment = experiment, subset_size = subset_size))
 
   # remove the NA line
   accuracy_df <- accuracy_df[-1,]

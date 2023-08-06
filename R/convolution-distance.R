@@ -563,7 +563,12 @@ filter_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01)
 }
 
 
-filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01) {
+#' Filter a matrix so that a given fraction of its real-valued elements
+#' are set to the corresponding quantile
+#' @param pairwise_matrix A symmetric matrix
+#' @param percentile The fraction (NOT a percentile) of elements to keep
+filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01)
+{
   # remove diagonals
   diag(pairwise_matrix) <- NA
 
@@ -571,15 +576,15 @@ filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01) {
   filtered_pm <- matrix(NA, nrow(pairwise_matrix), ncol(pairwise_matrix))
   colnames(filtered_pm) <- rownames(filtered_pm) <- colnames(pairwise_matrix)
 
-  # get infinite and NA indices
+  # get indices of non-infinite, non-NA elements
   non_inf_ind <- which(is.infinite(pairwise_matrix) == F & is.na(pairwise_matrix) == F)
   # exclude infinites and NAs
   non_inf_vec <- pairwise_matrix[non_inf_ind]
   # compute the percentile (top 1%)
   threshold <- as.numeric(quantile(non_inf_vec, probs = percentile))
   # fill in
-  filtered_pm[as.numeric(non_inf_ind[which(non_inf_vec <= threshold)])] <- pairwise_matrix[as.numeric(non_inf_ind[which(non_inf_vec <= threshold)])]
-
+  filtered_pm[as.numeric(non_inf_ind[which(non_inf_vec <= threshold)])] <-
+    pairwise_matrix[as.numeric(non_inf_ind[which(non_inf_vec <= threshold)])]
   return(filtered_pm)
 }
 
