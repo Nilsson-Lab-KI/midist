@@ -352,4 +352,41 @@ test_that("remn_v1 is correct", {
 })
 
 
+test_that("remn_v2 is correct", {
+  # a list [distance matrix, middle metabolite matrix]
+  dm_mm_list <- remn_v2(
+    mi_data_3, f = euclidean_dist, g = min_nonempty, rdata_fname = "", return = T)
+  # distance matrix
+  dm = dm_mm_list$distance_matrix
+  expect_equal(
+    dm,
+    matrix(
+      c(
+        NA,        1.1350016, 1.852613, 0.9649246, NA,
+        1.1350016, NA,        1.950884, 0.9649246, 1.175743,
+        1.8526132, 1.9508839, NA,       2.0502124, 1.559027,
+        0.9649246, 0.9649246, 2.050212, NA,        1.175743,
+        NA,        1.1757434, 1.559027, 1.1757434, NA
+      ),
+      nrow = 5, dimnames = list(mi_data_3$peak_ids,mi_data_3$peak_ids)
+    ),
+    tolerance = 1e-6
+  )
+  # distance matrix
+  mm = dm_mm_list$middle_metabolite_matrix
+  expect_equal(
+    mm,
+    matrix(
+      c(
+        NA, 1,  1,  2,  NA,
+        1,  NA, NA, 1,  4,
+        1,  NA, NA, 1,  4,
+        2,  1,  1,  NA, 2,
+        NA, 4,  4,  2,  NA
+      ),
+      nrow = 5, dimnames = list(mi_data_3$peak_ids,mi_data_3$peak_ids)
+    )
+  )
+})
+
 

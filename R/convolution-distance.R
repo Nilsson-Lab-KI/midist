@@ -899,7 +899,8 @@ calc_pair_distance_single_experiment <- function(pair, midata, f, g_select){
 
 }
 
-
+# Compute distance and middle metabolite matrices
+# Returns a list of length 2
 pairwise_matrix_v2 <- function(midata, f, g_select){
 
   # all unique pairs
@@ -930,6 +931,9 @@ pairwise_matrix_v2 <- function(midata, f, g_select){
   return(result)
 }
 
+#' Compute a pairwise distance matrix and optionally save it
+#' @param midata An MIData object
+#' @param f A distance function, as in conv_reduce
 #' @export
 remn_v2 <- function(midata, f, g_select, rdata_fname, return = T){
 
