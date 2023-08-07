@@ -21,13 +21,6 @@ cosine_sim <- function(x, y) {
 }
 
 
-#' Cosine similarity between two vectors of the same length without M+0.
-#' @param x a vector
-#' @param y a vector
-#' @returns the cosine similarity, or NA if either x or y is a zero vector
-#'
-cosine_sim_no_m0 <- function(x, y) apply_no_m0(cosine_sim, x, y)
-
 #' Cosine distance between two vectors of the same length.
 #'
 #' This is 1 minus the cosine similarity.
@@ -45,17 +38,6 @@ cosine_dist <- function(x, y)
 }
 
 
-#' Cosine distance between two vectors of the same length without M+0.
-#'
-#' This is 1 minus the cosine similarity.
-#'
-#' @param x a vector
-#' @param y a vector
-#' @returns the cosine similarity, or NA if either x or y is a zero vector
-#'
-cosine_dist_no_m0 <- function(x, y) apply_no_m0(cosine_dist, x, y)
-
-
 #' Dot product similarity
 #' @param x a vector
 #' @param y a vector
@@ -65,14 +47,6 @@ cosine_dist_no_m0 <- function(x, y) apply_no_m0(cosine_dist, x, y)
 dot_sim <- function(x, y) {
   return(sum(x * y))
 }
-
-
-#' Dot product similarity without M+0
-#' @param x a vector
-#' @param y a vector
-#' @returns the dot (scalar) product x.y
-#'
-dot_sim_no_m0 <- function(x, y) apply_no_m0(dot_sim, x, y)
 
 
 #' Dot product distance (not really a distance)
@@ -117,15 +91,6 @@ euclidean_dist_sq <- function(x, y)
 }
 
 
-#' The squared Euclidean distance (sum of squares) without M+0
-#'
-#' @param x a vector
-#' @param y a vector
-#' @returns the square of the Euclidean distance between x and y
-#'
-euclidean_dist_sq_no_m0 <- function(x, y) apply_no_m0(euclidean_dist_sq, x, y)
-
-
 #' The Euclidean distance
 #'
 #' @param x a vector
@@ -136,15 +101,6 @@ euclidean_dist_sq_no_m0 <- function(x, y) apply_no_m0(euclidean_dist_sq, x, y)
 euclidean_dist <- function(x, y) {
   return(sqrt(euclidean_dist_sq(x, y)))
 }
-
-
-#' The Euclidean distance without M+0
-#'
-#' @param x a vector
-#' @param y a vector
-#' @returns the Euclidean distance between x and y without M+0
-#'
-euclidean_dist_no_m0 <- function(x, y) apply_no_m0(euclidean_dist, x, y)
 
 
 #' The Jensen-Shannon (JS) distance

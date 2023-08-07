@@ -2,12 +2,6 @@
 #  Some utility functions
 #
 
-#' remove any NA values in a vector x
-remove_na <- function(x)
-{
-  return(x[!is.na(x)])
-}
-
 
 #' Take maximum of x after discarding missing values,
 #' return NA if the result is empty. If x has an "index"
@@ -77,4 +71,57 @@ with_attr <- function(x, attr_name, attr_value)
 #'
 apply_no_m0 <- function(f, x, y) {
   return(f(x[-1], y[-1]))
+}
+
+
+#' Test if a matrix is a valid distance matrix (metric)
+#' NOTE: this function should be fixed, see https://github.com/Nilsson-Lab-KI/remn/issues/40
+is_distance_matrix <- function(mat) {
+  # necessary intervention to prevent the floating number error
+  mat <- as.matrix(nearPD(mat)$mat)
+  # Initialize a character vector to store failure reasons
+  failures <- character(0)
+
+  # Check if the input is a matrix
+  if (!is.matrix(mat)) {
+    failures <- append(failures, "Input is not a matrix")
+  }
+
+  # Check if the matrix is square
+  if (nrow(mat) != ncol(mat)) {
+    failures <- append(failures, "Matrix is not square")
+  }
+
+  # Check if the matrix is symmetric
+  if (!isSymmetric(mat)) {
+    failures <- append(failures, "Matrix is not symmetric")
+  }
+
+  # Check if the diagonal entries are zero
+  if (!all(diag(mat) == 0)) {
+    failures <- append(failures, "Diagonal entries are not zero")
+  }
+
+  # Check if the matrix is non-negative
+  if (!all(mat >= 0)) {
+    failures <- append(failures, "Matrix contains negative values")
+  }R
+
+  # Check the triangle inequality
+  for (i in 1:nrow(mat)) {
+    for (j in 1:nrow(mat)) {
+      for (k in 1:nrow(mat)) {
+        if (round(mat[i,j], digits = 3) + round(mat[j,k], digits = 3) < round(mat[i,k], digits = 3)) {
+          failures <- append(failures, "Triangle inequality fails")
+        }
+      }
+    }
+  }
+
+  # If no failures, return NULL, else return the failure reasons
+  if (length(failures) == 0) {
+    return(NULL)
+  } else {
+    return(failures)
+  }
 }

@@ -56,13 +56,6 @@ c13correct <- function(mid, p = 0.0107, constraint = TRUE)
 }
 
 
-#' Correct an MID vector for naturally occurring isotopes and remove M+0
-#' @param mid An MID vector to correct
-correct_and_remove <- function(mid) {
-  return(c13correct(mid)[-1])
-}
-
-
 #' Add multiplicative gamma noise to a given MID from a given standard deviation
 #' @param mid An MID vector
 #' @param stdev standard deviation for the gamma distribution

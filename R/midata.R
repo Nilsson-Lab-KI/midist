@@ -94,6 +94,7 @@ get_midata <- function(peak_areas_fname){
   return(midata)
 }
 
+
 #' Compute index vector into the MI data table
 #' for a given list of atom sizes
 find_mi_index <- function(peak_n_atoms)
@@ -101,7 +102,6 @@ find_mi_index <- function(peak_n_atoms)
   n <- length(peak_n_atoms)
   return(c(1, (cumsum(peak_n_atoms + 1) + 1)[-n]))
 }
-
 
 
 #' Create an index list mapping each number of atoms n to the indices of the peaks having n atoms
@@ -120,6 +120,7 @@ create_atom_index <- function(peak_n_atoms)
   names(index) <- as.character(unique(peak_n_atoms))
   return(index)
 }
+
 
 # compute average MIDs (collapsing across replicates)
 calc_avg_mids <- function(mi_data) {
@@ -183,6 +184,7 @@ midata_subset <- function(mi_data, peak_subset_index)
   return(midata_subset)
 }
 
+
 #'
 #' Apply a function to each MID in an MIData object
 #'
@@ -208,42 +210,6 @@ midata_transform <- function(midata, f) {
   return(new_midata)
 }
 
-#'
-#' Add replicates with some noise to an midata object where experiments are not repeated (and probably noise free also)
-#' Returns a new midata object where the mids per peak per experiment are repeated with a defined level of noise
-#' Updates all related fields in midata such as avg_mids, exp_index, etc.
-#'
-#' This is useful when the midata object contains simulated MIDs without replicates and noise,
-#' and to add replicates we introduce a level of noise defined by the stdev parameter.
-#'
-#' @param midata An MIData object
-#' @param stdev The desired standard deviation to generate dirichlet distribution
-#' (see the random_mid() function for more details on the dirichlet distribution)
-#' and return a valid MID vector of the same size.
-#' @param nr_replicate Number of noisy replicates to generate
-#'
-add_noisy_replicates <- function(midata, stdev, nr_replicate) {
-  # copy MIData object
-  new_midata <- midata
-  exp_names <- rep(midata$experiments, each = nr_replicate)
-
-  # apply function to each peak
-  new_midata$mids <- do.call(rbind.data.frame,
-                             lapply(1:length(new_midata$peak_ids),
-         function(p) do.call(cbind.data.frame, lapply(1:length(new_midata$experiments),
-                                                      function(e) random_mid(get_avg_mid(new_midata, p, e),
-                                                                             stdev, nr_replicate)))) )
-
-  # need to replicate experiment names
-  new_midata$exp_index <- match(new_midata$experiments, exp_names)
-  # number of replicates per experiment
-  new_midata$exp_n_rep <-
-    as.numeric(table(factor(exp_names, levels = new_midata$experiments)))
-
-  # updata the averaged MIDs
-  new_midata$avg_mids <- calc_avg_mids(new_midata)
-  return(new_midata)
-}
 
 #' Reorder the peak IDs of an mi_data object
 #'
@@ -267,26 +233,6 @@ misplace_peak_ids <- function(midata)
 
   }
   return(midata$peak_ids)
-}
-
-
-midata_randomize <- function(midata){
-  for (i in 1:length(midata$n_atoms_index)){
-    print(i)
-    if (length(midata$n_atoms_index[[i]]) != 1){
-      # Shuffle the vector while ensuring none of the elements are in their original spot
-      # Note that this is not a complete randomization, but rather misplacing every element
-      new_ind <- midata$n_atoms_index[[i]]
-      while (any(new_ind == midata$n_atoms_index[[i]])) {
-        new_ind <- sample(midata$n_atoms_index[[i]])
-      }
-      # update the order of peak IDs without changing MIDs
-      midata$peak_ids[midata$n_atoms_index[[i]]] <- midata$peak_ids[new_ind]
-      rm(new_ind)
-    } else midata$peak_ids[midata$n_atoms_index[[i]]] <- midata$peak_ids[midata$n_atoms_index[[i]]]
-
-  }
-  return(midata)
 }
 
 
@@ -340,7 +286,6 @@ find_false_mi <- function(corrected_mids, threshold, min_experiments)
 }
 
 
-
 #
 # normalize each column in a matrix of positive values
 # so that each column sums to 1
@@ -356,6 +301,7 @@ normalize_mids <- function(mids) {
   }
   return(normalized.mids)
 }
+
 
 #
 # average replicates, excluding any MIDs that sum to zero
@@ -395,26 +341,6 @@ get_avg_mid <- function(mi_data, p, e) {
   return(mi_data$avg_mids[get_mi_indices(mi_data, p), e])
 }
 
-#' Get averaged MID vectors
-#'
-#' for a given peak index, for all experiments
-#'
-#' @param mi_data an MIData object
-#' @param index the peak index
-#' @returns a matrix where each column is the MID from an experiment
-get_avg_mid_all <- function(mi_data, index) {
-  return(mi_data$avg_mids[get_mi_indices(mi_data, index), ])
-}
-
-
-#' Get averaged MIDs for all metabolites of the given size
-#' If no metabolites exists returns an empty list
-#'
-get_avg_mids_by_size <- function(mi_data, n_atoms, e) {
-  index <- get_peak_index_n_atoms(mi_data, n_atoms)
-  return(sapply(index, function(i) get_avg_mid(mi_data, i, e)))
-}
-
 
 #' Get MI indices of a given peak
 #'
@@ -425,6 +351,7 @@ get_mi_indices <- function(mi_data, p) {
   return(mi_data$peak_index[[p]] + 0:mi_data$peak_n_atoms[[p]])
 }
 
+
 #' Get indices into the columns of the $mid matrix for experiment e
 #' @param mi_data An MIData object
 #' @param e An experiment index
@@ -432,6 +359,7 @@ get_mi_indices <- function(mi_data, p) {
 get_exp_indices <- function(mi_data, e) {
   return(mi_data$exp_index[[e]] + 0:(mi_data$exp_n_rep[[e]] - 1))
 }
+
 
 #' Get the index of a list of peak identifers in an MIData object
 #' @param mi_data an MIData object
@@ -441,12 +369,14 @@ get_peak_index <- function(mi_data, peak_ids) {
   return(match(peak_ids, mi_data$peak_ids))
 }
 
+
 #' Get the index of peaks with a specific number of atoms
 #' @param mi_data an MIData object
 #' @param n_atoms number of atoms in peaks of interest
 get_peak_index_n_atoms <- function(mi_data, n_atoms) {
   return(mi_data$n_atoms_index[[as.character(n_atoms)]])
 }
+
 
 #' Get the number of atoms for a given peak
 #' @param mi_data an MIData object
@@ -456,16 +386,3 @@ get_peak_n_atoms <- function(mi_data, p) {
   return(mi_data$peak_n_atoms[[p]])
 }
 
-
-get_formula <- function(mi_data, p) {
-  return(
-    mi_data$peak_formulas[p]
-  )
-}
-
-
-get_mass <- function(midata, p) {
-  return(
-    midata$peak_masses[p]
-  )
-}
