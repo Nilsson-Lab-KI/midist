@@ -8,11 +8,19 @@ and all y are the same size, but y is larger than x}
 conv_reduce_block(mi_data, e, f, g, x_index, y_index, z_index)
 }
 \arguments{
-\item{mids_x}{matrix of MIDs for metabolites x, each column one MID}
+\item{mi_data}{An MIData object}
 
-\item{mids_y}{matrix of MIDs for metabolites y}
+\item{e}{experiment index}
 
-\item{mids_z}{matrix of MIDs for metabolites z, may be empty}
+\item{f}{A distance function}
+
+\item{g}{A selection function, such as min_nonempty}
+
+\item{x_index}{index of the peak x}
+
+\item{y_index}{index of the peak y}
+
+\item{z_index}{index of the peak z}
 }
 \description{
 compute conv_reduce for one matrix block where all x are the same size

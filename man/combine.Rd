@@ -14,6 +14,12 @@ combine(pairwise_matrices, middle_met_matrices, fun)
 \item{middle_met_matrices}{a list of middle metabolite matrices across different
 experiments, where a middle metabolite denotes the metabolite that was chosen
 as the best convolution for a given metabolite pair of unequal carbon number}
+
+\item{fun}{Function to apply}
+}
+\value{
+a list of 3 matrices: (1) the combined pairwise matrix, (2) the combined
+middle metabolite matrix, and (3) the experiment index chosen for each element
 }
 \description{
 Combines pairwise matrices across multiple experiments based on the fun function.

@@ -11,7 +11,8 @@ MIData(peak_areas, exp_names = NULL)
 must be peak identifiers, repeated for each MI of the same peak.
 The second column holds formulas (but )}
 
-\item{exp_names}{a optional list of experiment names matching columns 2,3... in peak_areas}
+\item{exp_names}{a optional list of experiment names for columns 2,3... in peak_areas.
+These names will replace the column names for those columns.}
 }
 \description{
 Construct an MIData (mass isotopomer data) object

@@ -149,9 +149,13 @@ g_list <- function(mids_y, mids_xz, z_index, f, g)
 #' compute conv_reduce for one matrix block where all x are the same size
 #' and all y are the same size, but y is larger than x
 #'
-#' @param mids_x matrix of MIDs for metabolites x, each column one MID
-#' @param mids_y matrix of MIDs for metabolites y
-#' @param mids_z matrix of MIDs for metabolites z, may be empty
+#' @param mi_data An MIData object
+#' @param e experiment index
+#' @param f A distance function
+#' @param g A selection function, such as min_nonempty
+#' @param x_index index of the peak x
+#' @param y_index index of the peak y
+#' @param z_index index of the peak z
 #'
 conv_reduce_block <- function(mi_data, e, f, g, x_index, y_index, z_index)
 {
@@ -259,8 +263,9 @@ get_fun_index <- function(vector, fun)
 #' @param middle_met_matrices a list of middle metabolite matrices across different
 #' experiments, where a middle metabolite denotes the metabolite that was chosen
 #' as the best convolution for a given metabolite pair of unequal carbon number
-#' @returns a list of 3 matrices: [1] the combined pairwise matrix, [2] the combined
-#' middle metabolite matrix, and [3] the experiment index chosen for each element
+#' @param fun Function to apply
+#' @returns a list of 3 matrices: (1) the combined pairwise matrix, (2) the combined
+#' middle metabolite matrix, and (3) the experiment index chosen for each element
 #' @export
 combine <- function(pairwise_matrices, middle_met_matrices, fun)
 {
@@ -372,8 +377,8 @@ calc_pair_distance <- function(pair, midata, f, g_select)
 
 # Compute distance and middle metabolite matrices
 # Returns a list of length 2
-pairwise_matrix_v2 <- function(midata, f, g_select){
-
+pairwise_matrix_v2 <- function(midata, f, g_select)
+{
   # all unique pairs
   pairs <- combn(length(midata$peak_ids), 2)
 
@@ -404,10 +409,14 @@ pairwise_matrix_v2 <- function(midata, f, g_select){
 
 #' Compute a pairwise distance matrix and optionally save it
 #' @param midata An MIData object
-#' @param f A distance function, as in conv_reduce
+#' @param f A distance function
+#' @param g_select A selection function
+#' @param rdata_fname A file name to save results in, if return == F
+#' @param return A boolean; if FALSE, results are saved using base::save
+#' @returns A pairwise matrix if return == TRUE; else nothing
 #' @export
-remn_v2 <- function(midata, f, g_select, rdata_fname, return = T){
-
+remn_v2 <- function(midata, f, g_select, rdata_fname, return = T)
+{
   remn_output <- pairwise_matrix_v2(midata, f, g_select)
 
   if (return == T)
@@ -425,11 +434,11 @@ remn_v2 <- function(midata, f, g_select, rdata_fname, return = T){
 }
 
 
-# compute distance matrix from isotopic enrichment only
-# choose the method from c("euclidean", "manhattan", "canberra")
+#' Compute distance matrix from isotopic enrichment
 #' @param midata An MIData object
 #' @param experiments A list of experiments (names) to use
-#' @param method distance metric, as in stats::dist
+#' @param method Name of  distance metric, as in stats::dist. Use either
+#' of "euclidean", "manhattan", or "canberra"
 #' @export
 enrichment_dist_matrix <- function(midata, experiments, method = "euclidean")
 {

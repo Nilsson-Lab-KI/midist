@@ -115,22 +115,46 @@ jensen_shannon <- function(x, y) {
   return(jsd)
 }
 
+
+#' The manhattan distance sum_i |x-i - y_i|
+#'
+#' @param x a vector
+#' @param y a vector
+#' @returns the manhattan distance between x and y
 #' @export
 manhattan_distance <- function(x, y) {
   return(sum(abs(x - y)))
 }
 
+
+#' The Canberra distance
+#'
+#' @param x a vector
+#' @param y a vector
+#' @returns the Canberra distance between x and y
 #' @export
 canberra_distance <- function(x, y) {
   return(sum(abs(x - y) / (abs(x) + abs(y))))
 }
 
+
+#' The Bray-Curtis distance
+#'
+#' @param x a vector
+#' @param y a vector
+#' @returns the Bray-Curtis distance between x and y
 #' @export
 bray_curtis_distance <- function(x, y) {
   return(sum(abs(x - y)) / sum(abs(x + y)))
 }
 
 
+#' A p-distance weighted by the mass isotopomer number
+#'
+#' @param x an MID vector
+#' @param y an MID vector
+#' @param p The exponent p in the p-norm
+#' @returns the distance between x and y
 #' @export
 mi_weighted_distance <- function(x, y, p = 1) {
   n <- length(x) - 1
@@ -138,6 +162,13 @@ mi_weighted_distance <- function(x, y, p = 1) {
 }
 
 
+#' A p-distance weighted by the mass isotopomer number, normalized
+#' Here, the weight is i/n where i is the MI number and n is the number of atoms.
+#'
+#' @param x an MID vector
+#' @param y an MID vector
+#' @param p The exponent p in the p-norm
+#' @returns the distance between x and y
 #' @export
 mi_weighted_dist_normalized <- function(x, y, p = 1) {
   n <- length(x) - 1

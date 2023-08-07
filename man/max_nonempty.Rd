@@ -2,16 +2,19 @@
 % Please edit documentation in R/util.R
 \name{max_nonempty}
 \alias{max_nonempty}
-\title{Take maximum of x after discarding missing values,
-return NA if the result is empty. If x has an "index"
-attribute, it must be a list of same length as x;
-the element corresponding to the maximum is added as
-an "index" attribute to the result}
+\title{Take maximum of x after discarding missing values}
 \usage{
 max_nonempty(x)
 }
+\arguments{
+\item{x}{A vector of values. If x has an "index"
+attribute, it must be a vector of same length as x.}
+}
+\value{
+The largest value in x, or NA if x is empty. If x has an "index"
+attribute, the element corresponding to the largest value is added as
+an "index" attribute to the result.
+}
 \description{
-NOTE: I'm not convinced we should return NA in
-case of empty lists; see ?max for reasons for using +/-Inf
-Keeping this for compatibility for now
+Take maximum of x after discarding missing values
 }

@@ -2,12 +2,16 @@
 % Please edit documentation in R/midata.R
 \name{find_mi_index}
 \alias{find_mi_index}
-\title{Compute index vector into the MI data table
-for a given list of atom sizes}
+\title{Compute an index vector into the MI data table for given of atom sizes}
 \usage{
 find_mi_index(peak_n_atoms)
 }
+\arguments{
+\item{peak_n_atoms}{A vector of atom sizes}
+}
+\value{
+A vector of indices to the first peak for each given atom size
+}
 \description{
-Compute index vector into the MI data table
-for a given list of atom sizes
+Compute an index vector into the MI data table for given of atom sizes
 }

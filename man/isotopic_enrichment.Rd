@@ -7,10 +7,10 @@
 isotopic_enrichment(mid)
 }
 \arguments{
-\item{mid}{and MID vector}
+\item{mid}{An MID vector}
 }
 \value{
-the enrichment value
+The enrichment value
 }
 \description{
 Isotopic enrichment of an MID (fraction of heavy atoms)

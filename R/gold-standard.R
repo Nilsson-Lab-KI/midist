@@ -28,7 +28,17 @@ calc_accuracy <- function(true_matrix, predicted_matrix)
   return(accuracy)
 }
 
+#' Compute accuracy measures at a given percentile cutoffs for pairwise_matrix
 
+#' @param pairwise_matrix A symmetric matrix of distances
+#' @param gold_standard A symmetric, binary matrix where 1 indicates a true pair
+#' @param measure ?
+#' @param noise ?
+#' @param experiment ?
+#' @param subset_size ?
+#' @param percentiles A vector of percentiles, in the range 0--100
+#'
+#' #' @returns A data frame with accuracy values at each percentile
 #' @export
 get_global_percentile_accuracy <- function(
     pairwise_matrix, gold_standard, measure, noise, experiment, subset_size, percentiles)
@@ -73,12 +83,21 @@ get_global_percentile_accuracy <- function(
 }
 
 
-# Compute precision and recall for all pairs in a pairwise_matrix
-#' @param pairwise_matrix
+#' Compute precision and recall for all pairs in a pairwise_matrix
+#'
+#' @param pairwise_matrix A symmetric matrix of distances
+#' @param gold_standard A symmetric, binary matrix where 1 indicates a true pair
+#' @param measure ?
+#' @param subset_size ?
+#' @param subset_sample_no ?
+#' @param noise ?
+#' @param noise_sample_no ?
+#' @param experiment ?
 #' @export
-get_continuous_accuracy <- function(pairwise_matrix, gold_standard, measure, subset_size, subset_sample_no,
-                                    noise, noise_sample_no, experiment){
-
+get_continuous_accuracy <- function(pairwise_matrix, gold_standard,
+                                    measure, subset_size, subset_sample_no,
+                                    noise, noise_sample_no, experiment)
+{
   # make sure the diagonal is NA
   diag(pairwise_matrix) <- NA
   diag(gold_standard) <- NA

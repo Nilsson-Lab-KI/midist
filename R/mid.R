@@ -6,8 +6,8 @@
 
 #' Isotopic enrichment of an MID (fraction of heavy atoms)
 #'
-#' @param mid and MID vector
-#' @returns the enrichment value
+#' @param mid An MID vector
+#' @returns The enrichment value
 #' @export
 isotopic_enrichment <- function(mid) {
   # number of carbon atoms
@@ -17,10 +17,13 @@ isotopic_enrichment <- function(mid) {
 }
 
 
-#
-# return a zero vector if the mid enrichment is below a threshold
-#
-filter_enrichment <- function(mid, tol = 0.0107) {
+#' Return a zero vector if the mid enrichment is below a threshold
+#' @param mid An MID vector
+#' @param tol A threshold value
+#' @returns The given mid vector, or a vector of zeros of the same length,
+#'if the isotopic enrichment is less than threshold
+filter_enrichment <- function(mid, tol = 0.0107)
+{
   if (isotopic_enrichment(mid) <= tol) {
     return(rep(0, length(mid)))
   } else {
@@ -28,9 +31,11 @@ filter_enrichment <- function(mid, tol = 0.0107) {
   }
 }
 
+
 #' Correct an MID vector for naturally occurring isotopes
+#'
 #' @param mid An MID vector to correct
-#' @param p heavy atom natural abundance
+#' @param p The heavy atom natural abundance
 #' @param constraint whether to constrain sum of corrected vector to 1
 #' @export
 c13correct <- function(mid, p = 0.0107, constraint = TRUE)
@@ -57,13 +62,16 @@ c13correct <- function(mid, p = 0.0107, constraint = TRUE)
 
 
 #' Add multiplicative gamma noise to a given MID from a given standard deviation
+#'
 #' @param mid An MID vector
 #' @param stdev standard deviation for the gamma distribution
-#' Computes the gamma distribution parameters theta and k from the mean of the MID and input standard deviation.
+#' Computes the gamma distribution parameters theta and k from the
+#' mean of the MID and input standard deviation.
 #' Multiplies the gamma values by the MID itself (multiplicative)
 #' Adds this noise to the MID and returns the noisy MID
 #' @export
-add_gamma_noise <- function(mid, stdev){
+add_gamma_noise <- function(mid, stdev)
+{
   # mean of the MID
   m <- mean(mid)
   # determine theta from stdev^2 = m * theta --> theta = stdev^2 / m
@@ -79,28 +87,51 @@ add_gamma_noise <- function(mid, stdev){
   return(noisy_mid)
 }
 
-# Draw n samples from a Dirichlet distribution with a given mean vector
-# and precision. Each component i of the resulting random vector has
-# marginal variance mean[i]*(1-mean[i]) / (1 + precision)
 
+#' Sample from a Dirichlet distribution.
+#'
+#' Draws n samples from a Dirichlet distribution with the given mean vector
+#' and precision. Each component i of the resulting random vector has
+#' marginal variance x_i*(1-x_i) / (1 + precision) where x_i is the i'th component
+#' of the mean vector.
+#'
+#' @param mean Mean vector of the Dirichlet distribution. Must sum to 1.
+#' @param precision Precision of the Dirichlet distribution,
+#' @param n number of samples to draw
+#' @returns A matrix with n columns, each an MID of the same length as mean
+#'
 random_dirichlet <- function(mean, precision, n)
 {
+  # If Y_i is distributed Gamma(shape = x_i*p, 1), i = 1, ..., n
+  # then Y / sum(Y) is distributed Dirichlet(x_i*p, .. x_i*p),
+  # with means E Y_i = x_i*p / sum(x_i*p) = x_i
+  # and component variances Var Y_i = x_i(1 - x_i) / (1 + p)
   gamma_obs <- sapply(
     mean*precision,
     function(shape) rgamma(n, shape = shape, scale = 1))
   return(t(gamma_obs / rowSums(gamma_obs)))
 }
 
-# Sample n MIDs with given mean vector and precision such that
-# the standard deviation at MI fraction 0.5 equals stddev
+
+#' Sample MIDs from a Dirichlet distributon.
+#'
+#' Samples n MIDs from a Dirichlet distribution with the given mean vector
+#' and a precision such that the standard deviation of an MI fraction
+#' with (marginal) expectation = 1/2 equals stddev.
+#'
+#' @param mean An MID vector
+#' @param stdev A standard deviation
+#' @param n number of samples to draw
+#' @returns A matrix with n columns, each an MID of the same length as mean
 #' @export
 random_mid <- function(mean, stdev, n)
 {
-  # stdev^2 = 0.5 * (1 - 0.5) / (1 + p)
+  # If a component i of the random vector has mean 1/2, then
+  # its variance is stdev^2 = 1/4 / (1 + p) where p is the precision
+  # ==> p = 1/(4*stdev^2) - 1
   return(
     random_dirichlet(
       mean = mean,
-      # precision = 0.25 / (stdev^2),
       precision = 0.25 / (stdev^2) - 1,
       n))
 }
@@ -150,6 +181,7 @@ nnls_solution <- function(A, z)
   return(pnnls(a = A, b = z, sum = 1)$x)
 }
 
+
 # returns the MID y minimizing || x*y = z ||
 # where x and z are MIDs and z is longer than x
 solution <- function(z, x)
@@ -165,6 +197,7 @@ solution <- function(z, x)
   return(nnls_solution(A, z))
 }
 
+
 #' Find the optimal convolution for two MIDs
 #'
 #' Computes the convolution x*y (for x*y = z), where x and z are the shorter and
@@ -175,7 +208,6 @@ solution <- function(z, x)
 #' @returns the convoluted MID vector, or NA if isotopic enrichment is
 #' less than than tolerance
 #' @export
-
 find_convolution <- function(z, x, tol = 0.0107)
 {
   # this is redundant with solution() but avoids re-computing the matrix A ...

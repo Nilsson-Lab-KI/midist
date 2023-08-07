@@ -2,10 +2,19 @@
 % Please edit documentation in R/util.R
 \name{min_nonempty}
 \alias{min_nonempty}
-\title{Similar to max_nonempty, but takes the minimum}
+\title{Take minimum of x after discarding missing values}
 \usage{
 min_nonempty(x)
 }
+\arguments{
+\item{x}{A vector of values. If x has an "index"
+attribute, it must be a vector of same length as x.}
+}
+\value{
+The smallest value in x, or NA if x is empty. If x has an "index"
+attribute, the element corresponding to the smallest value is added as
+an "index" attribute to the result.
+}
 \description{
-Similar to max_nonempty, but takes the minimum
+Take minimum of x after discarding missing values
 }
