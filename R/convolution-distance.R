@@ -563,7 +563,12 @@ filter_pairwise_matrix <- function(pairwise_matrix, percentile = 0.01)
 }
 
 
-filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01) {
+#' Filter a matrix so that a given fraction of its real-valued elements
+#' are set to the corresponding quantile
+#' @param pairwise_matrix A symmetric matrix
+#' @param percentile The fraction (NOT a percentile) of elements to keep
+filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01)
+{
   # remove diagonals
   diag(pairwise_matrix) <- NA
 
@@ -571,15 +576,15 @@ filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01) {
   filtered_pm <- matrix(NA, nrow(pairwise_matrix), ncol(pairwise_matrix))
   colnames(filtered_pm) <- rownames(filtered_pm) <- colnames(pairwise_matrix)
 
-  # get infinite and NA indices
+  # get indices of non-infinite, non-NA elements
   non_inf_ind <- which(is.infinite(pairwise_matrix) == F & is.na(pairwise_matrix) == F)
   # exclude infinites and NAs
   non_inf_vec <- pairwise_matrix[non_inf_ind]
   # compute the percentile (top 1%)
   threshold <- as.numeric(quantile(non_inf_vec, probs = percentile))
   # fill in
-  filtered_pm[as.numeric(non_inf_ind[which(non_inf_vec <= threshold)])] <- pairwise_matrix[as.numeric(non_inf_ind[which(non_inf_vec <= threshold)])]
-
+  filtered_pm[as.numeric(non_inf_ind[which(non_inf_vec <= threshold)])] <-
+    pairwise_matrix[as.numeric(non_inf_ind[which(non_inf_vec <= threshold)])]
   return(filtered_pm)
 }
 
@@ -812,24 +817,22 @@ convolute_and_distance <- function(mid_x, mid_y, mid_z, f){
 
 
 # compute distance for each unique pair
-calc_pair_distance <- function(pair, midata, f, g_select){
-  print(pair)
-
+calc_pair_distance <- function(pair, midata, f, g_select)
+{
+#  print(pair)
   n_atoms_x <- midata$peak_n_atoms[pair[1]]
   mid_x <- lapply(1:length(midata$experiments), function(e) get_avg_mid(midata, pair[1], e))
   n_atoms_y <- midata$peak_n_atoms[pair[2]]
   mid_y <- lapply(1:length(midata$experiments), function(e) get_avg_mid(midata, pair[2], e))
 
-  if (n_atoms_x == n_atoms_y){
+  if (n_atoms_x == n_atoms_y) {
     # compute distances for all experiments
     distance <- calc_distance_equal_c(mid_x, mid_y, f)
     result <- data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2],
                          middle_metabolite = distance[[2]], distance = distance[[1]])
     return(result)
   }
-
   else {
-
     # number of carbons for the middle metabolite
     n_atoms_z <- abs(n_atoms_x - n_atoms_y)
     # indices of metabolites with n_atoms_z carbons
@@ -899,7 +902,8 @@ calc_pair_distance_single_experiment <- function(pair, midata, f, g_select){
 
 }
 
-
+# Compute distance and middle metabolite matrices
+# Returns a list of length 2
 pairwise_matrix_v2 <- function(midata, f, g_select){
 
   # all unique pairs
@@ -930,23 +934,26 @@ pairwise_matrix_v2 <- function(midata, f, g_select){
   return(result)
 }
 
+#' Compute a pairwise distance matrix and optionally save it
+#' @param midata An MIData object
+#' @param f A distance function, as in conv_reduce
 #' @export
 remn_v2 <- function(midata, f, g_select, rdata_fname, return = T){
 
   remn_output <- pairwise_matrix_v2(midata, f, g_select)
 
   if (return == T)
-    return(remn_output) else {
-      distance_matrix <- remn_output$distance_matrix
-      middle_metabolite_matrix <- remn_output$middle_metabolite_matrix
-
-      save(midata,
-           distance_matrix,
-           middle_metabolite_matrix,
-           f,
-           g_select,
-           file = rdata_fname)
-    }
+    return(remn_output)
+  else {
+    distance_matrix <- remn_output$distance_matrix
+    middle_metabolite_matrix <- remn_output$middle_metabolite_matrix
+    save(midata,
+         distance_matrix,
+         middle_metabolite_matrix,
+         f,
+         g_select,
+         file = rdata_fname)
+  }
 }
 
 
@@ -1026,6 +1033,14 @@ enrichment_dist_matrix <- function(midata, experiments, method = "euclidean")
   return(enrichments)
 }
 
+
+#' Compute pairwise distance matrices for individual experiments
+#' @param midata An MIData object
+#' @param f A distance function, as in conv_reduce
+#' @param g_select A function for selecting best convolutions, as in conv_reduce
+#' @param rdata_fname NOT USED
+#' @param return NOT USED
+#' @returns A list of distance matrices
 #' @export
 remn_v1 <- function(midata, f, g_select, rdata_fname, return = T) {
 
