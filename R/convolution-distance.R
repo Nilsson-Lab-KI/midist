@@ -84,13 +84,13 @@ conv_reduce_all <- function(mi_data, e, f, g)
   n_atoms <- sort(unique(mi_data$peak_n_atoms))
   # for each metabolite size for x
   for(i in 1:length(n_atoms)) {
-    n_atoms_x <- n_atoms[[i]]
+    n_atoms_x <- n_atoms[i]
     # get all MIDs for x
     x_index <- get_peak_index_n_atoms(mi_data, n_atoms_x)
 
     # for each metabolites size for y, larger than x
     for(j in i:length(n_atoms)) {
-      n_atoms_y <- n_atoms[[j]]
+      n_atoms_y <- n_atoms[j]
       # get all MIDs y of this size
       y_index <- get_peak_index_n_atoms(mi_data, n_atoms_y)
       # compute this block
@@ -102,8 +102,6 @@ conv_reduce_all <- function(mi_data, e, f, g)
         z_index <- get_peak_index_n_atoms(mi_data, n_atoms_z)
         block <- conv_reduce_block(mi_data, e, f, g, x_index, y_index, z_index)
       }
-      stopifnot(is.matrix(block$values))
-      stopifnot(is.matrix(block$index))
       # copy block to full matrices
       conv_values[x_index, y_index] <- block$values
       conv_values[y_index, x_index] <- t(block$values)
@@ -157,20 +155,15 @@ conv_reduce_block <- function(mi_data, e, f, g, x_index, y_index, z_index)
   if(length(z_index) > 0) {
     # get MID matrices, each column an MID
     mids_x <- sapply(x_index, function(i) get_avg_mid(mi_data, i, e))
-    stopifnot(is.matrix(mids_x))
     mids_y <- sapply(y_index, function(i) get_avg_mid(mi_data, i, e))
-    stopifnot(is.matrix(mids_y))
     mids_z <- sapply(z_index, function(i) get_avg_mid(mi_data, i, e))
-    stopifnot(is.matrix(mids_z))
 
     for(i in 1:n_x) {
       # compute all convolutions x*z for each z
       mids_xz <- convolute_cols(mids_x[, i], mids_z)
-      stopifnot(is.matrix(mids_xz))
       # calculate g(f(x*z, y) ...) for all y (rows) and all convolutions x*z
       g_result <- g_list(mids_y, mids_xz, z_index, f, g)
       # NOTE: is.vector(x) is FALSE when x is a vector but has attributes!
-      stopifnot(is.vector(g_result$values))
       # store value and attributes separately
       block$values[i, ] <- g_result$values
       block$index[i, ] <- g_result$index
@@ -192,9 +185,7 @@ conv_reduce_block_equal <- function(mi_data, e, f, g, x_index, y_index)
                index = matrix(as.integer(NA), n_x, n_y))
 
   mids_x <- sapply(x_index, function(i) get_avg_mid(mi_data, i, e))
-  stopifnot(is.matrix(mids_x))
   mids_y <- sapply(y_index, function(i) get_avg_mid(mi_data, i, e))
-  stopifnot(is.matrix(mids_y))
 
   # calculate f(x,y) for each x,y (no attributes in this case)
   for(i in 1:n_x) {
@@ -397,6 +388,7 @@ pairwise_matrix_v2 <- function(midata, f, g_select)
   return(result)
 }
 
+
 #' Compute a pairwise distance matrix and optionally save it
 #' @param midata An MIData object
 #' @param f A distance function
@@ -451,6 +443,7 @@ enrichment_dist_matrix <- function(midata, experiments, method = "euclidean")
 
 
 #' Compute pairwise distance matrices for individual experiments
+#'
 #' @param midata An MIData object
 #' @param f A distance function, as in conv_reduce
 #' @param g_select A function for selecting best convolutions, as in conv_reduce

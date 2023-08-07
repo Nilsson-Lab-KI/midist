@@ -357,8 +357,8 @@ get_avg_mid <- function(mi_data, p, e)
 #' @param p the peak index
 #' @returns a vector of MI indices
 get_mi_indices <- function(mi_data, p)
-  {
-  return(mi_data$peak_index[[p]] + 0:mi_data$peak_n_atoms[[p]])
+{
+  return(mi_data$peak_index[p] + 0:mi_data$peak_n_atoms[[p]])
 }
 
 
@@ -367,14 +367,13 @@ get_mi_indices <- function(mi_data, p)
 #' @param e An experiment index
 #' @export
 get_exp_indices <- function(mi_data, e) {
-  return(mi_data$exp_index[[e]] + 0:(mi_data$exp_n_rep[[e]] - 1))
+  return(mi_data$exp_index[e] + 0:(mi_data$exp_n_rep[[e]] - 1))
 }
 
 
 #' Get the index of a list of peak identifers in an MIData object
 #' @param mi_data an MIData object
 #' @param peak_ids a list of peak identifiers
-#' @export
 get_peak_index <- function(mi_data, peak_ids) {
   return(match(peak_ids, mi_data$peak_ids))
 }

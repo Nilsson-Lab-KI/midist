@@ -74,9 +74,6 @@ dot_dist <- function(x, y)
 #'
 euclidean_dist_sq <- function(x, y)
 {
-  stopifnot(is.vector(x))
-  stopifnot(is.vector(y))
-  stopifnot(length(x) == length(y))
   diff <- x - y
   return(sum(diff * diff))
 }
@@ -89,7 +86,8 @@ euclidean_dist_sq <- function(x, y)
 #' @returns the Euclidean distance between x and y
 #' @export
 #'
-euclidean_dist <- function(x, y) {
+euclidean_dist <- function(x, y)
+{
   return(sqrt(euclidean_dist_sq(x, y)))
 }
 
