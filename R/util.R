@@ -105,7 +105,7 @@ is_distance_matrix <- function(mat) {
   # Check if the matrix is non-negative
   if (!all(mat >= 0)) {
     failures <- append(failures, "Matrix contains negative values")
-  }R
+  }
 
   # Check the triangle inequality
   for (i in 1:nrow(mat)) {
