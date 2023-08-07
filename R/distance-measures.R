@@ -65,15 +65,6 @@ dot_dist <- function(x, y)
 }
 
 
-#' Dot product distance (not really a distance) without M+0
-#' @param x a vector
-#' @param y a vector
-#' @returns a distance based on the dot (scalar) product x.y
-#' This is always nonnegative, and zero if x = y
-#'
-dot_dist_no_m0 <- function(x, y) apply_no_m0(dot_dist, x, y)
-
-
 #' The squared Euclidean distance (sum of squares)
 #'
 #' @param x a vector
