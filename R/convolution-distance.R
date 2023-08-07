@@ -233,7 +233,7 @@ filter_pairwise_matrix_global <- function(pairwise_matrix, percentile = 0.01)
   # exclude infinites and NAs
   non_inf_vec <- pairwise_matrix[non_inf_ind]
   # compute the percentile (top 1%)
-  threshold <- as.numeric(quantile(non_inf_vec, probs = percentile))
+  threshold <- as.numeric(stats::quantile(non_inf_vec, probs = percentile))
   # fill in
   filtered_pm[as.numeric(non_inf_ind[which(non_inf_vec <= threshold)])] <-
     pairwise_matrix[as.numeric(non_inf_ind[which(non_inf_vec <= threshold)])]
@@ -380,7 +380,7 @@ calc_pair_distance <- function(pair, midata, f, g_select)
 pairwise_matrix_v2 <- function(midata, f, g_select)
 {
   # all unique pairs
-  pairs <- combn(length(midata$peak_ids), 2)
+  pairs <- utils::combn(length(midata$peak_ids), 2)
 
   # compute distances and keep track of the convolutions
   results <- apply(pairs, 2, calc_pair_distance, midata, f, g_select)

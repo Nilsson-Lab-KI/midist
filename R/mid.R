@@ -79,7 +79,7 @@ add_gamma_noise <- function(mid, stdev)
   # determine k from stdev^2 = k * theta --> k = stdev^2 / theta
   k <- (stdev^2) / (theta^2)
   # generate a gamma distribution from these parameters
-  gamma_vals <- rgamma(length(mid), k, scale = theta)
+  gamma_vals <- stats::rgamma(length(mid), k, scale = theta)
   # multiply the gamma values by the MID to make the noise multiplicative
   gamma_noise <- mid*gamma_vals
   noisy_mid <- (mid + gamma_noise) / sum(mid + gamma_noise)
@@ -108,7 +108,7 @@ random_dirichlet <- function(mean, precision, n)
   # and component variances Var Y_i = x_i(1 - x_i) / (1 + p)
   gamma_obs <- sapply(
     mean*precision,
-    function(shape) rgamma(n, shape = shape, scale = 1))
+    function(shape) stats::rgamma(n, shape = shape, scale = 1))
   return(t(gamma_obs / rowSums(gamma_obs)))
 }
 

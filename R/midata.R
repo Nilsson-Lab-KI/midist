@@ -83,7 +83,8 @@ MIData <- function(peak_areas, exp_names = NULL)
 #' @export
 get_midata <- function(peak_areas_fname)
 {
-  peak_areas <- as.data.frame(read.delim(peak_areas_fname, header = T, sep = "\t", check.names = F))
+  peak_areas <- as.data.frame(
+    utils::read.delim(peak_areas_fname, header = T, sep = "\t", check.names = F))
 
   if ("MassIsotopomer" %in% colnames(peak_areas)) {
     peak_areas <- peak_areas[, -which(colnames(peak_areas) == "MassIsotopomer")]

@@ -105,7 +105,7 @@ apply_no_m0 <- function(f, x, y) {
 #' NOTE: this function should be fixed, see https://github.com/Nilsson-Lab-KI/remn/issues/40
 is_distance_matrix <- function(mat) {
   # necessary intervention to prevent the floating number error
-  mat <- as.matrix(nearPD(mat)$mat)
+  mat <- as.matrix(Matrix::nearPD(mat)$mat)
   # Initialize a character vector to store failure reasons
   failures <- character(0)
 
