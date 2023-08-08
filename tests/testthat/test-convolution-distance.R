@@ -267,11 +267,29 @@ mi_data_3 <- MIData(peak_areas_3)
 
 test_that("conv_reduce is correct on multiple experiments", {
 
-  # a*a vs b
+  # a*b vs d
   expect_equal(
-      conv_reduce(mi_data_3, 1, 2, 1:2, euclidean_dist, min_nonempty),
-      with_attr(0, "index", 1),
-      tolerance = 1e-6
+    conv_reduce(mi_data_3, x = 1, y = 4, e = 1:2, euclidean_dist, which.min),
+    list(
+      values = euclidean_dist(
+        cbind(
+          convolute(get_avg_mid(mi_data_3, 1, 1), get_avg_mid(mi_data_3, 2, 1)),
+          convolute(get_avg_mid(mi_data_3, 1, 2), get_avg_mid(mi_data_3, 2, 2))
+        ),
+        get_avg_mid(mi_data_3, 4)
+      ),
+      index = 2)
+  )
+
+  # b vs c
+  expect_equal(
+    conv_reduce(mi_data_3, x = 2, y = 3, e = 1:2, euclidean_dist, which.min),
+    list(
+      values = euclidean_dist(
+        get_avg_mid(mi_data_3, 2),
+        get_avg_mid(mi_data_3, 3)
+      ),
+      index = NA)
   )
 })
 

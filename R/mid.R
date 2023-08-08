@@ -45,12 +45,12 @@ c13correct <- function(mid, p = 0.0107, constraint = TRUE)
     end <- length(mid)
     # an empty correction matrix to be filled in by binom values
     correct <- matrix(0, end, end)
-    
+
     # column-wise filling in the correction matrix
     for (j in 1:end) {
       correct[j:end, j] <- dbinom(c(0:(end-j)), end-j, p)
     }
-    
+
     # if we do not have a constraint on the sum of the values
     if (constraint == FALSE) {
       return(pnnls(a = correct, b = mid)$x)
@@ -58,9 +58,9 @@ c13correct <- function(mid, p = 0.0107, constraint = TRUE)
     # if we have a sum 1 constraint (default)
     else {
       return(pnnls(a = correct, b = mid, sum = 1)$x)
-    } 
+    }
   } else return(mid)
-  
+
 }
 
 
@@ -173,11 +173,16 @@ convolute <- function(x, y)
 #' @param x an MID vector
 #' @param y_mat a matrix whose columns are MID vectors
 #' @returns the matrix of convolution vectors x*y for each column y in y_mat
-convolute_cols <- function(x, y_mat) {
+convolute_cols <- function(x, y_mat)
+{
   return(convolution_matrix(x, nrow(y_mat) - 1) %*% y_mat)
 }
 
 #' Convolute columns of x with second dimension of y
+#'
+#' @param x_mat a matrix with MIDs in columns (MI x experiments)
+#' @param x_array an MI x experiments x peaks array
+#' @returns An MI x experiments x peaks array of convolutions
 convolute_array <- function(x_mat, y_array)
 {
   # this yields an MI x experiments x z_index array
@@ -189,7 +194,7 @@ convolute_array <- function(x_mat, y_array)
     aperm(
       vapply(
         1:n_exp,
-        function(i) convolute_cols(x_mat[, i], y_array[, i, , drop = FALSE]),
+        function(i) convolute_cols(x_mat[, i], y_array[, i, ]),
         FUN.VALUE = array(0, dim = c(n_atoms_x + n_atoms_y + 1, n_y))
       ),
       c(1, 3, 2)

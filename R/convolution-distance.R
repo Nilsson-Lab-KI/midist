@@ -51,16 +51,15 @@ conv_reduce <- function(mi_data, x, y, e, f, g)
                        function(i) get_avg_mid(mi_data, i, e),
                        simplify = "array")
       # compute all convolutions x*z for each z
-      if(length(e) == 1)
+      if(length(e) == 1) {
         mids_xz <- convolute_cols(mid_x, mids_z)
+        f_values <- apply(mids_xz, MARGIN = 2, f, mid_y)
+      }
       else {
-        #cat("mid_x dim = ", dim(mid_x))
-        #cat("mids_z dim = ", dim(mids_z))
         # this yields an MI x experiments x z_index array
         mids_xz <- convolute_array(mid_x, mids_z)
+        f_values <- apply(mids_xz, MARGIN = 3, f, mid_y)
       }
-      # calculate f between y and all x*y and add indices
-      f_values <- apply(mids_xz, MARGIN = 2, f, mid_y)
       # return best value and index
       f_index <- g(f_values)
       return(list(values = f_values[f_index], index = z_index[f_index]))
