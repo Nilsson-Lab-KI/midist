@@ -200,13 +200,20 @@ conv_reduce_block_equal <- function(mi_data, e, f, g, x_index, y_index)
   block = list(values = matrix(as.double(NA), n_x, n_y),
                index = matrix(as.integer(NA), n_x, n_y))
 
-  mids_x <- sapply(x_index, function(i) get_avg_mid(mi_data, i, e))
-  mids_y <- sapply(y_index, function(i) get_avg_mid(mi_data, i, e))
+  mids_x <- get_avg_mids(mi_data, x_index, e)
+  mids_y <- get_avg_mids(mi_data, y_index, e)
 
   # calculate f(x,y) for each x,y (no attributes in this case)
   for(i in 1:n_x) {
-    block$values[i, ] <- apply(mids_y, MARGIN = 2,
-                               function(mid_y) f(mids_x[, i], mid_y))
+    if(is.matrix(mids_x)) {
+      # single experiment, matrix is MIs x peaks
+      block$values[i, ] <- apply(mids_y, MARGIN = 2, f, mids_x[, i])
+    }
+    else {
+      # multiple experiments, matrix is MIs x experiments x peaks
+      block$values[i, ] <- apply(mids_y, MARGIN = 3, f, mids_x[, , i])
+    }
+
   }
   return(block)
 }
