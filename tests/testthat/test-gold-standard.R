@@ -35,7 +35,7 @@ test_that("get_continuous_accuracy is correct", {
     # none of the remaining arguments are actually used by this function,
     # but are added to the returned data frame; this should be refactored
     measure = 1:20, subset_size = 1:20, subset_sample_no = 1:20,
-    noise = 1:20, noise_sample_no = 1:20, experiment = 1:20
+    noise = 1:20, experiment = 1:20
   )
   # true positive rate = (no. true positives) / (no. true)
   expect_equal(
