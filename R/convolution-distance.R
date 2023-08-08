@@ -31,7 +31,7 @@ conv_reduce <- function(mi_data, x, y, e, f, g)
   if (n_atom_x > n_atom_y) {
     return(conv_reduce(mi_data, y, x, e, f, g))
   }
-  # find the MIDs of metabolite with index x, y from experiment e
+  # find the MIDs of metabolite with index x, y
   mid_x <- get_avg_mid(mi_data, x, e)
   mid_y <- get_avg_mid(mi_data, y, e)
 
@@ -44,10 +44,21 @@ conv_reduce <- function(mi_data, x, y, e, f, g)
     # get MIDs of metabolites z to convolute with
     n_atom_z <- n_atom_y - n_atom_x
     z_index <- get_peak_index_n_atoms(mi_data, n_atom_z)
-    mids_z <- sapply(z_index, function(i) get_avg_mid(mi_data, i, e))
-    if (length(mids_z) > 0) {
+    if (length(z_index) > 0) {
+      # this is either an MI x z_index matrix if e is scalar,
+      # or an MI x experiments x z_index array if e is a vector
+      mids_z <- sapply(z_index,
+                       function(i) get_avg_mid(mi_data, i, e),
+                       simplify = "array")
       # compute all convolutions x*z for each z
-      mids_xz <- convolute_cols(mid_x, mids_z)
+      if(length(e) == 1)
+        mids_xz <- convolute_cols(mid_x, mids_z)
+      else {
+        #cat("mid_x dim = ", dim(mid_x))
+        #cat("mids_z dim = ", dim(mids_z))
+        # this yields an MI x experiments x z_index array
+        mids_xz <- convolute_array(mid_x, mids_z)
+      }
       # calculate f between y and all x*y and add indices
       f_values <- apply(mids_xz, MARGIN = 2, f, mid_y)
       # return best value and index
@@ -68,8 +79,9 @@ conv_reduce <- function(mi_data, x, y, e, f, g)
 #' In that case, g_select will not be applied.
 #'
 #' @param mi_data the MIdata object
-#' @param e experiment index
-#' @param f A function f(x, y) taking two MIDs.
+#' @param e Experiment index. If e is a vector, the function f(x, y)
+#' must accept matrices.
+#' @param f A function f(x, y) taking two MIDs, or two matrices whose columns are MIDs.
 #' @param g a function g taking a vector of values f1, f2, ...
 #' @returns the matrix of g(f(x,y) ...) values for all x,y
 #' @export
@@ -111,7 +123,6 @@ conv_reduce_all <- function(mi_data, e, f, g)
   }
   return(list(value = conv_values, index = conv_index))
 }
-
 
 
 # apply a selection function g and return a list of

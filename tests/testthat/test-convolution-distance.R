@@ -159,7 +159,6 @@ nad2_mid <- c(3.116997e-01, 1.203842e-01, 1.414667e-01, 1.142038e-01,
               5.491461e-05, 0.000000e+00, 0.000000e+00, 0.000000e+00,
               0.000000e+00, 0.000000e+00)
 
-# example-1: carbon numbers are sorted
 peak_areas_example_hmec <- data.frame(
   Metabolite = c(rep("adp", 10+1), rep("gthrd" ,10+1), rep("ibutcrn", 11+1), rep("nad1", 21+1), rep("nad2", 21+1)),
   Formula = c(rep("adp", 10+1), rep("gthrd" ,10+1), rep("ibutcrn", 11+1), rep("nad1", 21+1), rep("nad2", 21+1)),
@@ -264,6 +263,17 @@ peak_areas_3 <- data.frame(
   )
 )
 mi_data_3 <- MIData(peak_areas_3)
+
+
+test_that("conv_reduce is correct on multiple experiments", {
+
+  # a*a vs b
+  expect_equal(
+      conv_reduce(mi_data_3, 1, 2, 1:2, euclidean_dist, min_nonempty),
+      with_attr(0, "index", 1),
+      tolerance = 1e-6
+  )
+})
 
 
 test_that("enrichment_dist_matrix is correct", {
