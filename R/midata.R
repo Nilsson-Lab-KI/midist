@@ -215,42 +215,7 @@ midata_transform <- function(midata, f) {
   return(new_midata)
 }
 
-#'
-#' Add replicates with some noise to an midata object where experiments are not repeated (and probably noise free also)
-#' Returns a new midata object where the mids per peak per experiment are repeated with a defined level of noise
-#' Updates all related fields in midata such as avg_mids, exp_index, etc.
-#'
-#' This is useful when the midata object contains simulated MIDs without replicates and noise,
-#' and to add replicates we introduce a level of noise defined by the stdev parameter.
-#'
-#' @param midata An MIData object
-#' @param stdev The desired standard deviation to generate dirichlet distribution
-#' (see the random_mid() function for more details on the dirichlet distribution)
-#' and return a valid MID vector of the same size.
-#' @param nr_replicate Number of noisy replicates to generate
-#'
-add_noisy_replicates <- function(midata, stdev, nr_replicate) {
-  # copy MIData object
-  new_midata <- midata
-  exp_names <- rep(midata$experiments, each = nr_replicate)
 
-  # apply function to each peak
-  new_midata$mids <- do.call(rbind.data.frame,
-                             lapply(1:length(new_midata$peak_ids),
-         function(p) do.call(cbind.data.frame, lapply(1:length(new_midata$experiments),
-                                                      function(e) random_mid(get_avg_mid(new_midata, p, e),
-                                                                             stdev, nr_replicate)))) )
-
-  # need to replicate experiment names
-  new_midata$exp_index <- match(new_midata$experiments, exp_names)
-  # number of replicates per experiment
-  new_midata$exp_n_rep <-
-    as.numeric(table(factor(exp_names, levels = new_midata$experiments)))
-
-  # updata the averaged MIDs
-  new_midata$avg_mids <- calc_avg_mids(new_midata)
-  return(new_midata)
-}
 
 #' Reorder the peak IDs of an mi_data object
 #'
@@ -274,26 +239,6 @@ misplace_peak_ids <- function(midata)
 
   }
   return(midata$peak_ids)
-}
-
-
-midata_randomize <- function(midata){
-  for (i in 1:length(midata$n_atoms_index)){
-    print(i)
-    if (length(midata$n_atoms_index[[i]]) != 1){
-      # Shuffle the vector while ensuring none of the elements are in their original spot
-      # Note that this is not a complete randomization, but rather misplacing every element
-      new_ind <- midata$n_atoms_index[[i]]
-      while (any(new_ind == midata$n_atoms_index[[i]])) {
-        new_ind <- sample(midata$n_atoms_index[[i]])
-      }
-      # update the order of peak IDs without changing MIDs
-      midata$peak_ids[midata$n_atoms_index[[i]]] <- midata$peak_ids[new_ind]
-      rm(new_ind)
-    } else midata$peak_ids[midata$n_atoms_index[[i]]] <- midata$peak_ids[midata$n_atoms_index[[i]]]
-
-  }
-  return(midata)
 }
 
 
@@ -354,6 +299,12 @@ find_false_mi <- function(corrected_mids, threshold, min_experiments)
 }
 
 
+normalize_mids <- function(mids){
+  if (!is.matrix(mids))
+    return(mids / sum(mids)) else 
+      return(apply(mids, 2, function(mid) mid / sum(mid)))
+}
+
 #
 # get MIDs, as above
 #
@@ -375,17 +326,6 @@ get_mids <- function(mi_data, p, e) {
 #' @export
 get_avg_mid <- function(mi_data, p, e) {
   return(mi_data$avg_mids[get_mi_indices(mi_data, p), e])
-}
-
-#' Get averaged MID vectors
-#'
-#' for a given peak index, for all experiments
-#'
-#' @param mi_data an MIData object
-#' @param index the peak index
-#' @returns a matrix where each column is the MID from an experiment
-get_avg_mid_all <- function(mi_data, index) {
-  return(mi_data$avg_mids[get_mi_indices(mi_data, index), ])
 }
 
 
