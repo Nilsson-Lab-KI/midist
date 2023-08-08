@@ -177,6 +177,12 @@ peak_areas_2 <- data.frame(
 exp_names_2 = c("exp1")
 mi_data_2 <- MIData(peak_areas_2, exp_names_2)
 
+test_that("zero peaks are handled properly", {
+  # zero peaks in peak areas should become NAs in the midata object
+  expect_equal(all(is.na(get_mids(mi_data_2, 5, 1))), TRUE)
+  # avg mids of NA mids should be assigned binomial
+  expect_equal(c13correct(get_avg_mid(mi_data_2, 5, 1)), c(1,0,0))
+})
 
 test_that("midata_subset works correctly", {
   # take a subset
