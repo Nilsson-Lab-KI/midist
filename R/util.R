@@ -111,13 +111,18 @@ assign_list <- structure(NA, class = "AssignList")
 
 #' Operator for assignment to an AssignList
 #'
-#' For example, assign_list[x, y] <- list(a,b) evaluates to
-#' "[<-AssignList"(assign_list, x, y, some_list) and is effectively the same as
+#' For example, assign_list\[x, y\] <- list(a,b)  is effectively the same as
 #' x <- a and y <- b.
-#' See help for "[<-"]
+#' See help for "\[<-"\]
+#' @param assign_list the unique object assign_list from this package
+#' @param ... elements to assign
+#' @param value the list to assign from
+#' @returns the assign_list object
 #
 "[<-.AssignList" <- function(assign_list, ..., value)
 {
+  # assign_list [x, y] <- value evaluates to
+  # [<-AssignList"(assign_list, x, y, value)
   # get arguments (first element is function name)
   args <- as.list(match.call())
   # take arguments after assign_list, before value = elements to assign

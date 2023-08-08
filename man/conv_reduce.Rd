@@ -2,7 +2,7 @@
 % Please edit documentation in R/convolution-distance.R
 \name{conv_reduce}
 \alias{conv_reduce}
-\title{Calculates a convolution-based measure between MIDs for peak x and y for
+\title{Convolution-based measure between MIDs for peak x and y for
 experiment e from an MIData object (mi_data).}
 \usage{
 conv_reduce(mi_data, x, y, e, f, g)
@@ -16,23 +16,18 @@ conv_reduce(mi_data, x, y, e, f, g)
 
 \item{e}{experiment index}
 
-\item{f}{A function f(x, y) taking two MIDs.}
+\item{f}{A function f(x, y) taking two MIDs and returning a scalar.}
 
-\item{g}{a function g taking a vector of values f1, f2, ...}
+\item{g}{a function g taking a non-empty vector of values and returning
+the index of the "best" element; for example, which.min}
 }
 \value{
 the resulting value g(f1, f2, ...)
 }
 \description{
-The function f(x, y) must be symmetric in x, y and return a real value
-or NA for any x, y with the same number of atoms.
 If x, y have the same number of atoms, f(x,y) is returned.
-}
-\details{
 If x is smaller than y, this function computes f(x\emph{z, y) for all
 peaks z such that x}z is the same size as y (and vice versa), and calls g()
-on the resulting vector of values from f.
-For example, setting f = max gives the maximum value.
-The function g must accept an empty lists g(c()) in case there are no
-possible convolutions, and handle all values produced by f.
+on the resulting vector of values from f to select a value.
+For example, setting g = which.max gives the maximum value.
 }

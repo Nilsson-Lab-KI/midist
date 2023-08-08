@@ -3,6 +3,7 @@
 export(MIData)
 export(add_gamma_noise)
 export(apply_no_m0)
+export(assign_list)
 export(best_nonempty)
 export(bray_curtis_distance)
 export(c13correct)
