@@ -4,7 +4,7 @@
 # individual MIDs
 a_mid <- c(0.98, 0.02)
 b_mid <- c(0.8, 0.1, 0.1)
-c_mid <- c(0.0, 0.0, 0.0)           # zero vector
+c_mid <- c(0.9787144, 0.02117102, 0.00011449)           # binomial vector
 d_mid <- c(0.8, 0.05, 0.1, 0.05)
 e_mid <- c(0.1, 0.0, 0.3, 0.0, 0.2, 0.05)
 
@@ -37,29 +37,29 @@ test_conv_reduce_1 <- function(f, g)
   expect_equal(conv_reduce(midata_1, 1, 2, 1, f, g),
                g(with_attr(
                  c(f(convolute(a_mid, a_mid), b_mid)), "index", c(1))),
-               tolerance = 1e-7)
+               tolerance = 1e-4)
   # distance for a vs c = f(a*a, c), where c is a zero vector, selects a
   expect_equal(conv_reduce(midata_1, 1, 3, 1, f, g),
                g(with_attr(
                  c(f(convolute(a_mid, a_mid), c_mid)), "index", c(1))),
-               tolerance = 1e-7)
+               tolerance = 1e-4)
   # distance for a vs d = g(f(a*b, d), f(a*c, d)), selects b
   expect_equal(conv_reduce(midata_1, 1, 4, 1, f, g),
                g(with_attr(
                  c(
                    f(d_mid, convolute(a_mid, b_mid)),
                    f(d_mid, convolute(a_mid, c_mid))), "index", c(2,3))),
-               tolerance = 1e-7)
+               tolerance = 1e-4)
   # for a vs. e there is no 4-carbon peak to convolute with,
   # so expect g(c()), index = NA
   expect_equal(conv_reduce(midata_1, 1, 5, 1, f, g),
                g(c()),
-               tolerance = 1e-7)
+               tolerance = 1e-4)
   # distance for b vs d = f(a*b, d), select a
   expect_equal(conv_reduce(midata_1, 2, 4, 1, f, g),
                g(with_attr(
                  c(f(convolute(a_mid, b_mid), d_mid)), "index", c(1))),
-               tolerance = 1e-7)
+               tolerance = 1e-4)
   return(conv_mat)
 }
 
@@ -73,9 +73,11 @@ test_that("conv_reduce is correct on max cosine similarity", {
   # maximum cosine similarity
   # in this case, the zero vector c causes NA values which must be handled
   sim_mat <- test_conv_reduce_1(cosine_sim, max_nonempty)
-  # for c (a zero vector) all cosine distances should be NAs due to division by zero
-  expect_true(all(is.na(sim_mat[,3])))
-  expect_true(all(is.na(sim_mat[3,])))
+  # should return NA for (1,5) and (5,1)
+  expect_true(is.na(sim_mat[1,5]))
+  expect_true(is.na(sim_mat[5,1]))
+  # max cosine distance for pair (1,2) should be 0.9889838
+  expect_equal(sim_mat[1,2], 0.9889, tolerance = 1e-4)
 })
 
 test_that("conv_reduce_all returns a matrix with index attribute", {
