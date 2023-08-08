@@ -69,14 +69,16 @@ test_that("conv_reduce is correct on minimum euclidean distance", {
 })
 
 
-# test_that("conv_reduce is correct on max cosine similarity", {
-#   # maximum cosine similarity
-#   # in this case, the zero vector c causes NA values which must be handled
-#   sim_mat <- test_conv_reduce_1(cosine_sim, max_nonempty)
-#   # for c (a zero vector) all cosine distances should be NAs due to division by zero
-#   expect_true(all(is.na(sim_mat[,3])))
-#   expect_true(all(is.na(sim_mat[3,])))
-# })
+test_that("conv_reduce is correct on max cosine similarity", {
+  # maximum cosine similarity
+  # in this case, the zero vector c causes NA values which must be handled
+  sim_mat <- test_conv_reduce_1(cosine_sim, max_nonempty)
+  # should return NA for (1,5) and (5,1)
+  expect_true(is.na(sim_mat[1,5]))
+  expect_true(is.na(sim_mat[5,1]))
+  # max cosine distance for pair (1,2) should be 0.9889838
+  expect_equal(sim_mat[1,2], 0.9889, tolerance = 1e-4)
+})
 
 test_that("conv_reduce_all returns a matrix with index attribute", {
   # maximum cosine similarity
