@@ -294,6 +294,11 @@ test_that("conv_reduce is correct on multiple experiments", {
 })
 
 
+test_that("conv_reduce_all is correct on multiple experiments", {
+  test_conv_reduce_all(mi_data_3, 1:2, euclidean_dist, which.min)
+})
+
+
 test_that("enrichment_dist_matrix is correct", {
 
   ed_matrix <- enrichment_dist_matrix(mi_data_3, c("exp1", "exp2"), "euclidean")

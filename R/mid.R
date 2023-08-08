@@ -181,7 +181,7 @@ convolute_cols <- function(x, y_mat)
 #' Convolute columns of x with second dimension of y
 #'
 #' @param x_mat a matrix with MIDs in columns (MI x experiments)
-#' @param x_array an MI x experiments x peaks array
+#' @param y_array an MI x experiments x peaks array
 #' @returns An MI x experiments x peaks array of convolutions
 convolute_array <- function(x_mat, y_array)
 {
@@ -194,7 +194,13 @@ convolute_array <- function(x_mat, y_array)
     aperm(
       vapply(
         1:n_exp,
-        function(i) convolute_cols(x_mat[, i], y_array[, i, ]),
+        function(i) {
+          convolute_cols(
+            x_mat[, i],
+            # matrix needed here to prevent dropping the 3rd dimension
+            matrix(y_array[, i, , drop = FALSE], nrow = n_atoms_y + 1)
+          )
+        },
         FUN.VALUE = array(0, dim = c(n_atoms_x + n_atoms_y + 1, n_y))
       ),
       c(1, 3, 2)

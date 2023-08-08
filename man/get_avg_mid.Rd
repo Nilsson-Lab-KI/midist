@@ -14,9 +14,10 @@ get_avg_mid(mi_data, p, e)
 \item{e}{the experiment index (optional)}
 }
 \value{
-An MID vector, or, if e is omitted, a matrix whose columns are MIDs
+An MID vector, or, if e is not a scalar, a matrix whose columns are MIDs
 }
 \description{
-Retrieve a vector of averages MIDs for the given peak p and experiment e;
-or, if e is omitted, the matrix of MIDs for peak p across all experiments.
+Retrieve a vector of averages MIDs for a peak p and an experiment e;
+or, if e is a vector or is omitted, the matrix of MIDs for peak p across
+the indicated experiments.
 }

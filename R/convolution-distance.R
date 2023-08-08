@@ -47,9 +47,7 @@ conv_reduce <- function(mi_data, x, y, e, f, g)
     if (length(z_index) > 0) {
       # this is either an MI x z_index matrix if e is scalar,
       # or an MI x experiments x z_index array if e is a vector
-      mids_z <- sapply(z_index,
-                       function(i) get_avg_mid(mi_data, i, e),
-                       simplify = "array")
+      mids_z <- get_avg_mids(mi_data, z_index, e)
       # compute all convolutions x*z for each z
       if(length(e) == 1) {
         mids_xz <- convolute_cols(mid_x, mids_z)
@@ -128,11 +126,17 @@ conv_reduce_all <- function(mi_data, e, f, g)
 # g values and corresponding indices
 g_list <- function(mids_y, mids_xz, z_index, f, g)
 {
-  n_y <- dim(mids_y)[2]
+  if(is.matrix(mids_y))
+    n_y <- dim(mids_y)[2]
+  else
+    n_y <- dim(mids_y)[3]
   values <- rep(as.double(NA), n_y)
   index <- rep(as.integer(NA), n_y)
   for(i in 1:n_y) {
-    f_values <- apply(mids_xz, MARGIN = 2, f, mids_y[, i])
+    if(is.matrix(mids_y))
+      f_values <- apply(mids_xz, MARGIN = 2, f, mids_y[, i])
+    else
+      f_values <- apply(mids_xz, MARGIN = 3, f, mids_y[, , i])
     f_index <- g(f_values)
     # store values and index separately
     values[i] <- f_values[f_index]
@@ -141,7 +145,6 @@ g_list <- function(mids_y, mids_xz, z_index, f, g)
   # add index vector as attribute
   return(list(values = values, index = index))
 }
-
 
 
 #' compute conv_reduce for one matrix block where all x are the same size
@@ -164,16 +167,19 @@ conv_reduce_block <- function(mi_data, e, f, g, x_index, y_index, z_index)
                index = matrix(as.integer(NA), n_x, n_y))
   if(length(z_index) > 0) {
     # get MID matrices, each column an MID
-    mids_x <- sapply(x_index, function(i) get_avg_mid(mi_data, i, e))
-    mids_y <- sapply(y_index, function(i) get_avg_mid(mi_data, i, e))
-    mids_z <- sapply(z_index, function(i) get_avg_mid(mi_data, i, e))
+    mids_x <- get_avg_mids(mi_data, x_index, e)
+    mids_y <- get_avg_mids(mi_data, y_index, e)
+    mids_z <- get_avg_mids(mi_data, z_index, e)
 
     for(i in 1:n_x) {
       # compute all convolutions x*z for each z
-      mids_xz <- convolute_cols(mids_x[, i], mids_z)
+      if(length(e) == 1)
+        mids_xz <- convolute_cols(mids_x[, i], mids_z)
+      else {
+        mids_xz <- convolute_array(mids_x[, , i], mids_z)
+      }
       # calculate g(f(x*z, y) ...) for all y (rows) and all convolutions x*z
       g_result <- g_list(mids_y, mids_xz, z_index, f, g)
-      # NOTE: is.vector(x) is FALSE when x is a vector but has attributes!
       # store value and attributes separately
       block$values[i, ] <- g_result$values
       block$index[i, ] <- g_result$index
