@@ -163,7 +163,8 @@ convolution_matrix <- function(x, y_carbons) {
 #' @param y an MID vector
 #' @returns the convolution MID vector x*y
 #' @export
-convolute <- function(x, y) {
+convolute <- function(x, y)
+{
   return(as.vector(convolution_matrix(x, length(y) - 1) %*% y))
 }
 
@@ -174,6 +175,26 @@ convolute <- function(x, y) {
 #' @returns the matrix of convolution vectors x*y for each column y in y_mat
 convolute_cols <- function(x, y_mat) {
   return(convolution_matrix(x, nrow(y_mat) - 1) %*% y_mat)
+}
+
+#' Convolute columns of x with second dimension of y
+convolute_array <- function(x_mat, y_array)
+{
+  # this yields an MI x experiments x z_index array
+  n_atoms_x <- nrow(x_mat) - 1
+  n_atoms_y <- dim(y_array)[1] - 1
+  n_exp <- dim(y_array)[2]
+  n_y <- dim(y_array)[3]
+  return(
+    aperm(
+      vapply(
+        1:n_exp,
+        function(i) convolute_cols(x_mat[, i], y_array[, i, , drop = FALSE]),
+        FUN.VALUE = array(0, dim = c(n_atoms_x + n_atoms_y + 1, n_y))
+      ),
+      c(1, 3, 2)
+    )
+  )
 }
 
 
