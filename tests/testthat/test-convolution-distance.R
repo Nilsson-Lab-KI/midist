@@ -4,7 +4,7 @@
 # individual MIDs
 a_mid <- c(0.98, 0.02)
 b_mid <- c(0.8, 0.1, 0.1)
-c_mid <- c(0.9787144, 0.02117102, 0.00011449)           # binomial vector
+c_mid <- c(0.97, 0.03, 0.0)
 d_mid <- c(0.8, 0.05, 0.1, 0.05)
 e_mid <- c(0.1, 0.0, 0.3, 0.0, 0.2, 0.05)
 
@@ -36,30 +36,25 @@ test_conv_reduce_1 <- function(f, g)
   # distance for a vs b = f(a*a, b), selects a
   expect_equal(conv_reduce(midata_1, 1, 2, 1, f, g),
                g(with_attr(
-                 c(f(convolute(a_mid, a_mid), b_mid)), "index", c(1))),
-               tolerance = 1e-4)
+                 c(f(convolute(a_mid, a_mid), b_mid)), "index", c(1))))
   # distance for a vs c = f(a*a, c), where c is a zero vector, selects a
   expect_equal(conv_reduce(midata_1, 1, 3, 1, f, g),
                g(with_attr(
-                 c(f(convolute(a_mid, a_mid), c_mid)), "index", c(1))),
-               tolerance = 1e-4)
+                 c(f(convolute(a_mid, a_mid), c_mid)), "index", c(1))))
   # distance for a vs d = g(f(a*b, d), f(a*c, d)), selects b
   expect_equal(conv_reduce(midata_1, 1, 4, 1, f, g),
                g(with_attr(
                  c(
                    f(d_mid, convolute(a_mid, b_mid)),
-                   f(d_mid, convolute(a_mid, c_mid))), "index", c(2,3))),
-               tolerance = 1e-4)
+                   f(d_mid, convolute(a_mid, c_mid))), "index", c(2,3))))
   # for a vs. e there is no 4-carbon peak to convolute with,
   # so expect g(c()), index = NA
   expect_equal(conv_reduce(midata_1, 1, 5, 1, f, g),
-               g(c()),
-               tolerance = 1e-4)
+               g(c()))
   # distance for b vs d = f(a*b, d), select a
   expect_equal(conv_reduce(midata_1, 2, 4, 1, f, g),
                g(with_attr(
-                 c(f(convolute(a_mid, b_mid), d_mid)), "index", c(1))),
-               tolerance = 1e-4)
+                 c(f(convolute(a_mid, b_mid), d_mid)), "index", c(1))))
   return(conv_mat)
 }
 
