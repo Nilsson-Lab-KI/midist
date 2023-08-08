@@ -68,7 +68,7 @@ MIData <- function(peak_areas, exp_names = NULL)
       # find and replace zero peaks
       pa[, which(colSums(pa) == 0)] <- NA
       # normalize mids
-      mi_data$mids[rows, cols] <- apply(pa, 2, function(vec) vec / sum(vec, na.rm = T))
+      mi_data$mids[rows, cols] <- normalize_mids(pa)
     }
   }
   # averaged MIDs
@@ -138,7 +138,7 @@ calc_avg_mids <- function(mi_data) {
         avg_mids[rows, e] <- dbinom(c(0:(length(rows) - 1)), length(rows) - 1, 0.0107) else {
           new_areas <- rowSums(mi_data$mids[rows, cols, drop = F], na.rm = T) / length(which(!is.na(colSums(mi_data$mids[rows, cols, drop = F], na.rm = T))))
           # renormalization needed for some cases
-          avg_mids[rows, e] <- new_areas / sum(new_areas)
+          avg_mids[rows, e] <- normalize_mids(new_areas)
         }
     }
   }
