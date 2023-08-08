@@ -96,7 +96,7 @@ get_global_percentile_accuracy <- function(
 #' @export
 get_continuous_accuracy <- function(pairwise_matrix, gold_standard,
                                     measure, subset_size, subset_sample_no,
-                                    noise, noise_sample_no, experiment)
+                                    noise, experiment)
 {
   # make sure the diagonal is NA
   diag(pairwise_matrix) <- NA
@@ -135,7 +135,7 @@ get_continuous_accuracy <- function(pairwise_matrix, gold_standard,
 
   return(data.frame(measure = measure,
                     subset_size = subset_size, subset_sample_no = subset_sample_no,
-                    noise = noise, noise_sample_no = noise_sample_no,
+                    noise = noise,
                     tpr = recall, precision = precision,
                     experiment = experiment)
   )

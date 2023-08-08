@@ -65,7 +65,9 @@ MIData <- function(peak_areas, exp_names = NULL)
       cols <- get_exp_indices(mi_data, e)
       # compute MID
       pa <- peak_areas[rows, cols, drop = FALSE]
-      # normalize nonzero mids
+      # find and replace zero peaks
+      pa[, which(colSums(pa) == 0)] <- NA
+      # normalize mids
       mi_data$mids[rows, cols] <- normalize_mids(pa)
     }
   }
@@ -137,7 +139,12 @@ calc_avg_mids <- function(mi_data)
     for (e in 1:length(mi_data$experiments)) {
       cols <- get_exp_indices(mi_data, e)
       # collapse across replicates
-      avg_mids[rows, e] <- collapse_replicates(mi_data$mids[rows, cols, drop = F])
+      if (all(is.na(colSums(mi_data$mids[rows, cols, drop = F]))))
+        avg_mids[rows, e] <- dbinom(c(0:(length(rows) - 1)), length(rows) - 1, 0.0107) else {
+          new_areas <- rowSums(mi_data$mids[rows, cols, drop = F], na.rm = T) / length(which(!is.na(colSums(mi_data$mids[rows, cols, drop = F], na.rm = T))))
+          # renormalization needed for some cases
+          avg_mids[rows, e] <- normalize_mids(new_areas)
+        }
     }
   }
   return(avg_mids)
@@ -273,11 +280,19 @@ censor_false_mi <- function(mi_data, threshold = 0.03, min_experiments = 1)
     new_mids[false_index,] <- 0
     # renormalize
     new_midata$mids[rows, ] <- t(t(new_mids) / colSums(new_mids))
+
+    # # NaN filtering here
+    # nan <- all(is.na(colSums(new_midata$mids[rows, ])))
+    # if (nan == F){
+    #   nan_index <- which(is.na(colSums(new_midata$mids[rows, ])))
+    #   new_midata$mids[rows, nan_index] <- dbinom(c(0:(length(rows) - 1)), length(rows) - 1, 0.0107)
+    # }
   }
   # update the averaged MIDs
   new_midata$avg_mids <- calc_avg_mids(new_midata)
   return(new_midata)
 }
+
 
 find_false_mi <- function(corrected_mids, threshold, min_experiments)
 {
@@ -293,34 +308,14 @@ find_false_mi <- function(corrected_mids, threshold, min_experiments)
 #
 # normalize each column in a matrix of positive values
 # so that each column sums to 1
-# skip columns whose sum is zero
 # TODO: move this to mid.R ?
 #
 normalize_mids <- function(mids)
 {
-  normalized.mids <- matrix(0, nrow(mids), ncol(mids))
-  for (i in 1:ncol(mids)) {
-    if (sum(mids[, i]) != 0 & unique(is.na(mids[,i])) == F) {
-      normalized.mids[, i] <- mids[, i] / sum(mids[, i])
-    }
-  }
-  return(normalized.mids)
-}
-
-
-#
-# average replicates, excluding any MIDs that sum to zero
-# else return zeros of size n+1 by 1, where n is the number of C atoms
-#
-collapse_replicates <- function(mid_matrix)
-{
-  col_sums <- colSums(mid_matrix)
-  n_nonzero <- sum(col_sums > 0)
-  if (n_nonzero > 0) {
-    return(rowSums(mid_matrix) / n_nonzero)
-  } else {
-    return(rep(0, nrow(mid_matrix)))
-  }
+  if (!is.matrix(mids))
+    return(mids / sum(mids))
+  else
+    return(apply(mids, 2, function(mid) mid / sum(mid)))
 }
 
 
@@ -330,6 +325,7 @@ collapse_replicates <- function(mid_matrix)
 #' @param p the peak index
 #' @param e the experiment index
 #' @returns A matrix with MIDs in columns
+
 #' @export
 get_mids <- function(mi_data, p, e)
 {
