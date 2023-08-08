@@ -100,6 +100,40 @@ apply_no_m0 <- function(f, x, y) {
 }
 
 
+# utility for handling multiple assignments
+# taken from
+# (originally called list[...] but I felt that gets confused with base::list)
+
+#' Unique object used to assign to list elements
+#' @export
+assign_list <- structure(NA, class = "AssignList")
+
+
+#' Operator for assignment to an AssignList
+#'
+#' For example, assign_list[x, y] <- list(a,b) evaluates to
+#' "[<-AssignList"(assign_list, x, y, some_list) and is effectively the same as
+#' x <- a and y <- b.
+#' See help for "[<-"]
+#
+"[<-.AssignList" <- function(assign_list, ..., value)
+{
+  # get arguments (first element is function name)
+  args <- as.list(match.call())
+  # take arguments after assign_list, before value = elements to assign
+  args <- args[-c(1:2, length(args))]
+  #
+  length(value) <- length(args)
+  for(i in seq(along = args)) {
+    arg <- args[[i]]
+    if(!missing(arg))
+      eval.parent(substitute(
+        a <- v, list(a = arg, v = value[[i]])))
+  }
+  return(assign_list)
+}
+
+
 #' Test if a matrix is a valid distance matrix (metric)
 #' @param mat A (candidate) distance matrix
 #' NOTE: this function should be fixed, see https://github.com/Nilsson-Lab-KI/remn/issues/40
