@@ -65,6 +65,8 @@ MIData <- function(peak_areas, exp_names = NULL, exp_columns = NULL)
 
   # peak area matrix
   peak_areas <- as.matrix(peak_areas[exp_columns])
+  # NA values are not allowed
+  stopifnot(all(!is.na(peak_areas)))
 
   # MIDs
   mi_data$mids <- matrix(
