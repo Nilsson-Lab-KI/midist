@@ -112,9 +112,12 @@ random_dirichlet <- function(mean, precision, n)
   # then Y / sum(Y) is distributed Dirichlet(x_i*p, .. x_i*p),
   # with means E Y_i = x_i*p / sum(x_i*p) = x_i
   # and component variances Var Y_i = x_i(1 - x_i) / (1 + p)
-  gamma_obs <- sapply(
-    mean*precision,
-    function(shape) stats::rgamma(n, shape = shape, scale = 1))
+  gamma_obs <- matrix(
+    sapply(
+      mean*precision,
+      function(shape) stats::rgamma(n, shape = shape, scale = 1)),
+    nrow = n
+  )
   return(t(gamma_obs / rowSums(gamma_obs)))
 }
 

@@ -111,5 +111,9 @@ test_that("random_mid is correct", {
     colSums(random_mids),
     rep(1.0, n)
   )
+  # with n == 1 we obtain a matrix with 1 column
+  random_mids <- random_mid(mean_mid, 0.1, 1)
+  expect_true(is.matrix(random_mids))
+  expect_equal(dim(random_mids), c(4, 1))
 })
 
