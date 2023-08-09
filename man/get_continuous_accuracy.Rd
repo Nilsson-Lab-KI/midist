@@ -11,7 +11,6 @@ get_continuous_accuracy(
   subset_size,
   subset_sample_no,
   noise,
-  noise_sample_no,
   experiment
 )
 }
@@ -27,8 +26,6 @@ get_continuous_accuracy(
 \item{subset_sample_no}{?}
 
 \item{noise}{?}
-
-\item{noise_sample_no}{?}
 
 \item{experiment}{?}
 }

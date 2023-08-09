@@ -4,7 +4,7 @@
 # individual MIDs
 a_mid <- c(0.98, 0.02)
 b_mid <- c(0.8, 0.1, 0.1)
-c_mid <- c(0.9787144, 0.02117102, 0.00011449)           # binomial vector
+c_mid <- c(0.97, 0.03, 0.0)
 d_mid <- c(0.8, 0.05, 0.1, 0.05)
 e_mid <- c(0.1, 0.0, 0.3, 0.0, 0.2, 0.05)
 
@@ -19,109 +19,108 @@ peak_areas_example_1 <- data.frame(
 midata_1 <- MIData(peak_areas_example_1, exp_names = "exp1")
 
 # test conv_reduce on example 1 with given f and g functions
-test_conv_reduce_1 <- function(f, g)
+pairwise_conv_reduce <- function(mi_data, e, f, g)
 {
   # compute full matrix row by row
-  # NOTE: assignment to matrix element discards attributes
-  conv_mat <- matrix(NA, nrow = 5, ncol = 5)
-  for(x in 1:5) {
-    for(y in 1:5) {
-      conv_mat[x,y] <- conv_reduce(midata_1, x, y, 1, f, g)
+  n_peaks <- length(mi_data$peak_ids)
+  values <- matrix(NA, nrow = n_peaks, ncol = n_peaks)
+  index <- matrix(NA, nrow = n_peaks, ncol = n_peaks)
+  for(x in 1:n_peaks) {
+    for(y in 1:n_peaks) {
+      assign_list[values[x, y], index[x, y]] <- conv_reduce(mi_data, x, y, e, f, g)
     }
   }
-
-  # make sure matrix is symmetric
-  expect_true(isSymmetric(conv_mat))
-
-  # distance for a vs b = f(a*a, b), selects a
-  expect_equal(conv_reduce(midata_1, 1, 2, 1, f, g),
-               g(with_attr(
-                 c(f(convolute(a_mid, a_mid), b_mid)), "index", c(1))),
-               tolerance = 1e-4)
-  # distance for a vs c = f(a*a, c), where c is a zero vector, selects a
-  expect_equal(conv_reduce(midata_1, 1, 3, 1, f, g),
-               g(with_attr(
-                 c(f(convolute(a_mid, a_mid), c_mid)), "index", c(1))),
-               tolerance = 1e-4)
-  # distance for a vs d = g(f(a*b, d), f(a*c, d)), selects b
-  expect_equal(conv_reduce(midata_1, 1, 4, 1, f, g),
-               g(with_attr(
-                 c(
-                   f(d_mid, convolute(a_mid, b_mid)),
-                   f(d_mid, convolute(a_mid, c_mid))), "index", c(2,3))),
-               tolerance = 1e-4)
-  # for a vs. e there is no 4-carbon peak to convolute with,
-  # so expect g(c()), index = NA
-  expect_equal(conv_reduce(midata_1, 1, 5, 1, f, g),
-               g(c()),
-               tolerance = 1e-4)
-  # distance for b vs d = f(a*b, d), select a
-  expect_equal(conv_reduce(midata_1, 2, 4, 1, f, g),
-               g(with_attr(
-                 c(f(convolute(a_mid, b_mid), d_mid)), "index", c(1))),
-               tolerance = 1e-4)
-  return(conv_mat)
+  return(list(values = values, index = index))
 }
 
 
 test_that("conv_reduce is correct on minimum euclidean distance", {
-  test_conv_reduce_1(euclidean_dist, min_nonempty)
+  assign_list[dm, index] <- pairwise_conv_reduce(
+    midata_1, 1, euclidean_dist, which.min)
+
+  # make sure matrices are symmetric
+  expect_true(isSymmetric(dm))
+  expect_true(isSymmetric(index))
+
+  # distance for a vs b = f(a*a, b), selects a
+  expect_equal(dm[1, 2], euclidean_dist(convolute(a_mid, a_mid), b_mid))
+  expect_equal(index[1, 2], 1)
+  # distance for a vs c = f(a*a, c), selects a
+  expect_equal(dm[1, 3], euclidean_dist(convolute(a_mid, a_mid), c_mid))
+  expect_equal(index[1, 3], 1)
+  # distance for a vs d = g(f(a*b, d), f(a*c, d)), selects b
+  expect_equal(dm[1, 4], euclidean_dist(convolute(a_mid, b_mid), d_mid))
+  expect_equal(index[1, 4], 2)
+  # for a vs. e there is no 4-carbon peak to convolute with,
+  # so expect g(c()), index = NA
+  expect_true(is.na(dm[1, 5]))
+  expect_true(is.na(index[1, 5]))
+  # for b vs c no convolution is done, index is NA
+  expect_equal(dm[2, 3], euclidean_dist(b_mid, c_mid))
+  expect_true(is.na(index[2, 3]))
+  # distance for b vs d = f(a*b, d), select a
+  expect_equal(dm[2,4], euclidean_dist(convolute(a_mid, b_mid), d_mid))
+  expect_equal(index[2, 4], 1)
 })
 
 
 test_that("conv_reduce is correct on max cosine similarity", {
   # maximum cosine similarity
-  # in this case, the zero vector c causes NA values which must be handled
-  sim_mat <- test_conv_reduce_1(cosine_sim, max_nonempty)
+  assign_list[sim_mat, index] <- pairwise_conv_reduce(
+    midata_1, 1, cosine_sim, which.max)
+
   # should return NA for (1,5) and (5,1)
-  expect_true(is.na(sim_mat[1,5]))
-  expect_true(is.na(sim_mat[5,1]))
-  # max cosine distance for pair (1,2) should be 0.9889838
-  expect_equal(sim_mat[1,2], 0.9889, tolerance = 1e-4)
+  expect_true(is.na(sim_mat[1, 5]))
+  expect_true(is.na(sim_mat[5, 1]))
+
+  # distance for a vs b = f(a*a, b), selects a
+  expect_equal(sim_mat[1, 2], cosine_sim(convolute(a_mid, a_mid), b_mid))
+  expect_equal(index[1, 2], 1)
+
+  # distance for b vs c = f(b, c), no convolution
+  expect_equal(sim_mat[2, 3], cosine_sim(b_mid, c_mid))
+  expect_true(is.na(index[2, 3]))
 })
+
 
 test_that("conv_reduce_all returns a matrix with index attribute", {
   # maximum cosine similarity
-  conv_all_mat <- conv_reduce_all(midata_1, 1, cosine_sim, max_nonempty)
+  assign_list[sim_mat, index] <- conv_reduce_all(midata_1, 1, cosine_sim, which.max)
   # value matrix
-  expect_true(is.matrix(conv_all_mat))
-  expect_equal(dim(conv_all_mat), c(5, 5))
+  expect_true(is.matrix(sim_mat))
+  expect_equal(dim(sim_mat), c(5, 5))
   # index matrix
-  expect_true(is.matrix(attr(conv_all_mat, "index")))
-  expect_equal(dim(attr(conv_all_mat, "index")), c(5, 5))
+  expect_true(is.matrix(index))
+  expect_equal(dim(index), c(5, 5))
 })
 
 
 # compare conv_reduce_all elementwise to conv_reduce on the given mi_data
 # with functions f and g
-test_conv_reduce_all <- function(mi_data, f, g)
+test_conv_reduce_all <- function(mi_data, e, f, g)
 {
   # matrix from conv_reduce_all
-  conv_all_mat <- conv_reduce_all(mi_data, 1, f, g)
+  assign_list[values, index] <- conv_reduce_all(mi_data, e, f, g)
   # make sure matrix is symmetric
-  expect_true(isSymmetric(conv_all_mat))
+  expect_true(isSymmetric(values))
 
   # check against conv_reduce element by element
-  n_peaks <- length(mi_data$peak_ids)
-  for(x in 1:n_peaks) {
-    for(y in 1:n_peaks) {
-      conv_all_elem <- with_attr(conv_all_mat[x,y], "index",
-                                 attr(conv_all_mat, "index")[x,y])
-      expect_equal(conv_all_elem,
-                   conv_reduce(mi_data, !!x, !!y, 1, f, g))
-    }
-  }
+  assign_list[values_pairwise, index_pairwise] <-
+    pairwise_conv_reduce(mi_data, e, f, g)
+
+  expect_equal(values, values_pairwise)
+  expect_equal(index, index_pairwise)
 }
 
 
 test_that("conv_reduce_all returns a valid similarity for example-1", {
   # maximum cosine similarity
-  test_conv_reduce_all(midata_1, cosine_sim, max_nonempty)
+  test_conv_reduce_all(midata_1, 1, cosine_sim, which.max)
 })
 
 
 test_that("conv_reduce_all returns a valid distance for example-1", {
-  test_conv_reduce_all(midata_1, euclidean_dist, min_nonempty)
+  test_conv_reduce_all(midata_1, 1, euclidean_dist, which.min)
 })
 
 
@@ -129,7 +128,7 @@ test_that("conv_reduce_all returns a valid distance for example-1", {
 midata_2 <- midata_subset(midata_1, c(4,2,1,5,3))
 
 test_that("conv_reduce_all returns a valid distance matrix for example-2", {
-  test_conv_reduce_all(midata_2, cosine_dist, min_nonempty)
+  test_conv_reduce_all(midata_2, 1, cosine_dist, which.min)
 })
 
 
@@ -171,7 +170,7 @@ peak_areas_example_hmec <- data.frame(
 midata_hmec <- MIData(peak_areas_example_hmec, exp_names = "exp1")
 
 test_that("conv_reduce_all returns a valid matrix for HMEC example", {
-  test_conv_reduce_all(midata_hmec, euclidean_dist_sq, min_nonempty)
+  test_conv_reduce_all(midata_hmec, 1, euclidean_dist_sq, which.min)
 })
 
 
@@ -291,66 +290,67 @@ test_that("enrichment_dist_matrix is correct", {
 
 test_that("remn_v1 is correct", {
   # list of distance matrices
-  dm_list <- remn_v1(
-      mi_data_3, f = euclidean_dist, g = min_nonempty, rdata_fname = "")
+  assign_list[dm_list, index_list] <-
+    remn_v1(mi_data_3, f = euclidean_dist, g = which.min, rdata_fname = "")
   expect_true(is.list(dm_list))
   expect_equal(length(dm_list), 2)
+  expect_true(is.list(index_list))
+  expect_equal(length(index_list), 2)
   # check matrices and attributes
   expect_equal(
     dm_list[[1]],
-    with_attr(
-      matrix(
-        c(
-          0.00000000, 0.19835564, 1.2413803, 0.08158431, NA,
-          0.19835564, 0.00000000, 1.0677078, 0.08158431, 0.6745781,
-          1.24138026, 1.06770783, 0.0000000, 1.09243581, 0.7812099,
-          0.08158431, 0.08158431, 1.0924358, 0.00000000, 0.6745781,
-          NA,         0.67457806, 0.7812099, 0.67457806, 0.0000000
-        ),
-        nrow = 5
+    matrix(
+      c(
+        0.00000000, 0.19835564, 1.2413803, 0.08158431, NA,
+        0.19835564, 0.00000000, 1.0677078, 0.08158431, 0.6745781,
+        1.24138026, 1.06770783, 0.0000000, 1.09243581, 0.7812099,
+        0.08158431, 0.08158431, 1.0924358, 0.00000000, 0.6745781,
+        NA,         0.67457806, 0.7812099, 0.67457806, 0.0000000
       ),
-      "index",
-      matrix(
-        c(
-          NA,  1,   1,   2,  NA,
-          1,   NA, NA,   1,   4,
-          1,   NA, NA,   1,   4,
-          2,   1,   1,  NA,   2,
-          NA,  4,   4,   2,  NA
-        ),
-        nrow = 5
-      )
+      nrow = 5
     ),
     tolerance = 1e-6
   )
   expect_equal(
-    dm_list[[2]],
-    with_attr(
-      matrix(
-        c(
-          0.0000000, 0.9366460, 0.6112329, 0.8833403, NA,
-          0.9366460, 0.0000000, 0.8831761, 0.8833403, 0.5011653,
-          0.6112329, 0.8831761, 0.0000000, 0.9577766, 0.7778175,
-          0.8833403, 0.8833403, 0.9577766, 0.0000000, 0.5011653,
-          NA,        0.5011653, 0.7778175, 0.5011653, 0.0000000
-        ),
-        nrow = 5
+    index_list[[1]],
+    matrix(
+      c(
+        NA,  1,   1,   2,  NA,
+        1,   NA, NA,   1,   4,
+        1,   NA, NA,   1,   4,
+        2,   1,   1,  NA,   2,
+        NA,  4,   4,   2,  NA
       ),
-      "index",
-      matrix(
-        c(
-          NA,  1,   1,   2,  NA,
-          1,   NA, NA,   1,   4,
-          1,   NA, NA,   1,   4,
-          2,   1,   1,  NA,   2,
-          NA,  4,   4,   2,  NA
-        ),
-        nrow = 5
-      )
+      nrow = 5
+    )
+  )
+  expect_equal(
+    dm_list[[2]],
+    matrix(
+      c(
+        0.0000000, 0.9366460, 0.6112329, 0.8833403, NA,
+        0.9366460, 0.0000000, 0.8831761, 0.8833403, 0.5011653,
+        0.6112329, 0.8831761, 0.0000000, 0.9577766, 0.7778175,
+        0.8833403, 0.8833403, 0.9577766, 0.0000000, 0.5011653,
+        NA,        0.5011653, 0.7778175, 0.5011653, 0.0000000
+      ),
+      nrow = 5
     ),
     tolerance = 1e-6
   )
-
+  expect_equal(
+    index_list[[2]],
+    matrix(
+      c(
+        NA,  1,   1,   2,  NA,
+        1,   NA, NA,   1,   4,
+        1,   NA, NA,   1,   4,
+        2,   1,   1,  NA,   2,
+        NA,  4,   4,   2,  NA
+      ),
+      nrow = 5
+    )
+  )
 })
 
 

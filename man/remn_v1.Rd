@@ -18,7 +18,8 @@ remn_v1(midata, f, g_select, rdata_fname, return = T)
 \item{return}{NOT USED}
 }
 \value{
-A list of distance matrices
+A list with elements $value holding a list of distance matrices,
+and $index holding a list of "middle metabolite" index matrices
 }
 \description{
 Compute pairwise distance matrices for individual experiments

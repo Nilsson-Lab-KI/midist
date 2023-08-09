@@ -91,7 +91,6 @@ get_global_percentile_accuracy <- function(
 #' @param subset_size ?
 #' @param subset_sample_no ?
 #' @param noise ?
-#' @param noise_sample_no ?
 #' @param experiment ?
 #' @export
 get_continuous_accuracy <- function(pairwise_matrix, gold_standard,

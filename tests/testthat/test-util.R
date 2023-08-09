@@ -64,3 +64,15 @@ test_that("min_nonempty is correct", {
 })
 
 
+test_that("list assignment is correct", {
+  # assigning from a list
+  assign_list[a, b] <- list(1, 2)
+  expect_equal(a, 1)
+  expect_equal(b, 2)
+  # assigning from a vector
+  assign_list[a, b] <- c(1, 2)
+  expect_equal(a, 1)
+  expect_equal(b, 2)
+})
+
+
