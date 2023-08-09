@@ -2,7 +2,8 @@
 % Please edit documentation in R/midata.R
 \name{create_atom_index}
 \alias{create_atom_index}
-\title{Create an index list mapping each number of atoms n to the indices of the peaks having n atoms}
+\title{Create an index list mapping each number of atoms n to the indices of the peaks
+having n atoms}
 \usage{
 create_atom_index(peak_n_atoms)
 }

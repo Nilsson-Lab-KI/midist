@@ -2,29 +2,30 @@
 #  Some utility functions
 #
 
-#' remove any NA values in a vector x
-remove_na <- function(x)
-{
-  return(x[!is.na(x)])
-}
 
-
-#' Take maximum of x after discarding missing values,
-#' return NA if the result is empty. If x has an "index"
-#' attribute, it must be a list of same length as x;
-#' the element corresponding to the maximum is added as
-#' an "index" attribute to the result
+#' Take maximum of x after discarding missing values
 #'
-#' NOTE: I'm not convinced we should return NA in
-#' case of empty lists; see ?max for reasons for using +/-Inf
-#' Keeping this for compatibility for now
+#' @param x A vector of values. If x has an "index"
+#' attribute, it must be a vector of same length as x.
+#'
+#' @returns The largest value in x, or NA if x is empty. If x has an "index"
+#' attribute, the element corresponding to the largest value is added as
+#' an "index" attribute to the result.
+#' @export
 max_nonempty <- function(x)
 {
   best_nonempty(x, function(x) order(x, decreasing = TRUE)[1])
 }
 
 
-#' Similar to max_nonempty, but takes the minimum
+#' Take minimum of x after discarding missing values
+#'
+#' @param x A vector of values. If x has an "index"
+#' attribute, it must be a vector of same length as x.
+#'
+#' @returns The smallest value in x, or NA if x is empty. If x has an "index"
+#' attribute, the element corresponding to the smallest value is added as
+#' an "index" attribute to the result.
 #' @export
 min_nonempty <- function(x)
 {
@@ -32,7 +33,20 @@ min_nonempty <- function(x)
 }
 
 
-# generic function taking a "select" function picking the "best" element
+#' Apply a selection function to x while handling the "index" attribute
+#'
+#' NOTE: I'm not convinced we should return NA in
+#' case of empty lists; see ?max for reasons for using +/-Inf
+#' Keeping this for compatibility for now
+#'
+#' @param x A vector of values. If x has an "index"
+#' attribute, it must be a vector of same length as x.
+#' @param select A function selecting a value from x, returning its index
+#'
+#' @returns The value in x chosen by select, or NA if x is empty. If x has an "index"
+#' attribute, the element corresponding to the selected value is added as
+#' an "index" attribute to the result.
+#' @export
 best_nonempty <- function(x, select)
 {
   if(length(x) == 0)
@@ -48,7 +62,9 @@ best_nonempty <- function(x, select)
 }
 
 
-#' get object without attributes
+#' Get object without attributes
+#' @param x Any object
+#' @returns The object x with attributes(x) == NULL
 without_attr <- function(x)
 {
   x_no_attr <- x
@@ -57,7 +73,11 @@ without_attr <- function(x)
 }
 
 
-#' get object with an attribute added
+#' Get object with an attribute added
+#' @param x Any object
+#' @param attr_name name of the attribut to add
+#' @param attr_value the attribute value to add
+#' @returns The object x with attr(x, attr_name) == attr_value
 with_attr <- function(x, attr_name, attr_value)
 {
   x_attr <- x
@@ -77,4 +97,58 @@ with_attr <- function(x, attr_name, attr_value)
 #'
 apply_no_m0 <- function(f, x, y) {
   return(f(x[-1], y[-1]))
+}
+
+
+#' Test if a matrix is a valid distance matrix (metric)
+#' @param mat A (candidate) distance matrix
+#' NOTE: this function should be fixed, see https://github.com/Nilsson-Lab-KI/remn/issues/40
+is_distance_matrix <- function(mat) {
+  # necessary intervention to prevent the floating number error
+  mat <- as.matrix(Matrix::nearPD(mat)$mat)
+  # Initialize a character vector to store failure reasons
+  failures <- character(0)
+
+  # Check if the input is a matrix
+  if (!is.matrix(mat)) {
+    failures <- append(failures, "Input is not a matrix")
+  }
+
+  # Check if the matrix is square
+  if (nrow(mat) != ncol(mat)) {
+    failures <- append(failures, "Matrix is not square")
+  }
+
+  # Check if the matrix is symmetric
+  if (!isSymmetric(mat)) {
+    failures <- append(failures, "Matrix is not symmetric")
+  }
+
+  # Check if the diagonal entries are zero
+  if (!all(diag(mat) == 0)) {
+    failures <- append(failures, "Diagonal entries are not zero")
+  }
+
+  # Check if the matrix is non-negative
+  if (!all(mat >= 0)) {
+    failures <- append(failures, "Matrix contains negative values")
+  }
+
+  # Check the triangle inequality
+  for (i in 1:nrow(mat)) {
+    for (j in 1:nrow(mat)) {
+      for (k in 1:nrow(mat)) {
+        if (round(mat[i,j], digits = 3) + round(mat[j,k], digits = 3) < round(mat[i,k], digits = 3)) {
+          failures <- append(failures, "Triangle inequality fails")
+        }
+      }
+    }
+  }
+
+  # If no failures, return NULL, else return the failure reasons
+  if (length(failures) == 0) {
+    return(NULL)
+  } else {
+    return(failures)
+  }
 }

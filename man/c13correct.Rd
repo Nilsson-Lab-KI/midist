@@ -9,7 +9,7 @@ c13correct(mid, p = 0.0107, constraint = TRUE)
 \arguments{
 \item{mid}{An MID vector to correct}
 
-\item{p}{heavy atom natural abundance}
+\item{p}{The heavy atom natural abundance}
 
 \item{constraint}{whether to constrain sum of corrected vector to 1}
 }

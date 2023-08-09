@@ -21,13 +21,6 @@ cosine_sim <- function(x, y) {
 }
 
 
-#' Cosine similarity between two vectors of the same length without M+0.
-#' @param x a vector
-#' @param y a vector
-#' @returns the cosine similarity, or NA if either x or y is a zero vector
-#'
-cosine_sim_no_m0 <- function(x, y) apply_no_m0(cosine_sim, x, y)
-
 #' Cosine distance between two vectors of the same length.
 #'
 #' This is 1 minus the cosine similarity.
@@ -45,17 +38,6 @@ cosine_dist <- function(x, y)
 }
 
 
-#' Cosine distance between two vectors of the same length without M+0.
-#'
-#' This is 1 minus the cosine similarity.
-#'
-#' @param x a vector
-#' @param y a vector
-#' @returns the cosine similarity, or NA if either x or y is a zero vector
-#'
-cosine_dist_no_m0 <- function(x, y) apply_no_m0(cosine_dist, x, y)
-
-
 #' Dot product similarity
 #' @param x a vector
 #' @param y a vector
@@ -65,14 +47,6 @@ cosine_dist_no_m0 <- function(x, y) apply_no_m0(cosine_dist, x, y)
 dot_sim <- function(x, y) {
   return(sum(x * y))
 }
-
-
-#' Dot product similarity without M+0
-#' @param x a vector
-#' @param y a vector
-#' @returns the dot (scalar) product x.y
-#'
-dot_sim_no_m0 <- function(x, y) apply_no_m0(dot_sim, x, y)
 
 
 #' Dot product distance (not really a distance)
@@ -89,15 +63,6 @@ dot_dist <- function(x, y)
   stopifnot(length(x) == length(y))
   return(sqrt(sum(x*x)*sum(y*y)) - sum(x*y))
 }
-
-
-#' Dot product distance (not really a distance) without M+0
-#' @param x a vector
-#' @param y a vector
-#' @returns a distance based on the dot (scalar) product x.y
-#' This is always nonnegative, and zero if x = y
-#'
-dot_dist_no_m0 <- function(x, y) apply_no_m0(dot_dist, x, y)
 
 
 #' The squared Euclidean distance (sum of squares)
@@ -117,15 +82,6 @@ euclidean_dist_sq <- function(x, y)
 }
 
 
-#' The squared Euclidean distance (sum of squares) without M+0
-#'
-#' @param x a vector
-#' @param y a vector
-#' @returns the square of the Euclidean distance between x and y
-#'
-euclidean_dist_sq_no_m0 <- function(x, y) apply_no_m0(euclidean_dist_sq, x, y)
-
-
 #' The Euclidean distance
 #'
 #' @param x a vector
@@ -136,15 +92,6 @@ euclidean_dist_sq_no_m0 <- function(x, y) apply_no_m0(euclidean_dist_sq, x, y)
 euclidean_dist <- function(x, y) {
   return(sqrt(euclidean_dist_sq(x, y)))
 }
-
-
-#' The Euclidean distance without M+0
-#'
-#' @param x a vector
-#' @param y a vector
-#' @returns the Euclidean distance between x and y without M+0
-#'
-euclidean_dist_no_m0 <- function(x, y) apply_no_m0(euclidean_dist, x, y)
 
 
 #' The Jensen-Shannon (JS) distance
@@ -168,22 +115,46 @@ jensen_shannon <- function(x, y) {
   return(jsd)
 }
 
+
+#' The manhattan distance sum_i |x-i - y_i|
+#'
+#' @param x a vector
+#' @param y a vector
+#' @returns the manhattan distance between x and y
 #' @export
 manhattan_distance <- function(x, y) {
   return(sum(abs(x - y)))
 }
 
+
+#' The Canberra distance
+#'
+#' @param x a vector
+#' @param y a vector
+#' @returns the Canberra distance between x and y
 #' @export
 canberra_distance <- function(x, y) {
   return(sum(abs(x - y) / (abs(x) + abs(y))))
 }
 
+
+#' The Bray-Curtis distance
+#'
+#' @param x a vector
+#' @param y a vector
+#' @returns the Bray-Curtis distance between x and y
 #' @export
 bray_curtis_distance <- function(x, y) {
   return(sum(abs(x - y)) / sum(abs(x + y)))
 }
 
 
+#' A p-distance weighted by the mass isotopomer number
+#'
+#' @param x an MID vector
+#' @param y an MID vector
+#' @param p The exponent p in the p-norm
+#' @returns the distance between x and y
 #' @export
 mi_weighted_distance <- function(x, y, p = 1) {
   n <- length(x) - 1
@@ -191,6 +162,13 @@ mi_weighted_distance <- function(x, y, p = 1) {
 }
 
 
+#' A p-distance weighted by the mass isotopomer number, normalized
+#' Here, the weight is i/n where i is the MI number and n is the number of atoms.
+#'
+#' @param x an MID vector
+#' @param y an MID vector
+#' @param p The exponent p in the p-norm
+#' @returns the distance between x and y
 #' @export
 mi_weighted_dist_normalized <- function(x, y, p = 1) {
   n <- length(x) - 1

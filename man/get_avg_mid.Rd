@@ -2,7 +2,7 @@
 % Please edit documentation in R/midata.R
 \name{get_avg_mid}
 \alias{get_avg_mid}
-\title{Get an averaged MID vector}
+\title{Get averaged MIDs from an MIData object}
 \usage{
 get_avg_mid(mi_data, p, e)
 }
@@ -11,8 +11,12 @@ get_avg_mid(mi_data, p, e)
 
 \item{p}{the peak index}
 
-\item{e}{the experiment index}
+\item{e}{the experiment index (optional)}
+}
+\value{
+An MID vector, or, if e is omitted, a matrix whose columns are MIDs
 }
 \description{
-for a given peak.
+Retrieve a vector of averages MIDs for the given peak p and experiment e;
+or, if e is omitted, the matrix of MIDs for peak p across all experiments.
 }

@@ -81,10 +81,12 @@ MIData <- function(peak_areas, exp_names = NULL)
 #' Read peak areas from file and create an MIData object
 #'
 #' @param peak_areas_fname Name of a a tab-separated file containing peak areas
+#' @returns An MIData object
 #' @export
-get_midata <- function(peak_areas_fname){
-
-  peak_areas <- as.data.frame(read.delim(peak_areas_fname, header = T, sep = "\t", check.names = F))
+get_midata <- function(peak_areas_fname)
+{
+  peak_areas <- as.data.frame(
+    utils::read.delim(peak_areas_fname, header = T, sep = "\t", check.names = F))
 
   if ("MassIsotopomer" %in% colnames(peak_areas)) {
     peak_areas <- peak_areas[, -which(colnames(peak_areas) == "MassIsotopomer")]
@@ -96,8 +98,10 @@ get_midata <- function(peak_areas_fname){
   return(midata)
 }
 
-#' Compute index vector into the MI data table
-#' for a given list of atom sizes
+
+#' Compute an index vector into the MI data table for given of atom sizes
+#' @param peak_n_atoms A vector of atom sizes
+#' @returns A vector of indices to the first peak for each given atom size
 find_mi_index <- function(peak_n_atoms)
 {
   n <- length(peak_n_atoms)
@@ -105,8 +109,8 @@ find_mi_index <- function(peak_n_atoms)
 }
 
 
-
-#' Create an index list mapping each number of atoms n to the indices of the peaks having n atoms
+#' Create an index list mapping each number of atoms n to the indices of the peaks
+#' having n atoms
 #'
 #' NOTE: this is a more generic function, applicable to any list,
 #' could be moved to util.R
@@ -114,7 +118,6 @@ find_mi_index <- function(peak_n_atoms)
 #' @param peak_n_atoms number of atoms per peak
 create_atom_index <- function(peak_n_atoms)
 {
-
   index <- lapply(
     unique(peak_n_atoms),
     function(n) which(peak_n_atoms == n)
@@ -123,8 +126,10 @@ create_atom_index <- function(peak_n_atoms)
   return(index)
 }
 
+
 # compute average MIDs (collapsing across replicates)
-calc_avg_mids <- function(mi_data) {
+calc_avg_mids <- function(mi_data)
+{
   avg_mids <- matrix(
     nrow = nrow(mi_data$mids), ncol = length(mi_data$experiments)
   )
@@ -190,16 +195,17 @@ midata_subset <- function(mi_data, peak_subset_index)
   return(midata_subset)
 }
 
-#'
+
 #' Apply a function to each MID in an MIData object
 #'
 #' This can be used for example to apply 13C correction to a data set
-#' @param mi_data An MIData object
+#' @param midata An MIData object
 #' @param f The function to apply. Must take an MID vector as first argument
 #' and return a valid MID vector of the same size.
 #' @export
 #'
-midata_transform <- function(midata, f) {
+midata_transform <- function(midata, f)
+{
   # copy MIData object
   new_midata <- midata
   # apply function to each peak and sample
@@ -214,7 +220,6 @@ midata_transform <- function(midata, f) {
   new_midata$avg_mids <- calc_avg_mids(new_midata)
   return(new_midata)
 }
-
 
 
 #' Reorder the peak IDs of an mi_data object
@@ -249,7 +254,7 @@ misplace_peak_ids <- function(midata)
 #' experiments (inclusive), set them to zero, and renormalize
 #' @param mi_data An MIData object
 #' @param threshold MI fraction threshold (after 13C correction)
-#' @param min_experiment Minimum number of experiments where an MI is observed
+#' @param min_experiments Minimum number of experiments where an MI is observed
 #' to be considered false
 #' @returns A new MIData object with false MIs censored
 #' @export
@@ -275,7 +280,7 @@ censor_false_mi <- function(mi_data, threshold = 0.03, min_experiments = 1)
     new_mids[false_index,] <- 0
     # renormalize
     new_midata$mids[rows, ] <- t(t(new_mids) / colSums(new_mids))
-    
+
     # # NaN filtering here
     # nan <- all(is.na(colSums(new_midata$mids[rows, ])))
     # if (nan == F){
@@ -288,6 +293,7 @@ censor_false_mi <- function(mi_data, threshold = 0.03, min_experiments = 1)
   return(new_midata)
 }
 
+
 find_false_mi <- function(corrected_mids, threshold, min_experiments)
 {
   # count number of experiments with an MI above threshold
@@ -299,42 +305,49 @@ find_false_mi <- function(corrected_mids, threshold, min_experiments)
 }
 
 
-normalize_mids <- function(mids){
+#
+# normalize each column in a matrix of positive values
+# so that each column sums to 1
+# TODO: move this to mid.R ?
+#
+normalize_mids <- function(mids)
+{
   if (!is.matrix(mids))
-    return(mids / sum(mids)) else 
-      return(apply(mids, 2, function(mid) mid / sum(mid)))
+    return(mids / sum(mids))
+  else
+    return(apply(mids, 2, function(mid) mid / sum(mid)))
 }
 
-#
-# get MIDs, as above
-#
+
+#' Get MIDs for a given peak and experiment from an MIData object
+#'
+#' @param mi_data an MIData object
+#' @param p the peak index
+#' @param e the experiment index
+#' @returns A matrix with MIDs in columns
+
 #' @export
-get_mids <- function(mi_data, p, e) {
+get_mids <- function(mi_data, p, e)
+{
   return(
     mi_data$mids[get_mi_indices(mi_data, p), get_exp_indices(mi_data, e), drop = FALSE]
   )
 }
 
 
-#' Get an averaged MID vector
+#' Get averaged MIDs from an MIData object
 #'
-#' for a given peak.
+#' Retrieve a vector of averages MIDs for the given peak p and experiment e;
+#' or, if e is omitted, the matrix of MIDs for peak p across all experiments.
 #'
 #' @param mi_data an MIData object
 #' @param p the peak index
-#' @param e the experiment index
+#' @param e the experiment index (optional)
+#' @return An MID vector, or, if e is omitted, a matrix whose columns are MIDs
 #' @export
-get_avg_mid <- function(mi_data, p, e) {
+get_avg_mid <- function(mi_data, p, e)
+{
   return(mi_data$avg_mids[get_mi_indices(mi_data, p), e])
-}
-
-
-#' Get averaged MIDs for all metabolites of the given size
-#' If no metabolites exists returns an empty list
-#'
-get_avg_mids_by_size <- function(mi_data, n_atoms, e) {
-  index <- get_peak_index_n_atoms(mi_data, n_atoms)
-  return(sapply(index, function(i) get_avg_mid(mi_data, i, e)))
 }
 
 
@@ -343,9 +356,11 @@ get_avg_mids_by_size <- function(mi_data, n_atoms, e) {
 #' @param mi_data an MIData object
 #' @param p the peak index
 #' @returns a vector of MI indices
-get_mi_indices <- function(mi_data, p) {
+get_mi_indices <- function(mi_data, p)
+  {
   return(mi_data$peak_index[[p]] + 0:mi_data$peak_n_atoms[[p]])
 }
+
 
 #' Get indices into the columns of the $mid matrix for experiment e
 #' @param mi_data An MIData object
@@ -355,6 +370,7 @@ get_exp_indices <- function(mi_data, e) {
   return(mi_data$exp_index[[e]] + 0:(mi_data$exp_n_rep[[e]] - 1))
 }
 
+
 #' Get the index of a list of peak identifers in an MIData object
 #' @param mi_data an MIData object
 #' @param peak_ids a list of peak identifiers
@@ -363,12 +379,14 @@ get_peak_index <- function(mi_data, peak_ids) {
   return(match(peak_ids, mi_data$peak_ids))
 }
 
+
 #' Get the index of peaks with a specific number of atoms
 #' @param mi_data an MIData object
 #' @param n_atoms number of atoms in peaks of interest
 get_peak_index_n_atoms <- function(mi_data, n_atoms) {
   return(mi_data$n_atoms_index[[as.character(n_atoms)]])
 }
+
 
 #' Get the number of atoms for a given peak
 #' @param mi_data an MIData object
@@ -378,16 +396,3 @@ get_peak_n_atoms <- function(mi_data, p) {
   return(mi_data$peak_n_atoms[[p]])
 }
 
-
-get_formula <- function(mi_data, p) {
-  return(
-    mi_data$peak_formulas[p]
-  )
-}
-
-
-get_mass <- function(midata, p) {
-  return(
-    midata$peak_masses[p]
-  )
-}

@@ -11,7 +11,7 @@ censor_false_mi(mi_data, threshold = 0.03, min_experiments = 1)
 
 \item{threshold}{MI fraction threshold (after 13C correction)}
 
-\item{min_experiment}{Minimum number of experiments where an MI is observed
+\item{min_experiments}{Minimum number of experiments where an MI is observed
 to be considered false}
 }
 \value{

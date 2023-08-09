@@ -7,10 +7,10 @@
 midata_transform(midata, f)
 }
 \arguments{
+\item{midata}{An MIData object}
+
 \item{f}{The function to apply. Must take an MID vector as first argument
 and return a valid MID vector of the same size.}
-
-\item{mi_data}{An MIData object}
 }
 \description{
 This can be used for example to apply 13C correction to a data set

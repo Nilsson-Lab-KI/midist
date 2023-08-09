@@ -13,8 +13,10 @@ Imports:
     ggplot2,
     gridExtra,
     lsei,
+    Matrix,
     stats,
     stringr
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    rlang
 Config/testthat/edition: 3

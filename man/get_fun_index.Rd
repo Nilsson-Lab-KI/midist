@@ -10,7 +10,7 @@ get_fun_index(vector, fun)
 \arguments{
 \item{vector}{a row from a pairwise matrix}
 
-\item{fun}{a function like max() or min()}
+\item{fun}{a function selecting an element of the vector, like max() or min()}
 }
 \description{
 Returns the metabolite index which was chosen by fun.

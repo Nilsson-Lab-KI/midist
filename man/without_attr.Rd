@@ -2,10 +2,16 @@
 % Please edit documentation in R/util.R
 \name{without_attr}
 \alias{without_attr}
-\title{get object without attributes}
+\title{Get object without attributes}
 \usage{
 without_attr(x)
 }
+\arguments{
+\item{x}{Any object}
+}
+\value{
+The object x with attributes(x) == NULL
+}
 \description{
-get object without attributes
+Get object without attributes
 }

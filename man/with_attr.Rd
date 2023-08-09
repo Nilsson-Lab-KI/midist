@@ -2,10 +2,20 @@
 % Please edit documentation in R/util.R
 \name{with_attr}
 \alias{with_attr}
-\title{get object with an attribute added}
+\title{Get object with an attribute added}
 \usage{
 with_attr(x, attr_name, attr_value)
 }
+\arguments{
+\item{x}{Any object}
+
+\item{attr_name}{name of the attribut to add}
+
+\item{attr_value}{the attribute value to add}
+}
+\value{
+The object x with attr(x, attr_name) == attr_value
+}
 \description{
-get object with an attribute added
+Get object with an attribute added
 }
