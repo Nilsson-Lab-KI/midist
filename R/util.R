@@ -118,7 +118,8 @@ assign_list <- structure(NA, class = "AssignList")
 #' @param ... elements to assign
 #' @param value the list to assign from
 #' @returns the assign_list object
-#
+#' @export
+#'
 "[<-.AssignList" <- function(assign_list, ..., value)
 {
   # assign_list [x, y] <- value evaluates to
