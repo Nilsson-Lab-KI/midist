@@ -3,6 +3,7 @@
 #
 
 # example "peak area" data
+
 peak_areas_1 <- data.frame(
   # two metabolites 'x' and 'y', 2 and 3 carbons respectively
   Metabolite = c("x", "x", "x", "y", "y", "y", "y"),
@@ -17,6 +18,7 @@ peak_areas_1 <- data.frame(
 exp_names_1 <- c('exp1', 'exp1', 'exp2')
 # create MIData object
 mi_data_1 <- MIData(peak_areas_1, exp_names_1)
+
 
 
 test_that("MIData objects are created correctly", {
@@ -181,7 +183,10 @@ test_that("zero peaks are handled properly", {
   # zero peaks in peak areas should become NAs in the midata object
   expect_equal(all(is.na(get_mids(mi_data_2, 5, 1))), TRUE)
   # avg mids of NA mids should be assigned binomial
-  expect_equal(c13correct(get_avg_mid(mi_data_2, 5, 1)), c(1,0,0))
+  expect_equal(
+    get_avg_mid(mi_data_2, 5, 1),
+    stats::dbinom(0:2, 2, natural_13C_fraction)
+  )
 })
 
 test_that("all average mids sum to 1", {
