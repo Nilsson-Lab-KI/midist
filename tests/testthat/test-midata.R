@@ -31,6 +31,10 @@ test_that("MIData objects are created correctly", {
   expect_equal(mi_data_1$exp_n_rep, c(2, 1))
   expect_equal(mi_data_1$n_atoms_index[["2"]], c(1))
   expect_equal(mi_data_1$n_atoms_index[["3"]], c(2))
+
+  # specifying columns
+  mi_data_tmp <- MIData(peak_areas_1, exp_columns = 2 + c(1, 3))
+  expect_equal(mi_data_tmp$experiments, c("exp1_1", "exp2_1"))
 })
 
 

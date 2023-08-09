@@ -24,7 +24,7 @@ MIData <- function(peak_areas, exp_names = NULL, exp_columns = NULL)
   if(!is.null(exp_columns)) {
     # verify indices
     stopifnot(
-      all(exp_columnns >= 2 & exp_columnns <= ncol(peak_areas)))
+      all(exp_columns >= 2 & exp_columns <= ncol(peak_areas)))
   }
   else
     exp_columns = 3:length(peak_areas)
