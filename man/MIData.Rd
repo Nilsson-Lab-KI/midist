@@ -4,15 +4,26 @@
 \alias{MIData}
 \title{Construct an MIData (mass isotopomer data) object}
 \usage{
-MIData(peak_areas, exp_names = NULL)
+MIData(peak_areas, exp_names = NULL, exp_columns = NULL)
 }
 \arguments{
-\item{peak_areas}{a peak_area data.frame. The first column of peak_areas
+\item{peak_areas}{a peak area data.frame. The first column of peak_areas
 must be peak identifiers, repeated for each MI of the same peak.
-The second column holds formulas (but )}
+By default the second column is ignored (can be used for metabolite descriptions,
+for example), and the remaining columns 3, 4 ... are assumed to contain
+peak area data, each column from one replicate. The names of these columns
+are interpreted such that any columns with identical names are assumed to be
+replicates of the same experiment; but see \link{exp_names}.}
 
-\item{exp_names}{a optional list of experiment names for columns 2,3... in peak_areas.
-These names will replace the column names for those columns.}
+\item{exp_names}{a optional list of experiment names for the columns 2,3... in peak_areas.
+These names will replace the column names for those columns, and used to infer
+replicate}
+
+\item{exp_columns}{an optional integer vector indicating the columns that
+contain peak area data.}
+}
+\value{
+An MIData object
 }
 \description{
 Construct an MIData (mass isotopomer data) object

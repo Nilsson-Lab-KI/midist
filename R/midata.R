@@ -4,25 +4,39 @@
 
 #' Construct an MIData (mass isotopomer data) object
 #'
-#' @param peak_areas a peak_area data.frame. The first column of peak_areas
+#' @param peak_areas a peak area data.frame. The first column of peak_areas
 #' must be peak identifiers, repeated for each MI of the same peak.
-#' The second column holds formulas (but )
-#' @param exp_names a optional list of experiment names for columns 2,3... in peak_areas.
-#' These names will replace the column names for those columns.
+#' By default the second column is ignored (can be used for metabolite descriptions,
+#' for example), and the remaining columns 3, 4 ... are assumed to contain
+#' peak area data, each column from one replicate. The names of these columns
+#' are interpreted such that any columns with identical names are assumed to be
+#' replicates of the same experiment; but see [exp_names].
+#' @param exp_names a optional list of experiment names for the columns 2,3... in peak_areas.
+#' These names will replace the column names for those columns, and used to infer
+#' replicate
+#' @param exp_columns an optional integer vector indicating the columns that
+#' contain peak area data.
+#' @returns An MIData object
 #' @export
-MIData <- function(peak_areas, exp_names = NULL)
+MIData <- function(peak_areas, exp_names = NULL, exp_columns = NULL)
 {
-  # verify first two column names
-  stopifnot(colnames(peak_areas)[1:2] == c("Metabolite", "Formula"))
+  # experiment (peak area) columns
+  if(!is.null(exp_columns)) {
+    # verify indices
+    stopifnot(
+      all(exp_columnns >= 2 & exp_columnns <= ncol(peak_areas)))
+  }
+  else
+    exp_columns = 3:length(peak_areas)
 
   # check for experiment names
   if(!is.null(exp_names)) {
     # verify length matches
-    stopifnot(ncol(peak_areas) - 2 == length(exp_names))
+    stopifnot(length(exp_columns) == length(exp_names))
   }
   else {
     # use data frame column names as experiment names
-    exp_names <- colnames(peak_areas)[-(1:2)]
+    exp_names <- colnames(peak_areas)[exp_columns]
   }
 
   # create object
@@ -30,14 +44,12 @@ MIData <- function(peak_areas, exp_names = NULL)
   class(mi_data) <- "MIData"
 
   # unique peak ids
-  mi_data$peak_ids <- unique(peak_areas[["Metabolite"]])
+  mi_data$peak_ids <- unique(peak_areas[[1]])
   # start index of each peak in the mass isotopomer data
   mi_data$peak_index <- match(mi_data$peak_ids, peak_areas[[1]])
-  # unique formulas
-  mi_data$peak_formulas <- peak_areas[["Formula"]][mi_data$peak_index]
   # find no. atoms for each peak (no. MIs = no.atoms + 1)
   mi_data$peak_n_atoms <-
-    as.numeric(table(factor(peak_areas[["Metabolite"]], levels = mi_data$peak_ids))) - 1
+    as.numeric(table(factor(peak_areas[[1]], levels = mi_data$peak_ids))) - 1
   # verify that peak_n_atoms matches peak_index
   stopifnot(all(mi_data$peak_index == find_mi_index(mi_data$peak_n_atoms)))
   # # precompute list of peak index vectors for each atom number
@@ -51,8 +63,8 @@ MIData <- function(peak_areas, exp_names = NULL)
   mi_data$exp_n_rep <-
     as.numeric(table(factor(exp_names, levels = mi_data$experiments)))
 
-  # remove first two columns (peak_ids / metabolite names, formulas)
-  peak_areas <- as.matrix(peak_areas[3:ncol(peak_areas)])
+  # peak area matrix
+  peak_areas <- as.matrix(peak_areas[exp_columns])
 
   # MIDs
   mi_data$mids <- matrix(
@@ -174,8 +186,6 @@ midata_subset <- function(mi_data, peak_subset_index)
 
   # index of each peak into the new MI data table
   midata_subset$peak_index <- find_mi_index(new_n_atoms)
-  # unique peak formulas
-  midata_subset$peak_formulas <- mi_data$peak_formulas[peak_subset_index]
   # number of atoms per peak
   midata_subset$peak_n_atoms <- new_n_atoms
   # indices of peaks per C group
