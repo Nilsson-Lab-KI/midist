@@ -45,12 +45,12 @@ c13correct <- function(mid, p = 0.0107, constraint = TRUE)
     end <- length(mid)
     # an empty correction matrix to be filled in by binom values
     correct <- matrix(0, end, end)
-    
+
     # column-wise filling in the correction matrix
     for (j in 1:end) {
       correct[j:end, j] <- dbinom(c(0:(end-j)), end-j, p)
     }
-    
+
     # if we do not have a constraint on the sum of the values
     if (constraint == FALSE) {
       return(pnnls(a = correct, b = mid)$x)
@@ -58,9 +58,9 @@ c13correct <- function(mid, p = 0.0107, constraint = TRUE)
     # if we have a sum 1 constraint (default)
     else {
       return(pnnls(a = correct, b = mid, sum = 1)$x)
-    } 
+    }
   } else return(mid)
-  
+
 }
 
 
@@ -163,7 +163,8 @@ convolution_matrix <- function(x, y_carbons) {
 #' @param y an MID vector
 #' @returns the convolution MID vector x*y
 #' @export
-convolute <- function(x, y) {
+convolute <- function(x, y)
+{
   return(as.vector(convolution_matrix(x, length(y) - 1) %*% y))
 }
 
@@ -172,8 +173,39 @@ convolute <- function(x, y) {
 #' @param x an MID vector
 #' @param y_mat a matrix whose columns are MID vectors
 #' @returns the matrix of convolution vectors x*y for each column y in y_mat
-convolute_cols <- function(x, y_mat) {
+convolute_cols <- function(x, y_mat)
+{
   return(convolution_matrix(x, nrow(y_mat) - 1) %*% y_mat)
+}
+
+#' Convolute columns of x with second dimension of y
+#'
+#' @param x_mat a matrix with MIDs in columns (MI x experiments)
+#' @param y_array an MI x experiments x peaks array
+#' @returns An MI x experiments x peaks array of convolutions
+convolute_array <- function(x_mat, y_array)
+{
+  # this yields an MI x experiments x z_index array
+  n_atoms_x <- nrow(x_mat) - 1
+  n_atoms_y <- dim(y_array)[1] - 1
+  n_exp <- dim(y_array)[2]
+  n_y <- dim(y_array)[3]
+  return(
+    aperm(
+      vapply(
+        1:n_exp,
+        function(i) {
+          convolute_cols(
+            x_mat[, i],
+            # matrix needed here to prevent dropping the 3rd dimension
+            matrix(y_array[, i, , drop = FALSE], nrow = n_atoms_y + 1)
+          )
+        },
+        FUN.VALUE = array(0, dim = c(n_atoms_x + n_atoms_y + 1, n_y))
+      ),
+      c(1, 3, 2)
+    )
+  )
 }
 
 

@@ -74,9 +74,6 @@ dot_dist <- function(x, y)
 #'
 euclidean_dist_sq <- function(x, y)
 {
-  stopifnot(is.vector(x))
-  stopifnot(is.vector(y))
-  stopifnot(length(x) == length(y))
   diff <- x - y
   return(sum(diff * diff))
 }
@@ -89,8 +86,25 @@ euclidean_dist_sq <- function(x, y)
 #' @returns the Euclidean distance between x and y
 #' @export
 #'
-euclidean_dist <- function(x, y) {
+euclidean_dist <- function(x, y)
+{
   return(sqrt(euclidean_dist_sq(x, y)))
+}
+
+
+#' Sum of euclidean distance on columns
+#'
+#' A distance function for matrices. Takes the sum of the
+#' Euclidean distances between each column of x, y.
+#'
+#' @param x a matrix
+#' @param y a matrix
+#' @returns sum of Euclidean distance between columns
+#' @export
+euclidean_sum_dist <- function(x, y)
+{
+  diff <- x - y
+  return(sum(sqrt(colSums(diff*diff))))
 }
 
 

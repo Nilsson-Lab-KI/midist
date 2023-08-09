@@ -10,9 +10,10 @@ conv_reduce_all(mi_data, e, f, g)
 \arguments{
 \item{mi_data}{the MIdata object}
 
-\item{e}{experiment index}
+\item{e}{Experiment index. If e is a vector, the function f(x, y)
+must accept matrices.}
 
-\item{f}{A function f(x, y) taking two MIDs.}
+\item{f}{A function f(x, y) taking two MIDs, or two matrices whose columns are MIDs.}
 
 \item{g}{a function g taking a vector of values f1, f2, ...}
 }

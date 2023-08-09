@@ -70,6 +70,42 @@ test_that("squared euclidean distance is correct", {
 })
 
 
+test_that("euclidean_sum_dist is correct", {
+  # identical vectors have distance 0
+  x <- matrix(rnorm(n = 6), nrow = 3)
+  expect_equal(euclidean_sum_dist(x, x), 0)
+  # distance between identity column vectors
+  expect_equal(
+    euclidean_sum_dist(
+      matrix(
+        c(
+          1, 0,
+          0, 1,
+          0, 0
+        ),
+        nrow = 3
+      ),
+      matrix(
+        c(
+          0, 0,
+          1, 0,
+          0, 1
+        ),
+        nrow = 3
+      )
+    ),
+    2*sqrt(2)
+  )
+  # with a zero matrix, distance is equal to sum of column norms
+  x <- matrix(rnorm(n = 6), nrow = 3)
+  y <- matrix(0, nrow = 3, ncol = 2)
+  expect_equal(
+    euclidean_sum_dist(x, y),
+    sum(apply(x, 2, function(x) norm(x, type="2")))
+  )
+})
+
+
 test_that("dot product similarity is correct", {
   # for identical vectors, similarity is sum of squares
   x <- rnorm(n = 4)

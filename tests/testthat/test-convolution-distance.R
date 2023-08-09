@@ -159,7 +159,6 @@ nad2_mid <- c(3.116997e-01, 1.203842e-01, 1.414667e-01, 1.142038e-01,
               5.491461e-05, 0.000000e+00, 0.000000e+00, 0.000000e+00,
               0.000000e+00, 0.000000e+00)
 
-# example-1: carbon numbers are sorted
 peak_areas_example_hmec <- data.frame(
   Metabolite = c(rep("adp", 10+1), rep("gthrd" ,10+1), rep("ibutcrn", 11+1), rep("nad1", 21+1), rep("nad2", 21+1)),
   Formula = c(rep("adp", 10+1), rep("gthrd" ,10+1), rep("ibutcrn", 11+1), rep("nad1", 21+1), rep("nad2", 21+1)),
@@ -266,6 +265,40 @@ peak_areas_3 <- data.frame(
 mi_data_3 <- MIData(peak_areas_3)
 
 
+test_that("conv_reduce is correct on multiple experiments", {
+
+  # a*b vs d
+  expect_equal(
+    conv_reduce(mi_data_3, x = 1, y = 4, e = 1:2, euclidean_dist, which.min),
+    list(
+      values = euclidean_dist(
+        cbind(
+          convolute(get_avg_mid(mi_data_3, 1, 1), get_avg_mid(mi_data_3, 2, 1)),
+          convolute(get_avg_mid(mi_data_3, 1, 2), get_avg_mid(mi_data_3, 2, 2))
+        ),
+        get_avg_mid(mi_data_3, 4)
+      ),
+      index = 2)
+  )
+
+  # b vs c
+  expect_equal(
+    conv_reduce(mi_data_3, x = 2, y = 3, e = 1:2, euclidean_dist, which.min),
+    list(
+      values = euclidean_dist(
+        get_avg_mid(mi_data_3, 2),
+        get_avg_mid(mi_data_3, 3)
+      ),
+      index = NA)
+  )
+})
+
+
+test_that("conv_reduce_all is correct on multiple experiments", {
+  test_conv_reduce_all(mi_data_3, 1:2, euclidean_dist, which.min)
+})
+
+
 test_that("enrichment_dist_matrix is correct", {
 
   ed_matrix <- enrichment_dist_matrix(mi_data_3, c("exp1", "exp2"), "euclidean")
@@ -357,18 +390,18 @@ test_that("remn_v1 is correct", {
 test_that("remn_v2 is correct", {
   # a list [distance matrix, middle metabolite matrix]
   dm_mm_list <- remn_v2(
-    mi_data_3, f = euclidean_dist, g = min_nonempty, rdata_fname = "", return = T)
+    mi_data_3, f = euclidean_sum_dist, g = which.min, rdata_fname = "", return = T)
   # distance matrix
   dm = dm_mm_list$distance_matrix
   expect_equal(
     dm,
     matrix(
       c(
-        NA,        1.1350016, 1.852613, 0.9649246, NA,
-        1.1350016, NA,        1.950884, 0.9649246, 1.175743,
-        1.8526132, 1.9508839, NA,       2.0502124, 1.559027,
-        0.9649246, 0.9649246, 2.050212, NA,        1.175743,
-        NA,        1.1757434, 1.559027, 1.1757434, NA
+        0,        1.1350016, 1.852613, 0.9649246, NA,
+        1.1350016, 0,        1.950884, 0.9649246, 1.175743,
+        1.8526132, 1.9508839, 0,       2.0502124, 1.559027,
+        0.9649246, 0.9649246, 2.050212, 0,        1.175743,
+        NA,        1.1757434, 1.559027, 1.1757434, 0
       ),
       nrow = 5, dimnames = list(mi_data_3$peak_ids,mi_data_3$peak_ids)
     ),
