@@ -7,9 +7,13 @@
 is_distance_matrix(mat)
 }
 \arguments{
-\item{mat}{A (candidate) distance matrix
-NOTE: this function should be fixed, see https://github.com/Nilsson-Lab-KI/remn/issues/40}
+\item{mat}{A candidate distance matrix}
+}
+\value{
+A list of string describing failure reasons
 }
 \description{
-Test if a matrix is a valid distance matrix (metric)
+This checks that the matrix is symmetric, positive, has zero diagonal,
+and obeys the triangle inequality;
+for all triples (i, j, k) we must have A_ij + A_jk <= A_ik
 }

@@ -141,11 +141,18 @@ assign_list <- structure(NA, class = "AssignList")
 
 
 #' Test if a matrix is a valid distance matrix (metric)
-#' @param mat A (candidate) distance matrix
-#' NOTE: this function should be fixed, see https://github.com/Nilsson-Lab-KI/remn/issues/40
-is_distance_matrix <- function(mat) {
-  # necessary intervention to prevent the floating number error
-  mat <- as.matrix(Matrix::nearPD(mat)$mat)
+#'
+#' This checks that the matrix is symmetric, positive, has zero diagonal,
+#' and obeys the triangle inequality;
+#' for all triples (i, j, k) we must have A_ij + A_jk <= A_ik
+#'
+#' @param mat A candidate distance matrix
+#' @returns A list of string describing failure reasons
+#'
+#' @note this function should be fixed, see https://github.com/Nilsson-Lab-KI/remn/issues/40
+#'
+is_distance_matrix <- function(mat)
+{
   # Initialize a character vector to store failure reasons
   failures <- character(0)
 
