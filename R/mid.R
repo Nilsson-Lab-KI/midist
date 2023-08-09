@@ -3,6 +3,9 @@
 # and related operations on MIDs
 #
 
+#' Constant for the fraction of naturally occurring 13C atoms
+natural_13C_fraction <- 0.0107
+
 
 #' Isotopic enrichment of an MID (fraction of heavy atoms)
 #'
@@ -22,7 +25,7 @@ isotopic_enrichment <- function(mid) {
 #' @param tol A threshold value
 #' @returns The given mid vector, or a vector of zeros of the same length,
 #'if the isotopic enrichment is less than threshold
-filter_enrichment <- function(mid, tol = 0.0107)
+filter_enrichment <- function(mid, tol = natural_13C_fraction)
 {
   if (isotopic_enrichment(mid) <= tol) {
     return(rep(0, length(mid)))
@@ -38,7 +41,7 @@ filter_enrichment <- function(mid, tol = 0.0107)
 #' @param p The heavy atom natural abundance
 #' @param constraint whether to constrain sum of corrected vector to 1
 #' @export
-c13correct <- function(mid, p = 0.0107, constraint = TRUE)
+c13correct <- function(mid, p = natural_13C_fraction, constraint = TRUE)
 {
   if (!all(is.na(mid))){
     # dimensions of the correction matrix
@@ -243,7 +246,7 @@ solution <- function(z, x)
 #' @returns the convoluted MID vector, or NA if isotopic enrichment is
 #' less than than tolerance
 #' @export
-find_convolution <- function(z, x, tol = 0.0107)
+find_convolution <- function(z, x, tol = natural_13C_fraction)
 {
   # this is redundant with solution() but avoids re-computing the matrix A ...
   n_x <- length(x) - 1
