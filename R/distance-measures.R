@@ -92,6 +92,22 @@ euclidean_dist <- function(x, y)
 }
 
 
+#' Sum of euclidean distance on columns
+#'
+#' A distance function for matrices. Takes the sum of the
+#' Euclidean distances between each column of x, y.
+#'
+#' @param x a matrix
+#' @param y a matrix
+#' @returns sum of Euclidean distance between columns
+#' @export
+euclidean_sum_dist <- function(x, y)
+{
+  diff <- x - y
+  return(sum(sqrt(colSums(diff*diff))))
+}
+
+
 #' The Jensen-Shannon (JS) distance
 #'
 #' @param x a vector
