@@ -193,9 +193,16 @@ test_that("zero peaks are handled properly", {
   )
 })
 
+
 test_that("all average mids sum to 1", {
-  expect_equal(unique(unlist(lapply(1:length(mi_data_2$peak_ids), function(p) sum(get_avg_mid(mi_data_2, p, 1))))), 1)
+  for(p in 1:length(mi_data_2$peak_ids)) {
+    expect_equal(
+      sum(get_avg_mid(mi_data_2, p, 1)),
+      1
+    )
+  }
 })
+
 
 test_that("midata_subset works correctly", {
   # take a subset

@@ -150,15 +150,20 @@ calc_avg_mids <- function(mi_data)
   # compute MIDs
   for (p in 1:length(mi_data$peak_ids)) {
     rows <- get_mi_indices(mi_data, p)
+    n <- length(rows) - 1
     for (e in 1:length(mi_data$experiments)) {
       cols <- get_exp_indices(mi_data, e)
+      mids <- mi_data$mids[rows, cols, drop = F]
       # collapse across replicates
-      if (all(is.na(colSums(mi_data$mids[rows, cols, drop = F]))))
-        avg_mids[rows, e] <- dbinom(c(0:(length(rows) - 1)), length(rows) - 1, natural_13C_fraction) else {
-          new_areas <- rowSums(mi_data$mids[rows, cols, drop = F], na.rm = T) / length(which(!is.na(colSums(mi_data$mids[rows, cols, drop = F], na.rm = T))))
-          # renormalization needed for some cases
-          avg_mids[rows, e] <- normalize_mids(new_areas)
-        }
+      if (all(is.na(mids[1, ]))) {
+        # all replicates are missing, impute with natural 13C distribution
+        avg_mids[rows, e] <- dbinom(c(0:n), n, natural_13C_fraction)
+      }
+      else {
+        new_areas <- rowMeans(mids, na.rm = T)
+        # renormalization needed for some cases
+        avg_mids[rows, e] <- normalize_mids(new_areas)
+      }
     }
   }
   return(avg_mids)
