@@ -422,13 +422,17 @@ pairwise_matrix_v2 <- function(midata, f, g_select)
 #' @export
 remn_v2 <- function(midata, f, g_select, rdata_fname, return = T)
 {
-  remn_output <- pairwise_matrix_v2(midata, f, g_select)
-
+  # compute distance matrix
+  n_exp <- length(midata$experiments)
+  assign_list[values, index] <- conv_reduce_all(midata, 1:n_exp, f, g_select)
+  # add peak IDs
+  dimnames(values) <- list(midata$peak_ids, midata$peak_ids)
+  dimnames(index) <- list(midata$peak_ids, midata$peak_ids)
   if (return == T)
-    return(remn_output)
+    return(list(distance_matrix = values, middle_metabolite_matrix = index))
   else {
-    distance_matrix <- remn_output$distance_matrix
-    middle_metabolite_matrix <- remn_output$middle_metabolite_matrix
+    distance_matrix <- values
+    middle_metabolite_matrix <- index
     save(midata,
          distance_matrix,
          middle_metabolite_matrix,
