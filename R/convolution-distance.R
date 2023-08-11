@@ -86,8 +86,11 @@ conv_reduce_all <- function(mi_data, e, f, g)
 {
   n_met <- length(mi_data$peak_ids)
   # allocate matrices
-  conv_values <- matrix(as.double(NA), n_met, n_met)
-  conv_index <- matrix(as.integer(NA), n_met, n_met)
+  conv_values <- matrix(
+    as.double(NA), n_met, n_met, dimnames = list(mi_data$peak_ids, mi_data$peak_ids))
+  conv_index <- matrix(
+    as.integer(NA), n_met, n_met,
+    dimnames = list(mi_data$peak_ids, mi_data$peak_ids))
 
   # unique metabolite sizes, sorted
   n_atoms <- sort(unique(mi_data$peak_n_atoms))
@@ -317,9 +320,6 @@ remn_v2 <- function(midata, f, g_select, rdata_fname, return = T)
   # compute distance matrix
   n_exp <- length(midata$experiments)
   assign_list[values, index] <- conv_reduce_all(midata, 1:n_exp, f, g_select)
-  # add peak IDs
-  dimnames(values) <- list(midata$peak_ids, midata$peak_ids)
-  dimnames(index) <- list(midata$peak_ids, midata$peak_ids)
   if (return == T)
     return(list(distance_matrix = values, middle_metabolite_matrix = index))
   else {
