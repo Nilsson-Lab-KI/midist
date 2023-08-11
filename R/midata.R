@@ -10,7 +10,7 @@
 #' for example), and the remaining columns 3, 4 ... are assumed to contain
 #' peak area data, each column from one replicate. The names of these columns
 #' are interpreted such that any columns with identical names are assumed to be
-#' replicates of the same experiment; but see [exp_names].
+#' replicates of the same experiment; but see parameter exp_names.
 #' @param exp_names a optional list of experiment names for the columns 2,3... in peak_areas.
 #' These names will replace the column names for those columns, and used to infer
 #' replicate
