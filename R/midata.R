@@ -374,6 +374,7 @@ get_avg_mid <- function(mi_data, p, e)
 #' @param peak_index One or more peak indices
 #' @param e an experiment index
 #' @returns An array of dimensions MI x experiments x peaks
+#' @export get_avg_mids
 get_avg_mids <- function(mi_data, peak_index, e)
 {
   return(
