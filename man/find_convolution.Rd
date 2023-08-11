@@ -4,7 +4,7 @@
 \alias{find_convolution}
 \title{Find the optimal convolution for two MIDs}
 \usage{
-find_convolution(z, x, tol = 0.0107)
+find_convolution(z, x, tol = natural_13C_fraction)
 }
 \arguments{
 \item{z}{the longer MID}

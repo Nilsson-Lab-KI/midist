@@ -17,3 +17,6 @@ This checks that the matrix is symmetric, positive, has zero diagonal,
 and obeys the triangle inequality;
 for all triples (i, j, k) we must have A_ij + A_jk <= A_ik
 }
+\note{
+this function should be fixed, see https://github.com/Nilsson-Lab-KI/remn/issues/40
+}
