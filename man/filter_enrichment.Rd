@@ -4,7 +4,7 @@
 \alias{filter_enrichment}
 \title{Return a zero vector if the mid enrichment is below a threshold}
 \usage{
-filter_enrichment(mid, tol = 0.0107)
+filter_enrichment(mid, tol = natural_13C_fraction)
 }
 \arguments{
 \item{mid}{An MID vector}

@@ -23,8 +23,12 @@ pairwise_conv_reduce <- function(mi_data, e, f, g)
 {
   # compute full matrix row by row
   n_peaks <- length(mi_data$peak_ids)
-  values <- matrix(NA, nrow = n_peaks, ncol = n_peaks)
-  index <- matrix(NA, nrow = n_peaks, ncol = n_peaks)
+  values <- matrix(
+    NA, nrow = n_peaks, ncol = n_peaks,
+    dimnames = list(mi_data$peak_ids, mi_data$peak_ids))
+  index <- matrix(
+    NA, nrow = n_peaks, ncol = n_peaks,
+    dimnames = list(mi_data$peak_ids, mi_data$peak_ids))
   for(x in 1:n_peaks) {
     for(y in 1:n_peaks) {
       assign_list[values[x, y], index[x, y]] <- conv_reduce(mi_data, x, y, e, f, g)
@@ -340,7 +344,7 @@ test_that("remn_v1 is correct", {
         0.08158431, 0.08158431, 1.0924358, 0.00000000, 0.6745781,
         NA,         0.67457806, 0.7812099, 0.67457806, 0.0000000
       ),
-      nrow = 5
+      nrow = 5, dimnames = list(mi_data_3$peak_ids, mi_data_3$peak_ids)
     ),
     tolerance = 1e-6
   )
@@ -354,7 +358,7 @@ test_that("remn_v1 is correct", {
         2,   1,   1,  NA,   2,
         NA,  4,   4,   2,  NA
       ),
-      nrow = 5
+      nrow = 5, dimnames = list(mi_data_3$peak_ids, mi_data_3$peak_ids)
     )
   )
   expect_equal(
@@ -367,7 +371,7 @@ test_that("remn_v1 is correct", {
         0.8833403, 0.8833403, 0.9577766, 0.0000000, 0.5011653,
         NA,        0.5011653, 0.7778175, 0.5011653, 0.0000000
       ),
-      nrow = 5
+      nrow = 5, dimnames = list(mi_data_3$peak_ids, mi_data_3$peak_ids)
     ),
     tolerance = 1e-6
   )
@@ -381,7 +385,7 @@ test_that("remn_v1 is correct", {
         2,   1,   1,  NA,   2,
         NA,  4,   4,   2,  NA
       ),
-      nrow = 5
+      nrow = 5, dimnames = list(mi_data_3$peak_ids, mi_data_3$peak_ids)
     )
   )
 })

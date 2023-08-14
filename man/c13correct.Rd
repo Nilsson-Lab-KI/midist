@@ -4,7 +4,7 @@
 \alias{c13correct}
 \title{Correct an MID vector for naturally occurring isotopes}
 \usage{
-c13correct(mid, p = 0.0107, constraint = TRUE)
+c13correct(mid, p = natural_13C_fraction, constraint = TRUE)
 }
 \arguments{
 \item{mid}{An MID vector to correct}

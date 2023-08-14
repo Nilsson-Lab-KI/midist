@@ -3,6 +3,7 @@
 #
 
 # example "peak area" data
+
 peak_areas_1 <- data.frame(
   # two metabolites 'x' and 'y', 2 and 3 carbons respectively
   Metabolite = c("x", "x", "x", "y", "y", "y", "y"),
@@ -19,6 +20,7 @@ exp_names_1 <- c('exp1', 'exp1', 'exp2')
 mi_data_1 <- MIData(peak_areas_1, exp_names_1)
 
 
+
 test_that("MIData objects are created correctly", {
   # check object properties
   expect_equal(mi_data_1$peak_ids, c("x", "y"))
@@ -29,6 +31,10 @@ test_that("MIData objects are created correctly", {
   expect_equal(mi_data_1$exp_n_rep, c(2, 1))
   expect_equal(mi_data_1$n_atoms_index[["2"]], c(1))
   expect_equal(mi_data_1$n_atoms_index[["3"]], c(2))
+
+  # specifying columns
+  mi_data_tmp <- MIData(peak_areas_1, exp_columns = 2 + c(1, 3))
+  expect_equal(mi_data_tmp$experiments, c("exp1_1", "exp2_1"))
 })
 
 
@@ -181,12 +187,22 @@ test_that("zero peaks are handled properly", {
   # zero peaks in peak areas should become NAs in the midata object
   expect_equal(all(is.na(get_mids(mi_data_2, 5, 1))), TRUE)
   # avg mids of NA mids should be assigned binomial
-  expect_equal(c13correct(get_avg_mid(mi_data_2, 5, 1)), c(1,0,0))
+  expect_equal(
+    get_avg_mid(mi_data_2, 5, 1),
+    stats::dbinom(0:2, 2, natural_13C_fraction)
+  )
 })
 
+
 test_that("all average mids sum to 1", {
-  expect_equal(unique(unlist(lapply(1:length(mi_data_2$peak_ids), function(p) sum(get_avg_mid(mi_data_2, p, 1))))), 1)
+  for(p in 1:length(mi_data_2$peak_ids)) {
+    expect_equal(
+      sum(get_avg_mid(mi_data_2, p, 1)),
+      1
+    )
+  }
 })
+
 
 test_that("midata_subset works correctly", {
   # take a subset

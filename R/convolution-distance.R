@@ -86,8 +86,11 @@ conv_reduce_all <- function(mi_data, e, f, g)
 {
   n_met <- length(mi_data$peak_ids)
   # allocate matrices
-  conv_values <- matrix(as.double(NA), n_met, n_met)
-  conv_index <- matrix(as.integer(NA), n_met, n_met)
+  conv_values <- matrix(
+    as.double(NA), n_met, n_met, dimnames = list(mi_data$peak_ids, mi_data$peak_ids))
+  conv_index <- matrix(
+    as.integer(NA), n_met, n_met,
+    dimnames = list(mi_data$peak_ids, mi_data$peak_ids))
 
   # unique metabolite sizes, sorted
   n_atoms <- sort(unique(mi_data$peak_n_atoms))
@@ -304,114 +307,6 @@ combine <- function(pairwise_matrices, middle_met_matrices, fun)
 }
 
 
-# compute distances for equal carbon metabolites, and make a selection based on g_select
-calc_distance_equal_c <- function(mid_x, mid_y, f){
-
-  cd <- c()
-  for (e in 1:length(mid_x)){
-    cd <- c(cd, f(mid_x[[e]], mid_y[[e]]))
-  }
-  # returns 2 elements: (1) the final distance, (2) the middle metabolite which was chosen by g_select
-  return(list(sum(cd, na.rm = T), NA))
-}
-
-
-# compute distances for unequal carbon metabolites, and make a selection based on g_select
-calc_distance_unequal_c <- function(mid_x, mid_y, mid_z, z_index, f, g_select){
-  sums_cd <- c()
-  for (z in 1:length(mid_z)){
-    cd <- c()
-    for (e in 1:length(mid_x)){
-      cd <- c(cd, convolute_and_distance(mid_x[[e]], mid_y[[e]], mid_z[[z]][[e]], f))
-    }
-    sums_cd <- c(sums_cd, sum(cd, na.rm = T))
-  }
-
-  return(list(g_select(sums_cd), z_index[which(sums_cd == g_select(sums_cd))[1]]))
-}
-
-
-# convolutes two small MIDs and computes the distance (by f) between the convolution and the largest MID
-convolute_and_distance <- function(mid_x, mid_y, mid_z, f){
-  if (length(mid_x) < length(mid_y))
-    return(f(convolute(mid_z, mid_x), mid_y)) else
-      return(f(convolute(mid_z, mid_y), mid_x))
-}
-
-
-# compute distance for each unique pair
-calc_pair_distance <- function(pair, midata, f, g_select)
-{
-#  print(pair)
-  n_atoms_x <- midata$peak_n_atoms[pair[1]]
-  mid_x <- lapply(1:length(midata$experiments), function(e) get_avg_mid(midata, pair[1], e))
-  n_atoms_y <- midata$peak_n_atoms[pair[2]]
-  mid_y <- lapply(1:length(midata$experiments), function(e) get_avg_mid(midata, pair[2], e))
-
-  if (n_atoms_x == n_atoms_y) {
-    # compute distances for all experiments
-    distance <- calc_distance_equal_c(mid_x, mid_y, f)
-    result <- data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2],
-                         middle_metabolite = distance[[2]], distance = distance[[1]])
-    return(result)
-  }
-  else {
-    # number of carbons for the middle metabolite
-    n_atoms_z <- abs(n_atoms_x - n_atoms_y)
-    # indices of metabolites with n_atoms_z carbons
-    z_index <- get_peak_index_n_atoms(midata, n_atoms_z)
-
-    # make sure at least one metabolite with n_atoms_z carbons exists in the data
-    if (is.null(z_index) == F) {
-      # bring MIDs of these metabolites across all experiments
-      mid_z <- lapply(z_index, function(p) lapply(1:length(midata$experiments), function(e) get_avg_mid(midata, p, e)))
-      # compute the actual distances for each z, and select the one
-      distance <- calc_distance_unequal_c(mid_x, mid_y, mid_z, z_index, f, g_select)
-      result <- data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2],
-                           middle_metabolite = distance[[2]], distance = distance[[1]])
-      return(result)
-    }
-    # if not just return NA for this pair
-    else return(data.frame(metabolite_1 = pair[1], metabolite_2 = pair[2],
-                           middle_metabolite = NA, distance = NA))
-  }
-
-}
-
-
-# Compute distance and middle metabolite matrices
-# Returns a list of length 2
-pairwise_matrix_v2 <- function(midata, f, g_select)
-{
-  # all unique pairs
-  pairs <- utils::combn(length(midata$peak_ids), 2)
-
-  # compute distances and keep track of the convolutions
-  results <- apply(pairs, 2, calc_pair_distance, midata, f, g_select)
-
-  # convert dataframes into proper distance matrices
-  distances <- sapply(results, function(x) return(x[4]))
-  stopifnot(length(distances) == dim(pairs)[2])
-  middle_mets <- sapply(results, function(x) return(x[3]))
-  stopifnot(length(middle_mets) == dim(pairs)[2])
-
-  dm <- matrix(NA, length(midata$peak_ids), length(midata$peak_ids))
-  mmm <- matrix(NA, length(midata$peak_ids), length(midata$peak_ids))
-  colnames(dm) <- rownames(dm) <- colnames(mmm) <- rownames(mmm) <- midata$peak_ids
-  for (i in 1:ncol(pairs)){
-    dm[pairs[1,i], pairs[2,i]] <- as.numeric(distances[i])
-    dm[pairs[2,i], pairs[1,i]] <- as.numeric(distances[i])
-    mmm[pairs[1,i], pairs[2,i]] <- as.numeric(middle_mets[i])
-    mmm[pairs[2,i], pairs[1,i]] <- as.numeric(middle_mets[i])
-  }
-
-  result <- list(dm, mmm)
-  names(result) <- c("distance_matrix", "middle_metabolite_matrix")
-
-  return(result)
-}
-
-
 #' Compute a pairwise distance matrix and optionally save it
 #' @param midata An MIData object
 #' @param f A distance function
@@ -425,9 +320,6 @@ remn_v2 <- function(midata, f, g_select, rdata_fname, return = T)
   # compute distance matrix
   n_exp <- length(midata$experiments)
   assign_list[values, index] <- conv_reduce_all(midata, 1:n_exp, f, g_select)
-  # add peak IDs
-  dimnames(values) <- list(midata$peak_ids, midata$peak_ids)
-  dimnames(index) <- list(midata$peak_ids, midata$peak_ids)
   if (return == T)
     return(list(distance_matrix = values, middle_metabolite_matrix = index))
   else {
