@@ -51,7 +51,9 @@ plot_matrix <- function(mat)
   return(
     ggplot2::ggplot(
       mat_melted,
-      ggplot2::aes(x = colnames(mat_melted)[1], y = colnames(mat_melted)[2])
+      ggplot2::aes(
+        x = mat_melted[, 2],
+        y = mat_melted[, 1])
     ) +
       ggplot2::geom_raster(aes(fill = value)) +
       ggplot2::scale_fill_gradient(low = "white", high = "red") +
