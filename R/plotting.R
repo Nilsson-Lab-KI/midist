@@ -7,6 +7,7 @@
 #'
 #' @param mid_mat A matrix whose columns are MID vectors
 #' @returns A ggplot object
+#' @importFrom stats sd
 #' @export
 #'
 plot_mid_barchart <- function(mid_mat)
@@ -16,7 +17,7 @@ plot_mid_barchart <- function(mid_mat)
   mid_df <- data.frame(
     mi = 0:n,
     mean = rowMeans(mid_mat),
-    sd = apply(mid_mat, 1, sd)
+    sd = apply(mid_mat, 1, stats::sd)
   )
   return(
     ggplot2::ggplot(mid_df) +
@@ -40,19 +41,21 @@ plot_mid_barchart <- function(mid_mat)
 #' Plot a matrix as a heatmap
 #'
 #' @param mat Any real matrix
+
+#' @importFrom reshape2 melt
 #' @returns A ggplot object
 #'
 plot_matrix <- function(mat)
 {
   mat_melted <- reshape2::melt(mat)
   return(
-    ggplot(
+    ggplot2::ggplot(
       mat_melted,
-      aes(x = colnames(mat_melted)[1], y = colnames(mat_melted)[2])
+      ggplot2::aes(x = colnames(mat_melted)[1], y = colnames(mat_melted)[2])
     ) +
-      geom_raster(aes(fill = value)) +
-      scale_fill_gradient(low = "white", high = "red") +
-      theme_bw()
+      ggplot2::geom_raster(aes(fill = value)) +
+      ggplot2::scale_fill_gradient(low = "white", high = "red") +
+      ggplot2::theme_bw()
   )
 }
 
@@ -62,10 +65,11 @@ plot_matrix <- function(mat)
 #' To get axes labels right, the matrix should have dimnames set
 #'
 #' @param mid_mat A matrix whose columns are MID vectors
+#' @param plot_title Title for the plot
 #' @returns A ggplot object
 #' @export
 #'
-plot_mid_matrix <- function(mid_mat, plot_title)
+plot_mid_matrix <- function(mid_mat, plot_title = "MID")
 {
   return(
     plot_matrix(mid_mat) +
