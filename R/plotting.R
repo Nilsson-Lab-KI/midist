@@ -80,3 +80,40 @@ plot_mid_matrix <- function(mid_mat, plot_title = "MID")
 }
 
 
+#' Plot MID matrices for a convolution x * z = y
+#'
+#' @param mi_date An MIData object
+#' @param index_x index of peak x
+#' @param index_y index of peak y
+#' @param index_z index of peak z
+#' @returns A ggplot object
+#' @export
+#'
+plot_convolution <- function(mi_data, index_x, index_y, index_z)
+{
+  # average MID matrices (MIs x experiments)
+  mids_x <- get_avg_mid(mi_data, index_x)
+  mids_y <- get_avg_mid(mi_data, index_y)
+  mids_z <- get_avg_mid(mi_data, index_z)
+  # check dimensions
+  stopifnot(nrow(mids_x) + nrow(mids_z) - 2 == nrow(mids_y) - 1)
+  # convolute x * y
+  mids_xz <- sapply(
+    1:length(mi_data$experiments),
+    function(i) convolute(mids_x[, i], mids_z[, i])
+  )
+  # peak IDs
+  peak_id_x <- mi_data$peak_ids[index_x]
+  peak_id_y <- mi_data$peak_ids[index_y]
+  peak_id_z <- mi_data$peak_ids[index_z]
+  # construct plot and return it
+  return(
+    grid.arrange(
+      plot_mid_matrix(mids_x, peak_id_x),
+      plot_mid_matrix(mids_z, peak_id_z),
+      plot_mid_matrix(mids_xz, paste(peak_id_x, peak_id_z, sep="*")),
+      plot_mid_matrix(mids_y, peak_id_y),
+      ncol = 2)
+  )
+}
+
