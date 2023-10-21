@@ -19,7 +19,7 @@
 #' @param f A function f(x, y) taking two MIDs and returning a scalar.
 #' @param g a function g taking a non-empty vector of values and returning
 #' the index of the "best" element; for example, which.min
-#' @param impute set to TRUE to impute missing convolutants (prevent NA distances)
+#' @param impute whether to impute missing convolutants (prevent NA distances)
 #' @returns the resulting value g(f1, f2, ...)
 #' @export
 
@@ -30,7 +30,7 @@ conv_reduce <- function(mi_data, x, y, e, f, g, impute = FALSE)
   n_atom_y <- get_peak_n_atoms(mi_data, y)
   # ensure MID x is smaller or equal to MID y
   if (n_atom_x > n_atom_y) {
-    return(conv_reduce(mi_data, y, x, e, f, g))
+    return(conv_reduce(mi_data, y, x, e, f, g, impute))
   }
   # find the MIDs of metabolite with index x, y
   mid_x <- get_avg_mid(mi_data, x, e)
@@ -90,9 +90,10 @@ conv_reduce <- function(mi_data, x, y, e, f, g, impute = FALSE)
 #' must accept matrices.
 #' @param f A function f(x, y) taking two MIDs, or two matrices whose columns are MIDs.
 #' @param g a function g taking a vector of values f1, f2, ...
+#' @param impute whether to impute missing convolutants (prevent NA distances)
 #' @returns the matrix of g(f(x,y) ...) values for all x,y
 #' @export
-conv_reduce_all <- function(mi_data, e, f, g)
+conv_reduce_all <- function(mi_data, e, f, g, impute = FALSE)
 {
   n_met <- length(mi_data$peak_ids)
   # allocate matrices
@@ -122,7 +123,8 @@ conv_reduce_all <- function(mi_data, e, f, g)
       else {
         n_atoms_z = n_atoms_y - n_atoms_x
         z_index <- get_peak_index_n_atoms(mi_data, n_atoms_z)
-        block <- conv_reduce_block(mi_data, e, f, g, x_index, y_index, z_index)
+        block <- conv_reduce_block(
+          mi_data, e, f, g, x_index, y_index, z_index, impute)
       }
       # copy block to full matrices
       conv_values[x_index, y_index] <- block$values
@@ -170,32 +172,56 @@ g_list <- function(mids_y, mids_xz, z_index, f, g)
 #' @param x_index index of the peak x
 #' @param y_index index of the peak y
 #' @param z_index index of the peak z
+#' @param impute whether to impute missing convolutants (prevent NA distances)
 #'
-conv_reduce_block <- function(mi_data, e, f, g, x_index, y_index, z_index)
+conv_reduce_block <- function(mi_data, e, f, g, x_index, y_index, z_index, impute)
 {
   n_x <- length(x_index)
   n_y <- length(y_index)
+  n_z <- length(z_index)
+  n_exp <- length(e)
   ## allocate matrices
   block = list(values = matrix(as.double(NA), n_x, n_y),
                index = matrix(as.integer(NA), n_x, n_y))
-  if(length(z_index) > 0) {
+  if(n_z > 0 | impute) {
     # get MID matrices, each column an MID
     mids_x <- get_avg_mids(mi_data, x_index, e)
     mids_y <- get_avg_mids(mi_data, y_index, e)
-    mids_z <- get_avg_mids(mi_data, z_index, e)
+    if(n_z > 0) {
+      mids_z <- get_avg_mids(mi_data, z_index, e)
 
-    for(i in 1:n_x) {
-      # compute all convolutions x*z for each z
-      if(length(e) == 1)
-        mids_xz <- convolute_cols(mids_x[, i], mids_z)
-      else {
-        mids_xz <- convolute_array(mids_x[, , i], mids_z)
+      for(i in 1:n_x) {
+        # compute all convolutions x*z for each z
+        if(n_exp == 1)
+          mids_xz <- convolute_cols(mids_x[, i], mids_z)
+        else {
+          mids_xz <- convolute_array(mids_x[, , i], mids_z)
+        }
+        # calculate g(f(x*z, y) ...) for all y (rows) and all convolutions x*z
+        g_result <- g_list(mids_y, mids_xz, z_index, f, g)
+        # store value and attributes separately
+        block$values[i, ] <- g_result$values
+        block$index[i, ] <- g_result$index
       }
-      # calculate g(f(x*z, y) ...) for all y (rows) and all convolutions x*z
-      g_result <- g_list(mids_y, mids_xz, z_index, f, g)
-      # store value and attributes separately
-      block$values[i, ] <- g_result$values
-      block$index[i, ] <- g_result$index
+    }
+    else {
+      # impute z with natural distribution
+      n_atoms_z <- dim(mids_y)[1] - dim(mids_x)[1]
+      mid_imputed <- natural_mid(n_atoms_z)
+      for(i in 1:n_x) {
+        for(j in 1:n_y) {
+          if(n_exp == 1)
+            block$values[i, j] <- f(
+              convolute(mids_x[, i], mid_imputed),
+              mids_y[, j]
+            )
+          else
+            block$values[i, j] <- f(
+              convolute_cols(mid_imputed, mids_x[, , i]),
+              mids_y[, , j]
+            )
+        }
+      }
     }
   }
   # else no metabolites z to convolute x with

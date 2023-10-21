@@ -71,6 +71,9 @@ test_that("conv_reduce is correct on minimum euclidean distance", {
 test_that("conv_reduce is correct when using imputation", {
   assign_list[dm, index] <- pairwise_conv_reduce(
     midata_1, 1, euclidean_dist, which.min, impute = TRUE)
+  # make sure matrices are symmetric
+  expect_true(isSymmetric(dm))
+  expect_true(isSymmetric(index))
 
   # for a vs. e there is no 4-carbon peak to convolute with,
   # so we convolute with a natural 4-carbon MID
@@ -117,16 +120,16 @@ test_that("conv_reduce_all returns a matrix with index attribute", {
 
 # compare conv_reduce_all elementwise to conv_reduce on the given mi_data
 # with functions f and g
-test_conv_reduce_all <- function(mi_data, e, f, g)
+test_conv_reduce_all <- function(mi_data, e, f, g, impute = FALSE)
 {
   # matrix from conv_reduce_all
-  assign_list[values, index] <- conv_reduce_all(mi_data, e, f, g)
+  assign_list[values, index] <- conv_reduce_all(mi_data, e, f, g, impute)
   # make sure matrix is symmetric
   expect_true(isSymmetric(values))
 
   # check against conv_reduce element by element
   assign_list[values_pairwise, index_pairwise] <-
-    pairwise_conv_reduce(mi_data, e, f, g)
+    pairwise_conv_reduce(mi_data, e, f, g, impute)
 
   expect_equal(values, values_pairwise)
   expect_equal(index, index_pairwise)
@@ -143,6 +146,10 @@ test_that("conv_reduce_all returns a valid distance for example-1", {
   test_conv_reduce_all(midata_1, 1, euclidean_dist, which.min)
 })
 
+
+test_that("conv_reduce_all is correct with imputation", {
+  test_conv_reduce_all(midata_1, 1, euclidean_dist, which.min, impute = TRUE)
+})
 
 # example-2:  as example 1 but peaks are permuted
 midata_2 <- midata_subset(midata_1, c(4,2,1,5,3))
