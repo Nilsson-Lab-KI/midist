@@ -19,10 +19,11 @@
 #' @param f A function f(x, y) taking two MIDs and returning a scalar.
 #' @param g a function g taking a non-empty vector of values and returning
 #' the index of the "best" element; for example, which.min
+#' @param impute set to TRUE to impute missing convolutants (prevent NA distances)
 #' @returns the resulting value g(f1, f2, ...)
 #' @export
 
-conv_reduce <- function(mi_data, x, y, e, f, g)
+conv_reduce <- function(mi_data, x, y, e, f, g, impute = FALSE)
 {
   # number of carbon atoms of metabolites x, y
   n_atom_x <- get_peak_n_atoms(mi_data, x)
@@ -63,7 +64,16 @@ conv_reduce <- function(mi_data, x, y, e, f, g)
       return(list(values = f_values[f_index], index = z_index[f_index]))
     } else {
       # no matching metabolites to convolute with
-      return(list(values = NA, index = NA))
+      if(impute) {
+        return(
+          list(
+            values = f(convolute(mid_x, natural_mid(n_atom_z)), mid_y),
+            index = NA
+          )
+        )
+      }
+      else
+        return(list(values = NA, index = NA))
     }
   }
 }

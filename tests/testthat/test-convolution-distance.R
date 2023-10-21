@@ -6,7 +6,7 @@ a_mid <- c(0.98, 0.02)
 b_mid <- c(0.8, 0.1, 0.1)
 c_mid <- c(0.97, 0.03, 0.0)
 d_mid <- c(0.8, 0.05, 0.1, 0.05)
-e_mid <- c(0.1, 0.0, 0.3, 0.0, 0.2, 0.05)
+e_mid <- c(0.1, 0.0, 0.65, 0.0, 0.2, 0.05)
 
 # example-1: carbon numbers are sorted
 peak_areas_example_1 <- data.frame(
@@ -19,7 +19,7 @@ peak_areas_example_1 <- data.frame(
 midata_1 <- MIData(peak_areas_example_1, exp_names = "exp1")
 
 # test conv_reduce on example 1 with given f and g functions
-pairwise_conv_reduce <- function(mi_data, e, f, g)
+pairwise_conv_reduce <- function(mi_data, e, f, g, impute = FALSE)
 {
   # compute full matrix row by row
   n_peaks <- length(mi_data$peak_ids)
@@ -31,7 +31,8 @@ pairwise_conv_reduce <- function(mi_data, e, f, g)
     dimnames = list(mi_data$peak_ids, mi_data$peak_ids))
   for(x in 1:n_peaks) {
     for(y in 1:n_peaks) {
-      assign_list[values[x, y], index[x, y]] <- conv_reduce(mi_data, x, y, e, f, g)
+      assign_list[values[x, y], index[x, y]] <-
+        conv_reduce(mi_data, x, y, e, f, g, impute)
     }
   }
   return(list(values = values, index = index))
@@ -66,6 +67,21 @@ test_that("conv_reduce is correct on minimum euclidean distance", {
   expect_equal(dm[2,4], euclidean_dist(convolute(a_mid, b_mid), d_mid))
   expect_equal(index[2, 4], 1)
 })
+
+test_that("conv_reduce is correct when using imputation", {
+  assign_list[dm, index] <- pairwise_conv_reduce(
+    midata_1, 1, euclidean_dist, which.min, impute = TRUE)
+
+  # for a vs. e there is no 4-carbon peak to convolute with,
+  # so we convolute with a natural 4-carbon MID
+  expect_equal(
+    dm[1, 5],
+    euclidean_dist(convolute(a_mid, natural_mid(4)), e_mid)
+  )
+  expect_true(is.na(index[1, 5]))
+
+})
+
 
 
 test_that("conv_reduce is correct on max cosine similarity", {
