@@ -43,7 +43,7 @@ filter_enrichment <- function(mid, tol = natural_13C_fraction)
 #' @export
 c13correct <- function(mid, p = natural_13C_fraction, constraint = TRUE)
 {
-  if (!all(is.na(mid))){
+  if (!all(is.na(mid))) {
     # dimensions of the correction matrix
     end <- length(mid)
     # an empty correction matrix to be filled in by binom values
@@ -63,7 +63,20 @@ c13correct <- function(mid, p = natural_13C_fraction, constraint = TRUE)
       return(pnnls(a = correct, b = mid, sum = 1)$x)
     }
   } else return(mid)
+}
 
+
+#' Correct an MID matrix for naturally occurring isotopes
+#'
+#' @param mid A matrix whose columns are MID vectors
+#' @param p The heavy atom natural abundance
+#' @param constraint whether to constrain sum of corrected vectors to 1
+#' @export
+c13correct_cols <- function(mids, p = natural_13C_fraction, constraint = TRUE)
+{
+  return(
+    apply(mids, MARGIN = 2, function(mid) c13correct(mid, p, constraint))
+  )
 }
 
 
