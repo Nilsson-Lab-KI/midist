@@ -5,7 +5,7 @@
 \title{Same as conv_reduce, but calculates f(x, y) pairwise for all peaks x and y
 from an MIData object (mi_data)}
 \usage{
-conv_reduce_all(mi_data, e, f, g)
+conv_reduce_all(mi_data, e, f, g, impute = FALSE)
 }
 \arguments{
 \item{mi_data}{the MIdata object}
@@ -16,6 +16,8 @@ must accept matrices.}
 \item{f}{A function f(x, y) taking two MIDs, or two matrices whose columns are MIDs.}
 
 \item{g}{a function g taking a vector of values f1, f2, ...}
+
+\item{impute}{whether to impute missing convolutants (prevent NA distances)}
 }
 \value{
 the matrix of g(f(x,y) ...) values for all x,y

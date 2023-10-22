@@ -5,7 +5,7 @@
 \title{compute conv_reduce for one matrix block where all x are the same size
 and all y are the same size, but y is larger than x}
 \usage{
-conv_reduce_block(mi_data, e, f, g, x_index, y_index, z_index)
+conv_reduce_block(mi_data, e, f, g, x_index, y_index, z_index, impute)
 }
 \arguments{
 \item{mi_data}{An MIData object}
@@ -21,6 +21,8 @@ conv_reduce_block(mi_data, e, f, g, x_index, y_index, z_index)
 \item{y_index}{index of the peak y}
 
 \item{z_index}{index of the peak z}
+
+\item{impute}{whether to impute missing convolutants (prevent NA distances)}
 }
 \description{
 compute conv_reduce for one matrix block where all x are the same size

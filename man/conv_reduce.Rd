@@ -5,7 +5,7 @@
 \title{Convolution-based measure between MIDs for peak x and y for
 experiment e from an MIData object (mi_data).}
 \usage{
-conv_reduce(mi_data, x, y, e, f, g)
+conv_reduce(mi_data, x, y, e, f, g, impute = FALSE)
 }
 \arguments{
 \item{mi_data}{the MIdata object}
@@ -20,6 +20,8 @@ conv_reduce(mi_data, x, y, e, f, g)
 
 \item{g}{a function g taking a non-empty vector of values and returning
 the index of the "best" element; for example, which.min}
+
+\item{impute}{whether to impute missing convolutants (prevent NA distances)}
 }
 \value{
 the resulting value g(f1, f2, ...)

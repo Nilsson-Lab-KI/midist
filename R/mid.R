@@ -163,6 +163,7 @@ random_mid <- function(mean, stdev, n)
 #' @param n number of atoms
 #' @param p heavy isotope probability
 #' @returns an MID vector
+#' @export
 natural_mid <- function(n, p = natural_13C_fraction)
 {
   return(dbinom(0:n, n, p))
