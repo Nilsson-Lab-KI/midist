@@ -13,6 +13,7 @@ Imports:
     ggplot2,
     gridExtra,
     lsei,
+    reshape2,
     stats,
     stringr
 Suggests: 

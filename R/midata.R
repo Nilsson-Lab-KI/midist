@@ -409,6 +409,7 @@ get_exp_indices <- function(mi_data, e) {
 #' Get the index of a list of peak identifers in an MIData object
 #' @param mi_data an MIData object
 #' @param peak_ids a list of peak identifiers
+#' @export
 get_peak_index <- function(mi_data, peak_ids) {
   return(match(peak_ids, mi_data$peak_ids))
 }
