@@ -347,14 +347,14 @@ normalize_mids <- function(mids)
 #' @export
 get_mids <- function(mi_data, peak, exp)
 {
-  peak_index <- ifelse(
-    typeof(peak) == "character",
-    get_peak_index(mi_data, peak), peak
-  )
-  exp_index <- ifelse(
-    typeof(exp) == "character",
-    match(exp, mi_data$experiments), exp
-  )
+  if(typeof(peak) == "character")
+    peak_index <- get_peak_index(mi_data, peak)
+  else
+    peak_index <- peak
+  if(typeof(exp) == "character")
+    exp_index <- match(exp, mi_data$experiments)
+  else
+    exp_index <- exp
   return(
     mi_data$mids[
       get_mi_indices(mi_data, peak_index),
