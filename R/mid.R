@@ -68,7 +68,7 @@ c13correct <- function(mid, p = natural_13C_fraction, constraint = TRUE)
 
 #' Correct an MID matrix for naturally occurring isotopes
 #'
-#' @param mid A matrix whose columns are MID vectors
+#' @param mids A matrix whose columns are MID vectors
 #' @param p The heavy atom natural abundance
 #' @param constraint whether to constrain sum of corrected vectors to 1
 #' @export

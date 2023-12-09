@@ -2,7 +2,7 @@
 % Please edit documentation in R/midata.R
 \name{get_avg_mids}
 \alias{get_avg_mids}
-\title{Get averaged MIDs for several peaks from an MIData object}
+\title{Get averaged MIDs for several peaks from an MIData object, each}
 \usage{
 get_avg_mids(mi_data, peak_index, e)
 }
@@ -17,5 +17,5 @@ get_avg_mids(mi_data, peak_index, e)
 An array of dimensions MI x experiments x peaks
 }
 \description{
-Get averaged MIDs for several peaks from an MIData object
+Get averaged MIDs for several peaks from an MIData object, each
 }

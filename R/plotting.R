@@ -82,7 +82,7 @@ plot_mid_matrix <- function(mid_mat, plot_title = "MID")
 
 #' Plot MID matrices for a convolution x * z = y
 #'
-#' @param mi_date An MIData object
+#' @param mi_data An MIData object
 #' @param index_x index of peak x
 #' @param index_y index of peak y
 #' @param index_z index of peak z

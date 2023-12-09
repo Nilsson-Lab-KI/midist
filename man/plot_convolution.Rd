@@ -7,13 +7,13 @@
 plot_convolution(mi_data, index_x, index_y, index_z)
 }
 \arguments{
+\item{mi_data}{An MIData object}
+
 \item{index_x}{index of peak x}
 
 \item{index_y}{index of peak y}
 
 \item{index_z}{index of peak z}
-
-\item{mi_date}{An MIData object}
 }
 \value{
 A ggplot object

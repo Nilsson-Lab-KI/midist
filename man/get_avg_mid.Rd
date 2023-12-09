@@ -4,20 +4,20 @@
 \alias{get_avg_mid}
 \title{Get averaged MIDs from an MIData object}
 \usage{
-get_avg_mid(mi_data, p, e)
+get_avg_mid(mi_data, peak, exp)
 }
 \arguments{
 \item{mi_data}{an MIData object}
 
-\item{p}{the peak index}
+\item{peak}{A peak index (integer) or identifier (string)}
 
-\item{e}{the experiment index (optional)}
+\item{exp}{An optional experiment index (integer) or identifier (string)}
 }
 \value{
 An MID vector, or, if e is not a scalar, a matrix whose columns are MIDs
 }
 \description{
-Retrieve a vector of averages MIDs for a peak p and an experiment e;
+Retrieve a vector of averaged MIDs for a peak p and an experiment e;
 or, if e is a vector or is omitted, the matrix of MIDs for peak p across
 the indicated experiments.
 }
