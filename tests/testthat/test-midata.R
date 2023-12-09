@@ -12,6 +12,7 @@ peak_areas_1 <- data.frame(
   # experiment 1 with 2 replicates
   exp1_1 = c(3, 2, 7, 9, 3, 0, 0),
   exp1_2 = c(4, 2, 6, 8, 3, 0, 0),
+  # experiment 2 with 1 replicate
   exp2_1 = c(5, 0, 1, 2, 6, 5, 5)
 )
 # unique experiment names
@@ -143,11 +144,43 @@ test_that("get_mids works correctly", {
 
 
 test_that("get_avg_mid works correctly", {
+  # get a single MID vector
   expect_equal(
     get_avg_mid(mi_data_1, 1, 1),
     c(0.2916667, 0.1666667, 0.5416667),
     tolerance = 1e-6
   )
+  expect_equal(
+    get_avg_mid(mi_data_1, 1, 1),
+    get_avg_mid(mi_data_1, "x", "exp1")
+  )
+  expect_equal(
+    get_avg_mid(mi_data_1, 1, 2),
+    c(0.8333333, 0, 0.1666667),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    get_avg_mid(mi_data_1, 1, 2),
+    get_avg_mid(mi_data_1, "x", "exp2")
+  )
+  # specify list of experiments to get an MID matrix
+  expect_equal(
+    get_avg_mid(mi_data_1, 1, c(1, 2)),
+    matrix(
+      c(
+        0.2916667, 0.8333333,
+        0.1666667, 0.0000000,
+        0.5416667, 0.1666667
+      ),
+      nrow = 3, byrow = TRUE
+    ),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    get_avg_mid(mi_data_1, 1, c(1, 2)),
+    get_avg_mid(mi_data_1, "x", c("exp1", "exp2"))
+  )
+  # leave out the exp parameter to get an MID matrix
   expect_equal(
     get_avg_mid(mi_data_1, 1),
     matrix(
@@ -160,7 +193,20 @@ test_that("get_avg_mid works correctly", {
     ),
     tolerance = 1e-6
   )
+  expect_equal(
+    get_avg_mid(mi_data_1, 1),
+    get_avg_mid(mi_data_1, "x")
+  )
 })
+
+
+# test_that("get_avg_mids works correctly", {
+#   expect_equal(
+#     get_avg_mid(mi_data_1, 1, 1),
+#     c(0.2916667, 0.1666667, 0.5416667),
+#     tolerance = 1e-6
+#   )
+# })
 
 
 test_that("midata_transform works correctly", {
