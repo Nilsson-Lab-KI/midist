@@ -151,8 +151,8 @@ test_that("get_avg_mid works correctly", {
     tolerance = 1e-6
   )
   expect_equal(
-    get_avg_mid(mi_data_1, 1, 1),
-    get_avg_mid(mi_data_1, "x", "exp1")
+    get_avg_mid(mi_data_1, "x", "exp1"),
+    get_avg_mid(mi_data_1, 1, 1)
   )
   expect_equal(
     get_avg_mid(mi_data_1, 1, 2),
@@ -177,8 +177,8 @@ test_that("get_avg_mid works correctly", {
     tolerance = 1e-6
   )
   expect_equal(
-    get_avg_mid(mi_data_1, 1, c(1, 2)),
-    get_avg_mid(mi_data_1, "x", c("exp1", "exp2"))
+    get_avg_mid(mi_data_1, "x", c("exp1", "exp2")),
+    get_avg_mid(mi_data_1, 1, c(1, 2))
   )
   # leave out the exp parameter to get an MID matrix
   expect_equal(
@@ -194,19 +194,10 @@ test_that("get_avg_mid works correctly", {
     tolerance = 1e-6
   )
   expect_equal(
-    get_avg_mid(mi_data_1, 1),
-    get_avg_mid(mi_data_1, "x")
+    get_avg_mid(mi_data_1, "x"),
+    get_avg_mid(mi_data_1, 1)
   )
 })
-
-
-# test_that("get_avg_mids works correctly", {
-#   expect_equal(
-#     get_avg_mid(mi_data_1, 1, 1),
-#     c(0.2916667, 0.1666667, 0.5416667),
-#     tolerance = 1e-6
-#   )
-# })
 
 
 test_that("midata_transform works correctly", {
@@ -241,6 +232,7 @@ peak_areas_2 <- data.frame(
 )
 exp_names_2 = c("exp1")
 mi_data_2 <- MIData(peak_areas_2, exp_names_2)
+
 
 test_that("zero peaks are handled properly", {
   # zero peaks in peak areas should become NAs in the midata object
@@ -286,6 +278,72 @@ test_that("midata_subset works correctly", {
   expect_equal(midata_subset(mi_data_2, 1:5), mi_data_2)
 
 })
+
+
+# an MIData object with 3 metabolites across two experiments
+peak_areas_3 <- data.frame(
+  Metabolite = c(rep("a",4), rep("b",3), rep("c",3)),
+  Formula = c(rep("a",4), rep("b",3), rep("c",3)),
+  exp1 = c(
+    0.8, 0.05, 0.1, 0.05,
+    0.8, 0.1, 0.1,
+    0.1, 0.4, 0.5),
+  exp2 = c(
+    0.85, 0.1, 0.0, 0.05,
+    0.75, 0.15, 0.1,
+    0.15, 0.35, 0.5)
+)
+exp_names_3 = c("exp1", "exp2")
+mi_data_3 <- MIData(peak_areas_3, exp_names_3)
+
+
+test_that("get_avg_mids works correctly", {
+  # two peaks, single experiment gives an MI x peak matrix
+  expect_equal(
+    get_avg_mids(mi_data_3, c(2, 3), 1),
+    matrix(
+      c(
+        0.8, 0.1, 0.1,
+        0.1, 0.4, 0.5
+      ),
+      nrow = 3, byrow = FALSE
+    ),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    get_avg_mids(mi_data_3, c("b", "c"), "exp1"),
+    get_avg_mids(mi_data_3, c(2, 3), 1)
+  )
+  expect_equal(
+    get_avg_mids(mi_data_3, c(2, 3), 2),
+    matrix(
+      c(
+        0.75, 0.15, 0.1,
+        0.15, 0.35, 0.5
+      ),
+      nrow = 3, byrow = FALSE
+    )
+  )
+  # two peaks, two experiments gives an MI x experiments x peaks array
+  mid_array <- get_avg_mids(mi_data_3, c(2, 3), c(1, 2))
+  expect_equal(
+    dim(mid_array),
+    c(3, 2, 2)
+  )
+  expect_equal(
+    mid_array[, , 1],
+    get_avg_mid(mi_data_3, 2, c(1, 2))
+  )
+  expect_equal(
+    mid_array[, , 2],
+    get_avg_mid(mi_data_3, 3, c(1, 2))
+  )
+  expect_equal(
+    get_avg_mids(mi_data_3, c("b", "c"), c("exp1", "exp2")),
+    mid_array
+  )
+})
+
 
 #
 # MID normalization -- move this to test-mid.R ?
