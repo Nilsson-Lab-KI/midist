@@ -102,6 +102,11 @@ test_that("get_mids works correctly", {
     tolerance = 1e-6
   )
   expect_equal(
+    get_mids(mi_data_1, "x", 1),
+    get_mids(mi_data_1, 1, 1)
+  )
+
+  expect_equal(
     get_mids(mi_data_1, 1, 2),
     matrix(
       c(
@@ -112,6 +117,10 @@ test_that("get_mids works correctly", {
       nrow = 3, byrow = TRUE
     ),
     tolerance = 1e-6
+  )
+  expect_equal(
+    get_mids(mi_data_1, 1, "exp2"),
+    get_mids(mi_data_1, 1, 2)
   )
   expect_equal(
     get_mids(mi_data_1, 2, 1),
@@ -125,6 +134,10 @@ test_that("get_mids works correctly", {
       nrow = 4, byrow = TRUE
     ),
     tolerance = 1e-6
+  )
+  expect_equal(
+    get_mids(mi_data_1, "y", "exp1"),
+    get_mids(mi_data_1, 2, 1)
   )
 })
 

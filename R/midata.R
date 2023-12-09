@@ -339,15 +339,28 @@ normalize_mids <- function(mids)
 #' Get MIDs for a given peak and experiment from an MIData object
 #'
 #' @param mi_data an MIData object
-#' @param p the peak index
-#' @param e the experiment index
-#' @returns A matrix with MIDs in columns
+#' @param peak A peak index (integer) or identifier (string)
+#' @param exp An experiment index (integer) or identifier (string)
+#' @returns A matrix of MIDs, with MIs in rows and experiments in columns,
+#' or NA if a peak or experiment identifier was absent from the MIData object
 
 #' @export
-get_mids <- function(mi_data, p, e)
+get_mids <- function(mi_data, peak, exp)
 {
+  peak_index <- ifelse(
+    typeof(peak) == "character",
+    get_peak_index(mi_data, peak), peak
+  )
+  exp_index <- ifelse(
+    typeof(exp) == "character",
+    match(exp, mi_data$experiments), exp
+  )
   return(
-    mi_data$mids[get_mi_indices(mi_data, p), get_exp_indices(mi_data, e), drop = FALSE]
+    mi_data$mids[
+      get_mi_indices(mi_data, peak_index),
+      get_exp_indices(mi_data, exp_index),
+      drop = FALSE
+    ]
   )
 }
 

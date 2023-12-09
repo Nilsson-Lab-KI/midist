@@ -4,17 +4,18 @@
 \alias{get_mids}
 \title{Get MIDs for a given peak and experiment from an MIData object}
 \usage{
-get_mids(mi_data, p, e)
+get_mids(mi_data, peak, exp)
 }
 \arguments{
 \item{mi_data}{an MIData object}
 
-\item{p}{the peak index}
+\item{peak}{A peak index (integer) or identifier (string)}
 
-\item{e}{the experiment index}
+\item{exp}{An experiment index (integer) or identifier (string)}
 }
 \value{
-A matrix with MIDs in columns
+A matrix of MIDs, with MIs in rows and experiments in columns,
+or NA if a peak or experiment identifier was absent from the MIData object
 }
 \description{
 Get MIDs for a given peak and experiment from an MIData object
