@@ -43,8 +43,8 @@ MIData <- function(peak_areas, exp_names = NULL, exp_columns = NULL)
   mi_data <- list()
   class(mi_data) <- "MIData"
 
-  # unique peak ids
-  mi_data$peak_ids <- unique(peak_areas[[1]])
+  # unique peak ids, as strings in case integer IDs are used
+  mi_data$peak_ids <- as.character(unique(peak_areas[[1]]))
   # start index of each peak in the mass isotopomer data
   mi_data$peak_index <- match(mi_data$peak_ids, peak_areas[[1]])
   # find no. atoms for each peak (no. MIs = no.atoms + 1)
