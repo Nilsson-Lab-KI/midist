@@ -159,6 +159,17 @@ random_mid <- function(mean, stdev, n)
 }
 
 
+#' Generate a natural (binomial) MID
+#' @param n number of atoms
+#' @param p heavy isotope probability
+#' @returns an MID vector
+#' @export
+natural_mid <- function(n, p = natural_13C_fraction)
+{
+  return(dbinom(0:n, n, p))
+}
+
+
 #' Generate a convolution matrix for an MID
 #'
 #' Convolution of two MIDs x * y can be written as a matrix multiplication

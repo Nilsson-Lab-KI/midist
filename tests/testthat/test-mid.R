@@ -117,3 +117,11 @@ test_that("random_mid is correct", {
   expect_equal(dim(random_mids), c(4, 1))
 })
 
+
+test_that("natural_mid is correct", {
+  expect_equal(
+    natural_mid(4, 0.1),
+    stats::dbinom(0:4, 4, 0.1)
+  )
+})
+
