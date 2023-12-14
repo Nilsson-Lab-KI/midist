@@ -173,10 +173,15 @@ calc_avg_mids <- function(mi_data)
 #' Subset an MIData object to the peaks given by peak_index, and return a new MIData object
 #'
 #' @param mi_data MIData object
-#' @param peak_subset_index indices of peaks to be included in the subset
+#' @param peak_subset IDs or indices of peaks to be included in the subset
 #' @export
-midata_subset <- function(mi_data, peak_subset_index)
+midata_subset <- function(mi_data, peak_subset)
 {
+  if(typeof(peak_subset) == "character")
+    peak_subset_index <- get_peak_index(mi_data, peak_subset)
+  else
+    peak_subset_index <- peak_subset
+
   # create subset midata object
   midata_subset <- list()
   class(midata_subset) <- "MIData"

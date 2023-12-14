@@ -4,12 +4,12 @@
 \alias{midata_subset}
 \title{Subset an MIData object to the peaks given by peak_index, and return a new MIData object}
 \usage{
-midata_subset(mi_data, peak_subset_index)
+midata_subset(mi_data, peak_subset)
 }
 \arguments{
 \item{mi_data}{MIData object}
 
-\item{peak_subset_index}{indices of peaks to be included in the subset}
+\item{peak_subset}{IDs or indices of peaks to be included in the subset}
 }
 \description{
 Subset an MIData object to the peaks given by peak_index, and return a new MIData object
