@@ -19,11 +19,12 @@
 #' @param f A function f(x, y) taking two MIDs and returning a scalar.
 #' @param g a function g taking a non-empty vector of values and returning
 #' the index of the "best" element; for example, which.min
-#' @param impute whether to impute missing convolutants (prevent NA distances)
+#' @param impute Impute missing convolutants with no. atoms no larger than
+#' this a value (to prevent NA distances). Default is 0 (no imputation).
 #' @returns the resulting value g(f1, f2, ...)
 #' @export
 
-conv_reduce <- function(mi_data, x, y, e, f, g, impute = FALSE)
+conv_reduce <- function(mi_data, x, y, e, f, g, impute = 0)
 {
   # number of carbon atoms of metabolites x, y
   n_atom_x <- get_peak_n_atoms(mi_data, x)
@@ -64,7 +65,8 @@ conv_reduce <- function(mi_data, x, y, e, f, g, impute = FALSE)
       return(list(values = f_values[f_index], index = z_index[f_index]))
     } else {
       # no matching metabolites to convolute with
-      if(impute) {
+      if(n_atom_z <= impute) {
+        # impute
         return(
           list(
             values = f(convolute(mid_x, natural_mid(n_atom_z)), mid_y),
@@ -90,10 +92,11 @@ conv_reduce <- function(mi_data, x, y, e, f, g, impute = FALSE)
 #' must accept matrices.
 #' @param f A function f(x, y) taking two MIDs, or two matrices whose columns are MIDs.
 #' @param g a function g taking a vector of values f1, f2, ...
-#' @param impute whether to impute missing convolutants (prevent NA distances)
+#' @param impute Impute missing convolutants with no. atoms no larger than
+#' this a value (to prevent NA distances). Default is 0 (no imputation).
 #' @returns the matrix of g(f(x,y) ...) values for all x,y
 #' @export
-conv_reduce_all <- function(mi_data, e, f, g, impute = FALSE)
+conv_reduce_all <- function(mi_data, e, f, g, impute = 0)
 {
   n_met <- length(mi_data$peak_ids)
   # allocate matrices
@@ -172,7 +175,9 @@ g_list <- function(mids_y, mids_xz, z_index, f, g)
 #' @param x_index index of the peak x
 #' @param y_index index of the peak y
 #' @param z_index index of the peak z
-#' @param impute whether to impute missing convolutants (prevent NA distances)
+#' @param Impute missing convolutants with no. atoms no larger than
+#' this a value (to prevent NA distances).
+#' @noRd
 #'
 conv_reduce_block <- function(mi_data, e, f, g, x_index, y_index, z_index, impute)
 {
@@ -180,10 +185,10 @@ conv_reduce_block <- function(mi_data, e, f, g, x_index, y_index, z_index, imput
   n_y <- length(y_index)
   n_z <- length(z_index)
   n_exp <- length(e)
-  ## allocate matrices
+  # allocate block matrix
   block = list(values = matrix(as.double(NA), n_x, n_y),
                index = matrix(as.integer(NA), n_x, n_y))
-  if(n_z > 0 | impute) {
+  if(n_z > 0 | impute > 0) {
     # get MID matrices, each column an MID
     mids_x <- get_avg_mids(mi_data, x_index, e)
     mids_y <- get_avg_mids(mi_data, y_index, e)
@@ -205,26 +210,27 @@ conv_reduce_block <- function(mi_data, e, f, g, x_index, y_index, z_index, imput
       }
     }
     else {
-      # impute z with natural distribution
       n_atoms_z <- dim(mids_y)[1] - dim(mids_x)[1]
-      mid_imputed <- natural_mid(n_atoms_z)
-      for(i in 1:n_x) {
-        for(j in 1:n_y) {
-          if(n_exp == 1)
-            block$values[i, j] <- f(
-              convolute(mids_x[, i], mid_imputed),
-              mids_y[, j]
-            )
-          else
-            block$values[i, j] <- f(
-              convolute_cols(mid_imputed, mids_x[, , i]),
-              mids_y[, , j]
-            )
+      if(n_atoms_z <= impute) {
+        mid_imputed <- natural_mid(n_atoms_z)
+        for(i in 1:n_x) {
+          for(j in 1:n_y) {
+            if(n_exp == 1)
+              block$values[i, j] <- f(
+                convolute(mids_x[, i], mid_imputed),
+                mids_y[, j]
+              )
+            else
+              block$values[i, j] <- f(
+                convolute_cols(mid_imputed, mids_x[, , i]),
+                mids_y[, , j]
+              )
+          }
         }
       }
     }
   }
-  # else no metabolites z to convolute x with
+  # else no metabolites z to convolute x with and no imputation
   return(block)
 }
 
