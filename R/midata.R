@@ -348,7 +348,6 @@ normalize_mids <- function(mids)
 #' @param exp An experiment index (integer) or identifier (string)
 #' @returns A matrix of MIDs, with MIs in rows and experiments in columns,
 #' or NA if a peak or experiment identifier was absent from the MIData object
-
 #' @export
 get_mids <- function(mi_data, peak, exp)
 {
@@ -372,14 +371,13 @@ get_mids <- function(mi_data, peak, exp)
 
 #' Get averaged MIDs from an MIData object
 #'
-#' Retrieve a vector of averaged MIDs for a peak p and an experiment e;
-#' or, if e is a vector or is omitted, the matrix of MIDs for peak p across
-#' the indicated experiments.
+#' Retrieve a vector of averaged MIDs for a given peak and experiment,
+#' or a matrix of MIDs for a given peak across several experiments.
 #'
 #' @param mi_data an MIData object
 #' @param peak A peak index (integer) or identifier (string)
 #' @param exp An optional experiment index (integer) or identifier (string)
-#' @return An MID vector, or, if e is not a scalar, a matrix whose columns are MIDs
+#' @return An MID vector, or, if exp is not a scalar, a matrix whose columns are MIDs
 #' @export
 get_avg_mid <- function(mi_data, peak, exp)
 {
@@ -400,20 +398,24 @@ get_avg_mid <- function(mi_data, peak, exp)
 }
 
 
-#' Get averaged MIDs for several peaks from an MIData object, each
+#' Get averaged MIDs for several peaks from an MIData object
 #'
+#' Retrieve an array of averaged MIDs for a given peak and experiment,
+#' or a matrix of MIDs for a given peak across several experiments.
 #'
 #' @param mi_data an MIData object
-#' @param peak_index One or more peak indices
-#' @param e an experiment index
-#' @returns An array of dimensions MI x experiments x peaks
+#' @param peak One or more peak IDs or indices
+#' @param exp One or more experiments IDs or indices
+#' @returns For one peak, a matrix of dimensions MI x peaks;
+#' for several peaks with same atom number, an array of dimensions
+#' MI x experiments x peaks
 #' @export get_avg_mids
-get_avg_mids <- function(mi_data, peak_index, e)
+get_avg_mids <- function(mi_data, peaks, exp)
 {
   return(
     sapply(
-      peak_index,
-      function(i) get_avg_mid(mi_data, i, e),
+      peaks,
+      function(p) get_avg_mid(mi_data, p, exp),
       simplify = "array", USE.NAMES = FALSE
     )
   )
@@ -424,6 +426,7 @@ get_avg_mids <- function(mi_data, peak_index, e)
 #' @param mi_data an MIData object
 #' @param p the peak index
 #' @returns a vector of MI indices
+#' @noRd
 get_mi_indices <- function(mi_data, p)
 {
   return(mi_data$peak_index[p] + 0:mi_data$peak_n_atoms[[p]])
@@ -451,6 +454,7 @@ get_peak_index <- function(mi_data, peak_ids) {
 #' Get the index of peaks with a specific number of atoms
 #' @param mi_data an MIData object
 #' @param n_atoms number of atoms in peaks of interest
+#' @noRd
 get_peak_index_n_atoms <- function(mi_data, n_atoms) {
   return(mi_data$n_atoms_index[[as.character(n_atoms)]])
 }
