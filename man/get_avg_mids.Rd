@@ -9,9 +9,9 @@ get_avg_mids(mi_data, peaks, exp)
 \arguments{
 \item{mi_data}{an MIData object}
 
-\item{exp}{One or more experiments IDs or indices}
+\item{peaks}{One or more peak IDs or indices}
 
-\item{peak}{One or more peak IDs or indices}
+\item{exp}{One or more experiments IDs or indices}
 }
 \value{
 For one peak, a matrix of dimensions MI x peaks;

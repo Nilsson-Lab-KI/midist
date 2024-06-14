@@ -404,7 +404,7 @@ get_avg_mid <- function(mi_data, peak, exp)
 #' or a matrix of MIDs for a given peak across several experiments.
 #'
 #' @param mi_data an MIData object
-#' @param peak One or more peak IDs or indices
+#' @param peaks One or more peak IDs or indices
 #' @param exp One or more experiments IDs or indices
 #' @returns For one peak, a matrix of dimensions MI x peaks;
 #' for several peaks with same atom number, an array of dimensions
