@@ -19,7 +19,7 @@ peak_areas_example_1 <- data.frame(
 midata_1 <- MIData(peak_areas_example_1, exp_names = "exp1")
 
 # test conv_reduce on example 1 with given f and g functions
-pairwise_conv_reduce <- function(mi_data, e, f, g, impute = FALSE)
+pairwise_conv_reduce <- function(mi_data, e, f, g, impute = 0)
 {
   # compute full matrix row by row
   n_peaks <- length(mi_data$peak_ids)
@@ -42,6 +42,9 @@ pairwise_conv_reduce <- function(mi_data, e, f, g, impute = FALSE)
 test_that("conv_reduce is correct on minimum euclidean distance", {
   assign_list[dm, index] <- pairwise_conv_reduce(
     midata_1, 1, euclidean_dist, which.min)
+
+  cat("\n")
+  print(dm)
 
   # make sure matrices are symmetric
   expect_true(isSymmetric(dm))
@@ -69,8 +72,10 @@ test_that("conv_reduce is correct on minimum euclidean distance", {
 })
 
 test_that("conv_reduce is correct when using imputation", {
+  # for a vs. e there is no 4-carbon peak to convolute with
+  # impute it NAs by setting impute >= 4
   assign_list[dm, index] <- pairwise_conv_reduce(
-    midata_1, 1, euclidean_dist, which.min, impute = TRUE)
+    midata_1, 1, euclidean_dist, which.min, impute = 4)
   # make sure matrices are symmetric
   expect_true(isSymmetric(dm))
   expect_true(isSymmetric(index))
@@ -83,6 +88,11 @@ test_that("conv_reduce is correct when using imputation", {
   )
   expect_true(is.na(index[1, 5]))
 
+  # with impute < 4 we get no imputation
+  assign_list[dm, index] <- pairwise_conv_reduce(
+    midata_1, 1, euclidean_dist, which.min, impute = 3)
+  expect_true(is.na(dm[1, 5]))
+  expect_true(is.na(index[1, 5]))
 })
 
 
@@ -120,7 +130,7 @@ test_that("conv_reduce_all returns a matrix with index attribute", {
 
 # compare conv_reduce_all elementwise to conv_reduce on the given mi_data
 # with functions f and g
-test_conv_reduce_all <- function(mi_data, e, f, g, impute = FALSE)
+test_conv_reduce_all <- function(mi_data, e, f, g, impute = 0)
 {
   # matrix from conv_reduce_all
   assign_list[values, index] <- conv_reduce_all(mi_data, e, f, g, impute)
@@ -148,7 +158,8 @@ test_that("conv_reduce_all returns a valid distance for example-1", {
 
 
 test_that("conv_reduce_all is correct with imputation", {
-  test_conv_reduce_all(midata_1, 1, euclidean_dist, which.min, impute = TRUE)
+  test_conv_reduce_all(midata_1, 1, euclidean_dist, which.min, impute = 3)
+  test_conv_reduce_all(midata_1, 1, euclidean_dist, which.min, impute = 4)
 })
 
 # example-2:  as example 1 but peaks are permuted
