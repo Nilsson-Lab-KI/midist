@@ -6,12 +6,13 @@
 
 peak_areas_1 <- data.frame(
   # two metabolites 'x' and 'y', 2 and 3 carbons respectively
-  Metabolite = c("x", "x", "x", "y", "y", "y", "y"),
+  metabolite = c("x", "x", "x", "y", "y", "y", "y"),
   # we require a formula column
-  Formula = c("x", "x", "x", "y", "y", "y", "y"),
+  annotation = "",
   # experiment 1 with 2 replicates
   exp1_1 = c(3, 2, 7, 9, 3, 0, 0),
   exp1_2 = c(4, 2, 6, 8, 3, 0, 0),
+  # experiment 2 with 1 replicate
   exp2_1 = c(5, 0, 1, 2, 6, 5, 5)
 )
 # unique experiment names
@@ -102,6 +103,11 @@ test_that("get_mids works correctly", {
     tolerance = 1e-6
   )
   expect_equal(
+    get_mids(mi_data_1, "x", 1),
+    get_mids(mi_data_1, 1, 1)
+  )
+
+  expect_equal(
     get_mids(mi_data_1, 1, 2),
     matrix(
       c(
@@ -112,6 +118,10 @@ test_that("get_mids works correctly", {
       nrow = 3, byrow = TRUE
     ),
     tolerance = 1e-6
+  )
+  expect_equal(
+    get_mids(mi_data_1, 1, "exp2"),
+    get_mids(mi_data_1, 1, 2)
   )
   expect_equal(
     get_mids(mi_data_1, 2, 1),
@@ -126,15 +136,51 @@ test_that("get_mids works correctly", {
     ),
     tolerance = 1e-6
   )
+  expect_equal(
+    get_mids(mi_data_1, "y", "exp1"),
+    get_mids(mi_data_1, 2, 1)
+  )
 })
 
 
 test_that("get_avg_mid works correctly", {
+  # get a single MID vector
   expect_equal(
     get_avg_mid(mi_data_1, 1, 1),
     c(0.2916667, 0.1666667, 0.5416667),
     tolerance = 1e-6
   )
+  expect_equal(
+    get_avg_mid(mi_data_1, "x", "exp1"),
+    get_avg_mid(mi_data_1, 1, 1)
+  )
+  expect_equal(
+    get_avg_mid(mi_data_1, 1, 2),
+    c(0.8333333, 0, 0.1666667),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    get_avg_mid(mi_data_1, 1, 2),
+    get_avg_mid(mi_data_1, "x", "exp2")
+  )
+  # specify list of experiments to get an MID matrix
+  expect_equal(
+    get_avg_mid(mi_data_1, 1, c(1, 2)),
+    matrix(
+      c(
+        0.2916667, 0.8333333,
+        0.1666667, 0.0000000,
+        0.5416667, 0.1666667
+      ),
+      nrow = 3, byrow = TRUE
+    ),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    get_avg_mid(mi_data_1, "x", c("exp1", "exp2")),
+    get_avg_mid(mi_data_1, 1, c(1, 2))
+  )
+  # leave out the exp parameter to get an MID matrix
   expect_equal(
     get_avg_mid(mi_data_1, 1),
     matrix(
@@ -146,6 +192,10 @@ test_that("get_avg_mid works correctly", {
       nrow = 3, byrow = TRUE
     ),
     tolerance = 1e-6
+  )
+  expect_equal(
+    get_avg_mid(mi_data_1, "x"),
+    get_avg_mid(mi_data_1, 1)
   )
 })
 
@@ -171,8 +221,8 @@ test_that("midata_transform works correctly", {
 
 # an MIData object with 5 metabolites
 peak_areas_2 <- data.frame(
-  Metabolite = c(rep("a",4), rep("b",3), rep("c",2), rep("d",6), rep("e",3)),
-  Formula = c(rep("a",4), rep("b",3), rep("c",2), rep("d",6), rep("e",3)),
+  metabolite = c(rep("a",4), rep("b",3), rep("c",2), rep("d",6), rep("e",3)),
+  annotation = "",
   exp1 = c(
     0.8, 0.05, 0.1, 0.05,
     0.8, 0.1, 0.1,
@@ -182,6 +232,7 @@ peak_areas_2 <- data.frame(
 )
 exp_names_2 = c("exp1")
 mi_data_2 <- MIData(peak_areas_2, exp_names_2)
+
 
 test_that("zero peaks are handled properly", {
   # zero peaks in peak areas should become NAs in the midata object
@@ -213,6 +264,10 @@ test_that("midata_subset works correctly", {
   expect_equal(
     get_avg_mid(mi_data_sub, 3, 1),
     get_avg_mid(mi_data_2, 2, 1))
+  expect_equal(
+    midata_subset(mi_data_2, c("a", "c", "b")),
+    mi_data_sub
+  )
 
   # permutation (all peaks, but in different order)
   sub_index <- c(4,2,1,5,3)
@@ -222,11 +277,81 @@ test_that("midata_subset works correctly", {
   expect_equal(
     get_avg_mid(mi_data_sub, 4, 1),
     get_avg_mid(mi_data_2, 5, 1))
+  expect_equal(
+    midata_subset(mi_data_2, c("d", "b", "a", "e", "c")),
+    mi_data_sub
+  )
 
   # subset to entire range should give identical object
   expect_equal(midata_subset(mi_data_2, 1:5), mi_data_2)
 
 })
+
+
+# an MIData object with 3 metabolites across two experiments
+peak_areas_3 <- data.frame(
+  Metabolite = c(rep("a",4), rep("b",3), rep("c",3)),
+  Formula = c(rep("a",4), rep("b",3), rep("c",3)),
+  exp1 = c(
+    0.8, 0.05, 0.1, 0.05,
+    0.8, 0.1, 0.1,
+    0.1, 0.4, 0.5),
+  exp2 = c(
+    0.85, 0.1, 0.0, 0.05,
+    0.75, 0.15, 0.1,
+    0.15, 0.35, 0.5)
+)
+exp_names_3 = c("exp1", "exp2")
+mi_data_3 <- MIData(peak_areas_3, exp_names_3)
+
+
+test_that("get_avg_mids works correctly", {
+  # two peaks, single experiment gives an MI x peak matrix
+  expect_equal(
+    get_avg_mids(mi_data_3, c(2, 3), 1),
+    matrix(
+      c(
+        0.8, 0.1, 0.1,
+        0.1, 0.4, 0.5
+      ),
+      nrow = 3, byrow = FALSE
+    ),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    get_avg_mids(mi_data_3, c("b", "c"), "exp1"),
+    get_avg_mids(mi_data_3, c(2, 3), 1)
+  )
+  expect_equal(
+    get_avg_mids(mi_data_3, c(2, 3), 2),
+    matrix(
+      c(
+        0.75, 0.15, 0.1,
+        0.15, 0.35, 0.5
+      ),
+      nrow = 3, byrow = FALSE
+    )
+  )
+  # two peaks, two experiments gives an MI x experiments x peaks array
+  mid_array <- get_avg_mids(mi_data_3, c(2, 3), c(1, 2))
+  expect_equal(
+    dim(mid_array),
+    c(3, 2, 2)
+  )
+  expect_equal(
+    mid_array[, , 1],
+    get_avg_mid(mi_data_3, 2, c(1, 2))
+  )
+  expect_equal(
+    mid_array[, , 2],
+    get_avg_mid(mi_data_3, 3, c(1, 2))
+  )
+  expect_equal(
+    get_avg_mids(mi_data_3, c("b", "c"), c("exp1", "exp2")),
+    mid_array
+  )
+})
+
 
 #
 # MID normalization -- move this to test-mid.R ?

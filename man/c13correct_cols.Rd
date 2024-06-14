@@ -7,11 +7,11 @@
 c13correct_cols(mids, p = natural_13C_fraction, constraint = TRUE)
 }
 \arguments{
+\item{mids}{A matrix whose columns are MID vectors}
+
 \item{p}{The heavy atom natural abundance}
 
 \item{constraint}{whether to constrain sum of corrected vectors to 1}
-
-\item{mid}{A matrix whose columns are MID vectors}
 }
 \description{
 Correct an MID matrix for naturally occurring isotopes

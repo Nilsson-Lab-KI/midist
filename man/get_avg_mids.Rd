@@ -4,18 +4,21 @@
 \alias{get_avg_mids}
 \title{Get averaged MIDs for several peaks from an MIData object}
 \usage{
-get_avg_mids(mi_data, peak_index, e)
+get_avg_mids(mi_data, peaks, exp)
 }
 \arguments{
 \item{mi_data}{an MIData object}
 
-\item{peak_index}{One or more peak indices}
+\item{exp}{One or more experiments IDs or indices}
 
-\item{e}{an experiment index}
+\item{peak}{One or more peak IDs or indices}
 }
 \value{
-An array of dimensions MI x experiments x peaks
+For one peak, a matrix of dimensions MI x peaks;
+for several peaks with same atom number, an array of dimensions
+MI x experiments x peaks
 }
 \description{
-Get averaged MIDs for several peaks from an MIData object
+Retrieve an array of averaged MIDs for a given peak and experiment,
+or a matrix of MIDs for a given peak across several experiments.
 }
