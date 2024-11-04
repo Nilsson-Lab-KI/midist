@@ -45,7 +45,7 @@ plot_mid_barchart <- function(mid_mat)
 #' @importFrom reshape2 melt
 #' @returns A ggplot object
 #'
-plot_matrix <- function(mat)
+plot_matrix <- function(mat, limits = NULL)
 {
   mat_melted <- reshape2::melt(mat)
   return(
@@ -56,7 +56,10 @@ plot_matrix <- function(mat)
         y = mat_melted[, 1])
     ) +
       ggplot2::geom_raster(aes(fill = value)) +
-      ggplot2::scale_fill_gradient(low = "white", high = "red") +
+      ggplot2::scale_fill_gradient(
+        low = "white", high = "red",
+        limits = limits,
+        oob = scales::squish) +
       ggplot2::theme_bw()
   )
 }
@@ -64,17 +67,19 @@ plot_matrix <- function(mat)
 
 #' Plot a matrix of MIDs
 #'
+#' Here we discard MI 0 as it is redundant with the others.
 #' To get axes labels right, the matrix should have dimnames set
 #'
 #' @param mid_mat A matrix whose columns are MID vectors
 #' @param plot_title Title for the plot
+#' @param max_mi_fraction MI fraction at which the heatmap saturates
 #' @returns A ggplot object
 #' @export
 #'
-plot_mid_matrix <- function(mid_mat, plot_title = "MID")
+plot_mid_matrix <- function(mid_mat, max_mi_fraction = 1.0, plot_title = "MID")
 {
   return(
-    plot_matrix(mid_mat) +
+    plot_matrix(mid_mat[-1, ], limits = c(0, max_mi_fraction)) +
       labs(x = "Experiment", y = "MI", title = plot_title)
   )
 }
