@@ -4,10 +4,12 @@
 \alias{plot_matrix}
 \title{Plot a matrix as a heatmap}
 \usage{
-plot_matrix(mat)
+plot_matrix(mat, limits = NULL)
 }
 \arguments{
 \item{mat}{Any real matrix}
+
+\item{limits}{A vector c(mi_min, mi_max) indicating the MI fraction range to plot}
 }
 \value{
 A ggplot object

@@ -249,7 +249,7 @@ test_that("combine works correcly", {
   )
 
   expect_equal(
-    remn::combine(list(dm_1, dm_2), list(mm_1, mm_2), max),
+    midist::combine(list(dm_1, dm_2), list(mm_1, mm_2), max),
     list(
       matrix(
         c(

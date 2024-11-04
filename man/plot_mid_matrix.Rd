@@ -4,10 +4,12 @@
 \alias{plot_mid_matrix}
 \title{Plot a matrix of MIDs}
 \usage{
-plot_mid_matrix(mid_mat, plot_title = "MID")
+plot_mid_matrix(mid_mat, max_mi_fraction = 1, plot_title = "MID")
 }
 \arguments{
 \item{mid_mat}{A matrix whose columns are MID vectors}
+
+\item{max_mi_fraction}{MI fraction at which the heatmap saturates}
 
 \item{plot_title}{Title for the plot}
 }
@@ -15,5 +17,6 @@ plot_mid_matrix(mid_mat, plot_title = "MID")
 A ggplot object
 }
 \description{
+Here we discard MI 0 as it is redundant with the others.
 To get axes labels right, the matrix should have dimnames set
 }
