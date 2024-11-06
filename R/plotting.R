@@ -41,7 +41,7 @@ plot_mid_barchart <- function(mid_mat)
 #' Plot a matrix as a heatmap
 #'
 #' @param mat Any real matrix
-
+#' @param limits A vector c(mi_min, mi_max) indicating the MI fraction range to plot
 #' @importFrom reshape2 melt
 #' @returns A ggplot object
 #'
