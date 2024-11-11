@@ -88,6 +88,7 @@ get_global_percentile_accuracy <- function(
 #' @param distance_matrix A symmetric matrix of distances
 #' @param gold_standard A symmetric, binary matrix where 1 indicates a true pair
 #' @returns A data.frame with columns 'precision' and 'recall'
+#' @export
 #'
 continuous_accuracy <- function(distance_matrix, gold_standard)
 {
