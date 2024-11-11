@@ -199,3 +199,28 @@ is_distance_matrix <- function(mat)
     return(failures)
   }
 }
+
+
+#' Get Vector of lower-triangular elements of a square matrix
+#'
+#' @param mat a square matrix
+#' @returns a vector of matrix elements below the diagonal
+#'
+get_lower_triangular <- function(mat)
+{
+  return(mat[lower.tri(mat)])
+}
+
+
+#' Replace NAs in an array with the maximal value
+#'
+#' @param x an array
+#' @returns the array with NA values replaced
+#' @export
+#'
+replace_na_with_max <- function(x)
+{
+  x[which(is.na(x))] <- max(x, na.rm = T)
+  return(x)
+}
+

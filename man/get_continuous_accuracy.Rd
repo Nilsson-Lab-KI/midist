@@ -2,10 +2,10 @@
 % Please edit documentation in R/gold-standard.R
 \name{get_continuous_accuracy}
 \alias{get_continuous_accuracy}
-\title{Compute precision and recall for all pairs in a pairwise_matrix}
+\title{Compute precision and recall for all pairs in a distance matrix}
 \usage{
 get_continuous_accuracy(
-  pairwise_matrix,
+  distance_matrix,
   gold_standard,
   measure,
   subset_size,
@@ -15,7 +15,7 @@ get_continuous_accuracy(
 )
 }
 \arguments{
-\item{pairwise_matrix}{A symmetric matrix of distances}
+\item{distance_matrix}{A symmetric matrix of distances}
 
 \item{gold_standard}{A symmetric, binary matrix where 1 indicates a true pair}
 
@@ -30,5 +30,5 @@ get_continuous_accuracy(
 \item{experiment}{?}
 }
 \description{
-Compute precision and recall for all pairs in a pairwise_matrix
+Compute precision and recall for all pairs in a distance matrix
 }

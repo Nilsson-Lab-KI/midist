@@ -85,7 +85,40 @@ get_global_percentile_accuracy <- function(
 
 #' Compute precision and recall for all pairs in a pairwise_matrix
 #'
-#' @param pairwise_matrix A symmetric matrix of distances
+#' @param distance_matrix A symmetric matrix of distances
+#' @param gold_standard A symmetric, binary matrix where 1 indicates a true pair
+#' @returns A data.frame with columns 'precision' and 'recall'
+#'
+continuous_accuracy <- function(distance_matrix, gold_standard)
+{
+  # vectors of lower-diagonal elements
+  gs_elements <- gold_standard %>%
+    get_lower_triangular()
+  dm_elements <- distance_matrix %>%
+    get_lower_triangular() %>%
+    replace_na_with_max()
+
+  # order by increasing distance
+  dm_order_index <- order(dm_elements)
+  gs_ordered <- gs_elements[dm_order_index]
+
+  # cumulative sum of true and false pairs from gold standard
+  tp <- cumsum(gs_ordered)
+  fp <- cumsum(abs(1 - gs_ordered))
+
+  # precision and recall for a single decision threshold
+  return(
+    data.frame(
+      precision = tp / (tp + fp),
+      recall = tp / max(tp)
+    )
+  )
+}
+
+
+#' Compute precision and recall for all pairs in a distance matrix
+#'
+#' @param distance_matrix A symmetric matrix of distances
 #' @param gold_standard A symmetric, binary matrix where 1 indicates a true pair
 #' @param measure ?
 #' @param subset_size ?
@@ -93,17 +126,17 @@ get_global_percentile_accuracy <- function(
 #' @param noise ?
 #' @param experiment ?
 #' @export
-get_continuous_accuracy <- function(pairwise_matrix, gold_standard,
+get_continuous_accuracy <- function(distance_matrix, gold_standard,
                                     measure, subset_size, subset_sample_no,
                                     noise, experiment)
 {
   # make sure the diagonal is NA
-  diag(pairwise_matrix) <- NA
+  diag(distance_matrix) <- NA
   diag(gold_standard) <- NA
 
   # put both matrices in a vector
   gs_vector <- as.vector(gold_standard)
-  pm_vector <- as.vector(pairwise_matrix)
+  pm_vector <- as.vector(distance_matrix)
 
   # diagonals in gold standard are NAs - remove them from both vectors
   gs_na_ind <- which(is.na(gs_vector))
@@ -121,15 +154,11 @@ get_continuous_accuracy <- function(pairwise_matrix, gold_standard,
   # cumulative sum of true and false pairs from gold standard
   tp <- cumsum(gs)
   fp <- cumsum(abs(1-gs))
-  # tn <- c(0:(length(gs)-1))*fp
-  # fn <- c(0:(length(gs)-1))*tp
 
   # Compute precision and recall for a single decision threshold
   threshold <- 1:length(gs)
   precision <- tp[threshold] / (tp[threshold] + fp[threshold])
   recall <- tp[threshold] / max(tp)
-  # precision <-  sapply(1:length(gs), function(x, tp, fp) tp[x] / (tp[x] + fp[x]), tp, fp)
-  # recall <-  sapply(1:length(gs), function(x, tp) tp[x] / max(tp), tp)
 
 
   return(data.frame(measure = measure,
