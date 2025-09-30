@@ -43,9 +43,6 @@ test_that("conv_reduce is correct on minimum euclidean distance", {
   assign_list[dm, index] <- pairwise_conv_reduce(
     midata_1, 1, euclidean_dist, which.min)
 
-  cat("\n")
-  print(dm)
-
   # make sure matrices are symmetric
   expect_true(isSymmetric(dm))
   expect_true(isSymmetric(index))
