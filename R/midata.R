@@ -316,6 +316,30 @@ censor_false_mi <- function(mi_data, threshold = 0.03, min_experiments = 1)
 }
 
 
+#' Perform 13C correction
+#'
+#' Correct each MID for natural 13C abundance and return the corrected data.
+#' @param mi_data An MIData object
+#' @returns A new MIData object with 13C-corrected MIDs
+#' @export
+correct_natural_13c <- function(mi_data)
+{
+  # copy MIData object
+  new_midata <- mi_data
+
+  # apply correction to each peak
+  for (p in 1:length(mi_data$peak_ids)) {
+    # rows of this peak
+    rows <- get_mi_indices(mi_data, p)
+    # replace false isotopes by zero
+    new_midata$mids[rows, ] <- c13correct_cols(mi_data$mids[rows, ])
+  }
+  # update the averaged MIDs
+  new_midata$avg_mids <- calc_avg_mids(new_midata)
+  return(new_midata)
+}
+
+
 find_false_mi <- function(corrected_mids, threshold, min_experiments)
 {
   # count number of experiments with an MI above threshold

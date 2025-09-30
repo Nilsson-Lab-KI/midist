@@ -468,3 +468,28 @@ test_that("misplace_peak_ids is correct", {
   expect_false(any(misplaced_ids[11:20] == unique_peak_ids[11:20]))
 })
 
+
+test_that("13C correction works correctly", {
+  mi_data_corrected <- correct_natural_13c(mi_data_1)
+
+  # correct MID matrix
+  expect_equal(
+    get_mids(mi_data_corrected, 1, 1),
+    matrix(
+      c(
+        0.2554371, 0.3405828,
+        0.1630029, 0.1611808,
+        0.5815600, 0.4982364
+      ),
+      nrow = 3, byrow = TRUE
+    ),
+    tolerance = 1e-6
+  )
+  # corrected averaged MID vector
+  expect_equal(
+    get_avg_mid(mi_data_corrected, 2, 2),
+    c(0.1147555, 0.3368992, 0.2735331, 0.2748123),
+    tolerance = 1e-6
+  )
+})
+
